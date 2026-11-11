@@ -1,0 +1,5 @@
+{% comment %}
+Logo eines Vertragspartners oder Platzhalter mit dem Anfangsbuchstaben.
+Parameter: provider, size ("sm", "md", "lg"; Standard "md"),
+optional logo (abweichende Datei, z. B. das gespeicherte Logo im Formular).
+{% endcomment %}{% with file=logo|default:provider.logo %}<span class="provider-logo provider-logo-{{ size|default:'md' }}" aria-hidden="true">{% if file %}<img src="{{ file.url }}" alt="" loading="lazy">{% else %}{{ provider.name|slice:":1"|upper }}{% endif %}</span>{% endwith %}

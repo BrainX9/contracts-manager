@@ -1,0 +1,67 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Contracts" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{% translate "Contracts" %}</h1>
+  {% if perms.contracts.add_contract %}
+  <a class="btn btn-primary" href="{% url 'contract_create' %}"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "New contract" %}</a>
+  {% endif %}
+</div>
+
+<form id="contract-filters" class="card card-body mb-3" method="get" action="{% url 'contract_list' %}"
+      hx-get="{% url 'contract_list' %}" hx-target="#results" hx-push-url="true"
+      hx-trigger="change, submit" hx-indicator="#results-indicator">
+  <div class="row g-2">
+    <div class="col-12 col-xxl-4">
+      <label class="visually-hidden" for="filter-q">{% translate "Search" %}</label>
+      <input type="search" id="filter-q" name="q" value="{{ filters.q }}" class="form-control"
+             placeholder="{% translate 'Search name, reference, number or partner' %}"
+             hx-get="{% url 'contract_list' %}" hx-target="#results" hx-push-url="true"
+             hx-trigger="input changed delay:300ms, search" hx-include="#contract-filters"
+             hx-indicator="#results-indicator" autocomplete="off">
+    </div>
+    <div class="col-6 col-md-3 col-xxl-2">
+      <label class="visually-hidden" for="filter-main-category">{% translate "Main category" %}</label>
+      <select id="filter-main-category" name="main_category" class="form-select">
+        <option value="">{% translate "All main categories" %}</option>
+        {% for item in main_categories %}
+        <option value="{{ item.pk }}"{% if item.pk == filters.main_category %} selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-xxl-2">
+      <label class="visually-hidden" for="filter-category">{% translate "Category" %}</label>
+      <select id="filter-category" name="category" class="form-select">
+        <option value="">{% translate "All categories" %}</option>
+        {% for item in categories %}
+        <option value="{{ item.pk }}"{% if item.pk == filters.category %} selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-xxl-2">
+      <label class="visually-hidden" for="filter-consumer">{% translate "Consumer" %}</label>
+      <select id="filter-consumer" name="consumer" class="form-select">
+        <option value="">{% translate "All consumers" %}</option>
+        {% for item in consumers %}
+        <option value="{{ item.pk }}"{% if item.pk == filters.consumer %} selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-xxl-2">
+      <label class="visually-hidden" for="filter-provider">{% translate "Contract partner" %}</label>
+      <select id="filter-provider" name="provider" class="form-select">
+        <option value="">{% translate "All contract partners" %}</option>
+        {% for item in providers %}
+        <option value="{{ item.pk }}"{% if item.pk == filters.provider %} selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <noscript><button type="submit" class="btn btn-primary mt-2">{% translate "Apply filters" %}</button></noscript>
+</form>
+
+<div id="results" class="position-relative">
+  {% include "web/contracts/_results.html" %}
+</div>
+{% endblock %}

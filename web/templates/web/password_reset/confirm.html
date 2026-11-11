@@ -1,0 +1,23 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Choose a new password" %}{% endblock %}
+{% block auth_content %}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    {% if validlink %}
+    <h1 class="h4 mb-1">{% translate "Choose a new password" %}</h1>
+    <p class="text-body-secondary mb-4">{% translate "Please enter your new password twice." %}</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "web/includes/form_fields.html" %}
+      <button type="submit" class="btn btn-primary w-100">{% translate "Save password" %}</button>
+    </form>
+    {% else %}
+    <h1 class="h4 mb-1">{% translate "Link no longer valid" %}</h1>
+    <p class="text-body-secondary">{% translate "The link has already been used or has expired. Please request a new one." %}</p>
+    <a class="btn btn-primary w-100" href="{% url 'password_reset' %}">{% translate "Request new link" %}</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

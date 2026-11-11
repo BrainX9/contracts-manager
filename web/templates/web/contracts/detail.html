@@ -1,0 +1,71 @@
+{% extends "web/base.html" %}
+{% load i18n web_format %}
+{% block title %}{{ contract.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'contract_list' %}">{% translate "Contracts" %}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ contract.reference }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ contract.name }}</h1>
+    {% if contract.short_description %}<p class="text-body-secondary mb-0">{{ contract.short_description }}</p>{% endif %}
+  </div>
+  <div class="d-flex flex-column align-items-lg-end gap-2">
+    {% include "web/contracts/_current_amount.html" %}
+    {% include "web/includes/object_actions.html" with prefix="contract" object=contract %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3">{% translate "Contract details" %}</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">{% translate "Reference" %}</dt>
+          <dd class="col-sm-8">{{ contract.reference }}</dd>
+          <dt class="col-sm-4">{% translate "Contract partner" %}</dt>
+          <dd class="col-sm-8">{% if provider_visible %}<span class="d-inline-flex align-items-center gap-2">{% include "web/includes/provider_logo.html" with provider=contract.provider size="sm" %}<a href="{% url 'provider_detail' contract.provider.pk %}">{{ contract.provider.name }}</a></span>{% else %}{{ contract.provider.name }}{% endif %}
+            {% if provider_visible and contract.provider.paperless_correspondent_url %}
+            · <a href="{{ contract.provider.paperless_correspondent_url }}" target="_blank" rel="noopener noreferrer">{% translate "Open partner documents" %}</a>
+            {% endif %}
+          </dd>
+          {% if contract.contract_number %}
+          <dt class="col-sm-4">{% translate "Contract number" %}</dt>
+          <dd class="col-sm-8">{{ contract.contract_number }}</dd>
+          {% endif %}
+          <dt class="col-sm-4">{% translate "Category" %}</dt>
+          <dd class="col-sm-8">{% if category_visible %}<a href="{% url 'category_detail' contract.category.pk %}">{{ contract.category }}</a>{% else %}{{ contract.category }}{% endif %}</dd>
+          <dt class="col-sm-4">{% translate "Consumer" %}</dt>
+          <dd class="col-sm-8">{% if consumer_visible %}<a href="{% url 'consumer_detail' contract.consumer.pk %}">{{ contract.consumer.name }}</a>{% else %}{{ contract.consumer.name|default:"–" }}{% endif %}</dd>
+          <dt class="col-sm-4">{% translate "Start date" %}</dt>
+          <dd class="col-sm-8">{{ contract.start_date|date:"SHORT_DATE_FORMAT"|default:"–" }}</dd>
+          <dt class="col-sm-4">{% translate "Term" %}</dt>
+          <dd class="col-sm-8">{% if contract.term_value %}{{ contract.term_value }} {{ contract.get_term_unit_display }}{% else %}–{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {% if contract.notes %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Notes" %}</h2>
+        <p class="mb-0" style="white-space: pre-line">{{ contract.notes }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% include "web/contracts/_costs.html" %}
+    {% include "web/contracts/_documents.html" %}
+  </div>
+
+  <div class="col-lg-5">
+    {% include "web/contracts/_reminder.html" %}
+    {% include "web/includes/access_card.html" with object=contract %}
+  </div>
+</div>
+{% endblock %}

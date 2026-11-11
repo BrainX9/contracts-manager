@@ -1,0 +1,13 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% if document %}{% translate "Edit document" %}{% else %}{% translate "New document" %}{% endif %}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'contract_list' %}">{% translate "Contracts" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'contract_detail' contract.pk %}">{{ contract.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% if document %}{% translate "Edit document" %}{% else %}{% translate "New document" %}{% endif %}</li>
+  </ol>
+</nav>
+<div style="max-width: 40rem">{% include "web/contracts/_document_form.html" %}</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Delete consumer" %}{% endblock %}
+{% block content %}
+<div class="card border-danger" style="max-width: 36rem">
+  <div class="card-body">
+    <h1 class="h4 card-title">{% translate "Delete consumer" %}</h1>
+    {% if in_use %}
+    <p>{% blocktranslate with name=consumer.name %}The consumer “{{ name }}” is still used in contracts and cannot be deleted. Assign these contracts to a different consumer first.{% endblocktranslate %}</p>
+    <a class="btn btn-secondary" href="{% url 'consumer_detail' consumer.pk %}">{% translate "Back" %}</a>
+    {% else %}
+    <p>{% blocktranslate with name=consumer.name %}Do you really want to delete the consumer “{{ name }}”? This cannot be undone.{% endblocktranslate %}</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+      <a class="btn btn-link" href="{% url 'consumer_detail' consumer.pk %}">{% translate "Cancel" %}</a>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

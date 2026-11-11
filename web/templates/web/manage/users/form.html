@@ -1,0 +1,54 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% if target %}{% translate "Edit user" %}{% else %}{% translate "New user" %}{% endif %}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'manage_user_list' %}">{% translate "Users" %}</a></li>
+    {% if target %}<li class="breadcrumb-item"><a href="{% url 'manage_user_detail' target.pk %}">{{ target.get_username }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if target %}{% translate "Edit" %}{% else %}{% translate "New user" %}{% endif %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-4">{% if target %}{% translate "Edit user" %}{% else %}{% translate "New user" %}{% endif %}</h1>
+
+<form method="post" novalidate style="max-width: 48rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-3">{% translate "Account" %}</h2>
+    {% include "web/includes/field.html" with field=form.username %}
+    <div class="row g-2">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.first_name %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.last_name %}</div>
+    </div>
+    {% include "web/includes/field.html" with field=form.email %}
+    {% if form.send_invitation %}
+    <div class="form-check form-switch mb-2">{{ form.send_invitation }}<label class="form-check-label" for="{{ form.send_invitation.id_for_label }}">{{ form.send_invitation.label }}</label></div>
+    <div class="form-text mb-3">{{ form.send_invitation.help_text }}</div>
+    {% endif %}
+    {% if form.is_active %}
+    <div class="form-check form-switch mb-2">{{ form.is_active }}<label class="form-check-label" for="{{ form.is_active.id_for_label }}">{% translate "Active (may sign in)" %}</label></div>
+    {% endif %}
+    {% if form.is_superuser %}
+    <div class="form-check form-switch">{{ form.is_superuser }}<label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">{{ form.is_superuser.label }}</label></div>
+    {% endif %}
+  </div></div>
+
+  {% if form.groups %}
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-1">{% translate "Groups" %}</h2>
+    <p class="small text-body-secondary">{% translate "“Benutzer” may create own contracts and master data, “Administratoren” may manage users and groups. Every user is automatically in “Alle”." %}</p>
+    {% for checkbox in form.groups %}
+    <div class="form-check">{{ checkbox.tag }}<label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label></div>
+    {% endfor %}
+    {% for error in form.groups.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div></div>
+  {% endif %}
+
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  <a class="btn btn-link" href="{% if target %}{% url 'manage_user_detail' target.pk %}{% else %}{% url 'manage_user_list' %}{% endif %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

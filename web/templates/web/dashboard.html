@@ -1,0 +1,104 @@
+{% extends "web/base.html" %}
+{% load i18n web_format %}
+{% block title %}{% translate "Overview" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{% translate "Overview" %}</h1>
+    <p class="text-body-secondary mb-0">{% blocktranslate with name=user.get_username %}Hello {{ name }}, here are your current costs.{% endblocktranslate %}</p>
+  </div>
+  {% if perms.contracts.add_contract %}
+  <a class="btn btn-primary" href="{% url 'contract_create' %}"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "New contract" %}</a>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-4">
+    <div class="card stat-card h-100"><div class="card-body">
+      <span class="stat-icon" aria-hidden="true"><i class="bi bi-calendar3"></i></span>
+      <div>
+        <div class="stat-label">{% translate "Total per month" %}</div>
+        <div class="stat-value amount">{{ totals.monthly|euro }}</div>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-xl-4">
+    <div class="card stat-card h-100"><div class="card-body">
+      <span class="stat-icon stat-icon-green" aria-hidden="true"><i class="bi bi-graph-up"></i></span>
+      <div>
+        <div class="stat-label">{% translate "Total per year" %}</div>
+        <div class="stat-value amount">{{ totals.yearly|euro }}</div>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-sm-12 col-xl-4">
+    <div class="card stat-card h-100"><div class="card-body">
+      <span class="stat-icon stat-icon-amber" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+      <div>
+        <div class="stat-label">{% translate "Contracts" %}</div>
+        <div class="stat-value">{{ contract_count }}</div>
+        <div class="stat-label">
+          {% blocktranslate count counter=totals.count %}{{ counter }} with current costs{% plural %}{{ counter }} with current costs{% endblocktranslate %}
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+{% if not contract_count %}
+<div class="card"><div class="card-body text-center py-5">
+  <span class="stat-icon mb-3" aria-hidden="true"><i class="bi bi-inbox"></i></span>
+  <p class="text-body-secondary mb-0">{% translate "There are no contracts yet that you are allowed to see." %}</p>
+</div></div>
+{% else %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body p-4">
+        <h2 class="h5 card-title mb-4">{% translate "By main category" %}</h2>
+        {% for entry in categories %}
+        <div class="{% if not forloop.last %}mb-3{% endif %}">
+          <div class="d-flex justify-content-between gap-2 mb-1">
+            <span class="fw-medium">{{ entry.name }}</span>
+            <span class="amount">{{ entry.monthly|euro }} <span class="text-body-secondary small">/ {% translate "month" %} · {{ entry.share }} %</span></span>
+          </div>
+          <div class="progress share-bar" role="progressbar" aria-label="{{ entry.name }}"
+               aria-valuenow="{{ entry.share }}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width: {{ entry.share }}%"></div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-body-secondary mb-0">{% translate "No current costs." %}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-baseline mb-3">
+          <h2 class="h5 card-title mb-0">{% translate "Most expensive contracts" %}</h2>
+          <a class="small" href="{% url 'contract_list' %}?sort=-monthly">{% translate "Show all" %}</a>
+        </div>
+        {% if top_contracts %}
+        <ol class="rank-list">
+          {% for row in top_contracts %}
+          <li>
+            {% if row.provider_visible %}{% include "web/includes/provider_logo.html" with provider=row.contract.provider %}{% else %}<span class="provider-logo" aria-hidden="true"><i class="bi bi-building"></i></span>{% endif %}
+            <div class="rank-name">
+              <a href="{% url 'contract_detail' row.contract.pk %}" class="fw-medium link-body-emphasis text-decoration-none">{{ row.contract.name }}</a>
+              <div class="small text-body-secondary">{{ row.contract.provider.name }}</div>
+            </div>
+            <span class="amount fw-semibold">{{ row.monthly|euro }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+        {% else %}
+        <p class="text-body-secondary mb-0">{% translate "No current costs." %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "web/base.html" %}
+{% load i18n web_format %}
+{% block title %}{{ consumer.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'consumer_list' %}">{% translate "Consumers" %}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ consumer.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ consumer.name }}</h1>
+    {% if consumer.number %}<p class="text-body-secondary mb-0">{% translate "Number" %}: {{ consumer.number }}</p>{% endif %}
+  </div>
+  {% include "web/includes/object_actions.html" with prefix="consumer" object=consumer %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    {% if consumer.notes %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Notes" %}</h2>
+        <p class="mb-0" style="white-space: pre-line">{{ consumer.notes }}</p>
+      </div>
+    </div>
+    {% endif %}
+    {% translate "No contracts for this consumer that you are allowed to see." as empty_text %}
+    {% include "web/includes/contract_table.html" with hide="consumer" empty_text=empty_text %}
+  </div>
+
+  <div class="col-lg-5">
+    {% include "web/includes/access_card.html" with object=consumer %}
+  </div>
+</div>
+{% endblock %}

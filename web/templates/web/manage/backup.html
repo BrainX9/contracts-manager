@@ -1,0 +1,44 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Backup" %}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">{% translate "Backup" %}</h1>
+  <p class="text-body-secondary mb-0">{% translate "Save all data and files in one file, or restore them from a backup. Visible to superusers only." %}</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5 card-title mb-3"><i class="bi bi-download me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Create backup" %}</h2>
+      <p>{% translate "The ZIP file contains users, groups, contracts with costs, documents and reminders, master data, shares, the assistant's conversations and all uploaded files." %}</p>
+      <ul class="small text-body-secondary">
+        <li>{% translate "Passwords are not included." %}</li>
+        <li>{% translate "The settings in the .env file are not included." %}</li>
+        <li>{% translate "The file contains personal data. Store it in a safe place." %}</li>
+      </ul>
+      <form method="post" action="{% url 'manage_backup_download' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary"><i class="bi bi-download me-1" aria-hidden="true"></i>{% translate "Download backup" %}</button>
+      </form>
+    </div></div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5 card-title mb-3"><i class="bi bi-upload me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Import backup" %}</h2>
+      <p>{% translate "The import replaces all existing data and files with the content of the backup. The backup must come from the same version." %}</p>
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+          {{ form.file }}
+          {% for error in form.file.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          <div class="form-text">{% translate "The file is only checked first. Nothing is changed before you confirm." %}</div>
+        </div>
+        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>{% translate "Check backup" %}</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

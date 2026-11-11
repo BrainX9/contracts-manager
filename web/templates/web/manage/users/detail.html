@@ -1,0 +1,86 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{{ target.get_username }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'manage_user_list' %}">{% translate "Users" %}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ target.get_username }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <span class="app-avatar" style="width:3rem;height:3rem;font-size:1.25rem" aria-hidden="true">{{ target.get_username|slice:":1"|upper }}</span>
+    <div>
+      <h1 class="h3 mb-1">{{ target.get_username }}</h1>
+      <div class="d-flex flex-wrap gap-1">{% include "web/manage/_badges.html" %}</div>
+    </div>
+  </div>
+  {% if can_edit %}
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'manage_user_edit' target.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
+    {% if target.email and target.is_active %}
+    <form method="post" action="{% url 'manage_user_mail' target.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-envelope me-1" aria-hidden="true"></i>{% if badges.never_logged_in or badges.sso_only %}{% translate "Send invitation" %}{% else %}{% translate "Send password reset link" %}{% endif %}</button>
+    </form>
+    {% endif %}
+    {% if can_change_status %}
+    <form method="post" action="{% url 'manage_user_active' target.pk %}">
+      {% csrf_token %}
+      {% if target.is_active %}
+      <button type="submit" class="btn btn-sm btn-outline-warning"><i class="bi bi-person-slash me-1" aria-hidden="true"></i>{% translate "Deactivate" %}</button>
+      {% else %}
+      <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-person-check me-1" aria-hidden="true"></i>{% translate "Activate" %}</button>
+      {% endif %}
+    </form>
+    {% endif %}
+    {% if can_delete %}<a class="btn btn-sm btn-outline-danger" href="{% url 'manage_user_delete' target.pk %}"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% translate "Delete" %}</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3">{% translate "Account" %}</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">{% translate "Name" %}</dt>
+          <dd class="col-sm-8">{{ target.get_full_name|default:"–" }}</dd>
+          <dt class="col-sm-4">{% translate "Email" %}</dt>
+          <dd class="col-sm-8">{{ target.email|default:"–" }}</dd>
+          <dt class="col-sm-4">{% translate "Groups" %}</dt>
+          <dd class="col-sm-8">{% for name in groups %}<span class="badge text-bg-light border me-1">{{ name }}</span>{% empty %}–{% endfor %}</dd>
+          <dt class="col-sm-4">{% translate "Sign-in" %}</dt>
+          <dd class="col-sm-8">{% if target.has_usable_password %}{% translate "Password" %}{% else %}{% translate "Single sign-on only (no local password)" %}{% endif %}</dd>
+          <dt class="col-sm-4">{% translate "Last sign-in" %}</dt>
+          <dd class="col-sm-8">{{ target.last_login|date:"SHORT_DATETIME_FORMAT"|default:"–" }}</dd>
+          <dt class="col-sm-4">{% translate "Created" %}</dt>
+          <dd class="col-sm-8 mb-0">{{ target.date_joined|date:"SHORT_DATE_FORMAT" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-baseline mb-3">
+          <h2 class="h5 card-title mb-0">{% translate "Owned objects" %}</h2>
+          {% if can_transfer %}<a class="btn btn-sm btn-outline-primary" href="{% url 'manage_user_transfer' target.pk %}"><i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i>{% translate "Transfer" %}</a>{% endif %}
+        </div>
+        <dl class="row mb-0">
+          <dt class="col-7">{% translate "Contracts" %}</dt><dd class="col-5 text-end">{{ counts.contract }}</dd>
+          <dt class="col-7">{% translate "Contract partners" %}</dt><dd class="col-5 text-end">{{ counts.provider }}</dd>
+          <dt class="col-7">{% translate "Categories" %}</dt><dd class="col-5 text-end">{{ counts.category }}</dd>
+          <dt class="col-7">{% translate "Consumers" %}</dt><dd class="col-5 text-end mb-0">{{ counts.consumer }}</dd>
+        </dl>
+        {% if owns_objects %}
+        <p class="small text-body-secondary mt-3 mb-0">{% translate "A user who owns objects cannot be deleted. Deactivate the user or transfer the objects first (superusers only)." %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

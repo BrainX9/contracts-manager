@@ -1,0 +1,25 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Log in" %}{% endblock %}
+{% block auth_content %}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    <h1 class="h4 mb-1">{% translate "Log in" %}</h1>
+    <p class="text-body-secondary mb-4">{% translate "Please log in to continue." %}</p>
+    {% if sso_enabled %}
+    <a class="btn btn-primary w-100" href="{% url 'oidc_authentication_init' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
+      <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>{{ sso_label }}
+    </a>
+    <div class="auth-divider"><span>{% translate "or with a local account" %}</span></div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "web/includes/form_fields.html" %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn {% if sso_enabled %}btn-outline-primary{% else %}btn-primary{% endif %} w-100">{% translate "Log in" %}</button>
+    </form>
+    <p class="text-center small mt-3 mb-0"><a href="{% url 'password_reset' %}">{% translate "Forgot password?" %}</a></p>
+  </div>
+</div>
+{% endblock %}

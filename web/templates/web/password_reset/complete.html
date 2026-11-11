@@ -1,0 +1,13 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Password saved" %}{% endblock %}
+{% block auth_content %}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    <h1 class="h4 mb-1">{% translate "Password saved" %}</h1>
+    <p class="text-body-secondary">{% translate "Your new password has been saved. You can now log in with it." %}</p>
+    <a class="btn btn-primary w-100" href="{% url 'login' %}">{% translate "Log in" %}</a>
+  </div>
+</div>
+{% endblock %}

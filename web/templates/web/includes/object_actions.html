@@ -1,0 +1,9 @@
+{% load i18n %}
+{# Schaltflächen einer Detailseite; prefix ist der Anfang der URL-Namen, z. B. "provider" #}
+{% if can_change or can_delete or can_share %}
+<div class="btn-group btn-group-sm">
+  {% if can_change %}<a class="btn btn-outline-primary" href="{% url prefix|add:'_edit' object.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>{% endif %}
+  {% if can_share %}<a class="btn btn-outline-secondary" href="{% url prefix|add:'_sharing' object.pk %}"><i class="bi bi-share me-1" aria-hidden="true"></i>{% translate "Sharing" %}</a>{% endif %}
+  {% if can_delete %}<a class="btn btn-outline-danger" href="{% url prefix|add:'_delete' object.pk %}"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% translate "Delete" %}</a>{% endif %}
+</div>
+{% endif %}

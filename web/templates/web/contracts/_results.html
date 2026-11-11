@@ -1,0 +1,56 @@
+{% load i18n web_format %}
+{# Gehört über das form-Attribut zum Filterformular, wird mit dem Ergebnis aktualisiert #}
+<input type="hidden" name="sort" value="{{ sort }}" form="contract-filters">
+<div id="results-indicator" class="htmx-indicator position-absolute top-0 end-0">
+  <div class="spinner-border spinner-border-sm text-secondary" role="status">
+    <span class="visually-hidden">{% translate "Loading…" %}</span>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-4 mb-3">
+  <div><span class="stat-label">{% translate "Total per month" %}</span>
+    <span class="fs-5 fw-semibold amount ms-1">{{ totals.monthly|euro }}</span></div>
+  <div><span class="stat-label">{% translate "Total per year" %}</span>
+    <span class="fs-5 fw-semibold amount ms-1">{{ totals.yearly|euro }}</span></div>
+  <div class="stat-label align-self-center">
+    {% blocktranslate count counter=rows|length %}{{ counter }} contract{% plural %}{{ counter }} contracts{% endblocktranslate %}{% if is_filtered %} · {% blocktranslate with total=visible_count %}filtered from {{ total }}{% endblocktranslate %} · <a href="{% url 'contract_list' %}">{% translate "Reset filters" %}</a>{% endif %}
+  </div>
+</div>
+
+{% if rows %}
+<div class="card card-table">
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th scope="col" class="d-none d-sm-table-cell">{% include "web/includes/sort_link.html" with key="reference" label=_("Reference") %}</th>
+        <th scope="col">{% include "web/includes/sort_link.html" with key="name" label=_("Contract") %}</th>
+        <th scope="col">{% include "web/includes/sort_link.html" with key="provider" label=_("Contract partner") %}</th>
+        <th scope="col" class="d-none d-md-table-cell">{% translate "Category" %}</th>
+        <th scope="col" class="d-none d-lg-table-cell">{% translate "Consumer" %}</th>
+        <th scope="col" class="text-end d-none d-md-table-cell">{% translate "Current amount" %}</th>
+        <th scope="col" class="text-end">{% include "web/includes/sort_link.html" with key="monthly" label=_("Per month") %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="text-body-secondary d-none d-sm-table-cell">{{ row.contract.reference }}</td>
+        <td><a href="{% url 'contract_detail' row.contract.pk %}" class="fw-medium">{{ row.contract.name }}</a>
+          {% if row.contract.short_description %}<div class="small text-body-secondary">{{ row.contract.short_description }}</div>{% endif %}</td>
+        <td><span class="d-inline-flex align-items-center gap-2">{% if row.provider_visible %}{% include "web/includes/provider_logo.html" with provider=row.contract.provider size="sm" %}<a href="{% url 'provider_detail' row.contract.provider.pk %}" class="link-body-emphasis">{{ row.contract.provider.name }}</a>{% else %}{{ row.contract.provider.name }}{% endif %}</span></td>
+        <td class="d-none d-md-table-cell">{{ row.contract.category }}</td>
+        <td class="d-none d-lg-table-cell">{{ row.contract.consumer.name|default:"–" }}</td>
+        <td class="text-end amount d-none d-md-table-cell">{% if row.entry %}{{ row.entry.amount|euro }} <span class="small text-body-secondary">{{ row.entry.get_payment_interval_display }}</span>{% else %}<span class="text-body-secondary">{% translate "No costs" %}</span>{% endif %}</td>
+        <td class="text-end amount">{{ row.monthly|euro }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  {% if is_filtered %}{% translate "No contracts match the filters." %}{% else %}{% translate "There are no contracts yet that you are allowed to see." %}{% endif %}
+</div>
+{% endif %}

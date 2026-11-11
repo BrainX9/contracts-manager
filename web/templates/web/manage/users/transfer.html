@@ -1,0 +1,28 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Transfer ownership" %}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'manage_user_list' %}">{% translate "Users" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'manage_user_detail' target.pk %}">{{ target.get_username }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% translate "Transfer ownership" %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-1">{% translate "Transfer ownership" %}</h1>
+<p class="text-body-secondary mb-4">{% blocktranslate with name=target.get_username contracts=counts.contract providers=counts.provider categories=counts.category consumers=counts.consumer %}All objects of {{ name }}: {{ contracts }} contracts, {{ providers }} contract partners, {{ categories }} categories, {{ consumers }} consumers.{% endblocktranslate %}</p>
+
+<form method="post" novalidate style="max-width: 36rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+  <div class="card mb-3"><div class="card-body">
+    {% include "web/includes/field.html" with field=form.new_owner %}
+    <div class="form-check form-switch">{{ form.keep_access }}<label class="form-check-label" for="{{ form.keep_access.id_for_label }}">{{ form.keep_access.label }}</label></div>
+    <div class="form-text">{{ form.keep_access.help_text }}</div>
+  </div></div>
+  <button type="submit" class="btn btn-primary">{% translate "Transfer" %}</button>
+  <a class="btn btn-link" href="{% url 'manage_user_detail' target.pk %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

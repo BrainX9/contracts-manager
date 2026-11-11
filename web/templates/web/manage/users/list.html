@@ -1,0 +1,55 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Users" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{% translate "Users" %}</h1>
+  {% if can_add %}<a class="btn btn-primary" href="{% url 'manage_user_create' %}"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>{% translate "New user" %}</a>{% endif %}
+</div>
+
+<form class="card card-body mb-3" method="get" action="{% url 'manage_user_list' %}">
+  <label class="visually-hidden" for="user-q">{% translate "Search" %}</label>
+  <input type="search" id="user-q" name="q" value="{{ q }}" class="form-control"
+         placeholder="{% translate 'Search user name, name or email' %}" autocomplete="off">
+</form>
+
+<p class="stat-label mb-3">{% blocktranslate count counter=rows|length %}{{ counter }} user{% plural %}{{ counter }} users{% endblocktranslate %}{% if q %} · <a href="{% url 'manage_user_list' %}">{% translate "Reset filters" %}</a>{% endif %}</p>
+
+<div class="card card-table">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "User" %}</th>
+          <th scope="col" class="d-none d-md-table-cell">{% translate "Email" %}</th>
+          <th scope="col" class="d-none d-lg-table-cell">{% translate "Groups" %}</th>
+          <th scope="col" class="d-none d-sm-table-cell">{% translate "Last sign-in" %}</th>
+          <th scope="col" class="text-end">{% translate "Objects" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <span class="app-avatar" aria-hidden="true">{{ row.user.get_username|slice:":1"|upper }}</span>
+              <div>
+                <a href="{% url 'manage_user_detail' row.user.pk %}">{{ row.user.get_username }}</a>
+                {% if row.user.get_full_name %}<div class="small text-body-secondary">{{ row.user.get_full_name }}</div>{% endif %}
+                <div class="d-flex flex-wrap gap-1 mt-1">{% include "web/manage/_badges.html" with badges=row.badges %}</div>
+              </div>
+            </div>
+          </td>
+          <td class="d-none d-md-table-cell">{{ row.user.email|default:"–" }}</td>
+          <td class="d-none d-lg-table-cell">{% for name in row.groups %}<span class="badge text-bg-light border me-1">{{ name }}</span>{% empty %}–{% endfor %}</td>
+          <td class="d-none d-sm-table-cell text-nowrap">{{ row.user.last_login|date:"SHORT_DATE_FORMAT"|default:"–" }}</td>
+          <td class="text-end">{{ row.objects }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-body-secondary">{% translate "No users match the search." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

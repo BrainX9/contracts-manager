@@ -1,0 +1,51 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Reminders" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{% translate "Reminders" %}</h1>
+  <div class="btn-group btn-group-sm" role="group">
+    <a class="btn btn-outline-primary{% if not show_all %} active{% endif %}" href="{% url 'manage_reminders' %}">{% translate "Active" %}</a>
+    <a class="btn btn-outline-primary{% if show_all %} active{% endif %}" href="{% url 'manage_reminders' %}?show=all">{% translate "All" %}</a>
+  </div>
+</div>
+<p class="text-body-secondary">{% translate "Reminders of all contracts. Visible to superusers only." %}</p>
+
+<div class="card card-table">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Contract" %}</th>
+          <th scope="col">{% translate "Reminder date" %}</th>
+          <th scope="col" class="d-none d-md-table-cell">{% translate "Reason" %}</th>
+          <th scope="col" class="d-none d-lg-table-cell">{% translate "Recipients" %}</th>
+          <th scope="col">{% translate "Status" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reminder in reminders %}
+        {% with status=reminder.status %}
+        <tr>
+          <td><a href="{% url 'contract_detail' reminder.contract.pk %}">{{ reminder.contract.name }}</a>
+            <div class="small text-body-secondary">{{ reminder.contract.reference }} · {{ reminder.contract.provider.name }}</div></td>
+          <td class="text-nowrap">{{ reminder.remind_on|date:"SHORT_DATE_FORMAT"|default:"–" }}
+            {% if reminder.remind_on %}<div class="small text-body-secondary">{% blocktranslate with date=reminder.send_from|date:"SHORT_DATE_FORMAT" %}emails from {{ date }}{% endblocktranslate %}</div>{% endif %}</td>
+          <td class="d-none d-md-table-cell">{{ reminder.get_reason_display }}</td>
+          <td class="d-none d-lg-table-cell">{% for recipient in reminder.recipients.all %}<span class="badge text-bg-light border me-1">{{ recipient.get_username }}</span>{% empty %}–{% endfor %}</td>
+          <td>
+            {% if status == "sending" %}<span class="badge text-bg-warning">{% translate "Sending daily" %}</span>
+            {% elif status == "scheduled" %}<span class="badge text-bg-primary">{% translate "Active" %}</span>
+            {% elif status == "done" %}<span class="badge text-bg-success">{% translate "Done" %}</span>
+            {% else %}<span class="badge text-bg-secondary">{% translate "Off" %}</span>{% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="5" class="text-body-secondary">{% translate "No reminders." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

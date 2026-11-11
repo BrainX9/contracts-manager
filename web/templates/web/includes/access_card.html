@@ -1,0 +1,28 @@
+{% load i18n %}
+<div class="card">
+  <div class="card-body">
+    <h2 class="h5 card-title mb-3">{% translate "Access" %}</h2>
+    <dl class="mb-0">
+      <dt>{% translate "Owner" %}</dt>
+      <dd>{{ object.owner.get_username }}{% if object.owner == user %} <span class="text-body-secondary">({% translate "you" %})</span>{% endif %}</dd>
+      <dt>{% translate "Your access" %}</dt>
+      <dd class="{% if roles %}{% else %}mb-0{% endif %}">
+        {% if can_delete %}{% translate "View, edit and delete" %}{% elif can_change %}{% translate "View and edit" %}{% else %}{% translate "View only" %}{% endif %}
+      </dd>
+      {% if roles %}
+      <dt>{% translate "Editors" %}</dt>
+      <dd>
+        {% for target in roles.editor.users %}<span class="badge text-bg-secondary me-1">{{ target.get_username }}</span>{% endfor %}
+        {% for target in roles.editor.groups %}<span class="badge text-bg-secondary me-1">{% translate "Group" %}: {{ target.name }}</span>{% endfor %}
+        {% if not roles.editor.users and not roles.editor.groups %}–{% endif %}
+      </dd>
+      <dt>{% translate "Readers" %}</dt>
+      <dd class="mb-0">
+        {% for target in roles.reader.users %}<span class="badge text-bg-light border me-1">{{ target.get_username }}</span>{% endfor %}
+        {% for target in roles.reader.groups %}<span class="badge text-bg-light border me-1">{% translate "Group" %}: {{ target.name }}</span>{% endfor %}
+        {% if not roles.reader.users and not roles.reader.groups %}–{% endif %}
+      </dd>
+      {% endif %}
+    </dl>
+  </div>
+</div>

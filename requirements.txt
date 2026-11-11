@@ -1,0 +1,14 @@
+Django>=5.0,<6.0
+psycopg[binary]>=3.2
+gunicorn>=20.1.0
+whitenoise>=6.0
+django-environ>=0.9.0
+django-guardian>=3.5,<4
+django-htmx>=1.29,<2
+Pillow>=11.0,<13
+mozilla-django-oidc>=5.0,<6
+django-q2>=1.11,<2
+django-axes[ipware]>=8.3,<9
+openai>=3.40,<4
+anthropic>=2.0,<3
+pypdf>=6.0,<8

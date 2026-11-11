@@ -1,0 +1,1 @@
+{% load i18n %}{% blocktranslate with reason=reminder.get_reason_display name=contract.name date=reminder.remind_on|date:"SHORT_DATE_FORMAT" %}Reminder: {{ reason }} – {{ name }} on {{ date }}{% endblocktranslate %}

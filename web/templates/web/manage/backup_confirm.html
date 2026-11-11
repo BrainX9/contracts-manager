@@ -1,0 +1,54 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Import backup" %}{% endblock %}
+{% block content %}
+<div style="max-width: 44rem">
+  <h1 class="h3 mb-3">{% translate "Import backup" %}</h1>
+
+  <div class="card mb-4"><div class="card-body">
+    <h2 class="h5 card-title mb-3">{% translate "Content of the backup" %}</h2>
+    <dl class="row mb-0">
+      <dt class="col-sm-5">{% translate "Created" %}</dt>
+      <dd class="col-sm-7">{% if summary.created_at %}{{ summary.created_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{{ info.created_at }}{% endif %}</dd>
+      <dt class="col-sm-5">{% translate "Version" %}</dt>
+      <dd class="col-sm-7">{{ info.app_version }}</dd>
+      {% for label, count in summary.rows %}
+      <dt class="col-sm-5">{{ label }}</dt>
+      <dd class="col-sm-7">{{ count }}</dd>
+      {% endfor %}
+      <dt class="col-sm-5">{% translate "Files" %}</dt>
+      <dd class="col-sm-7">{{ info.media_files }} ({{ info.media_bytes|filesizeformat }})</dd>
+    </dl>
+  </div></div>
+
+  {% if info.missing_files %}
+  <div class="alert alert-warning">
+    {% translate "These files were already missing when the backup was created and are not included:" %}
+    <ul class="mb-0">{% for name in info.missing_files %}<li>{{ name }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <div class="alert alert-danger">
+    <p class="fw-semibold mb-2"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% translate "All existing data and files will be replaced. This cannot be undone." %}</p>
+    <ul class="mb-0">
+      <li>{% translate "All users are signed out, including you." %}</li>
+      <li>{% translate "No user has a password afterwards. Everyone who had one chooses a new one via “Forgot password?” on the sign-in page (requires an email address in the account)." %}</li>
+      <li>{% translate "Users who are not in the backup no longer exist afterwards." %}</li>
+    </ul>
+  </div>
+
+  {% if no_users %}
+  <div class="alert alert-danger">{% translate "This backup contains no users. Nobody can sign in after the import; a new superuser must be created with “manage.py createsuperuser”." %}</div>
+  {% endif %}
+  {% if not smtp %}
+  <div class="alert alert-warning">{% translate "Email delivery is not configured. “Forgot password?” will not work; set passwords with “manage.py changepassword &lt;user&gt;” instead." %}</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'manage_backup_import' %}" class="d-flex gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token }}">
+    <button type="submit" name="confirm" value="1" class="btn btn-danger"><i class="bi bi-upload me-1" aria-hidden="true"></i>{% translate "Replace everything and import" %}</button>
+    <button type="submit" name="cancel" value="1" class="btn btn-outline-secondary">{% translate "Cancel" %}</button>
+  </form>
+</div>
+{% endblock %}

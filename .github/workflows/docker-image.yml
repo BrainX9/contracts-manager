@@ -1,0 +1,107 @@
+# Baut das Docker-Image und veröffentlicht es in der GitHub Container Registry.
+#
+# Auslöser:
+# - Tag "v…" (z. B. v0.1.0): Tests, dann Image für amd64 und arm64 als
+#   ghcr.io/<owner>/contracts-manager:<Version> und :latest
+# - Manuell (Actions › Docker image › Run workflow): nur Bauen und Tests,
+#   nichts wird veröffentlicht
+#
+# Die Anmeldung an ghcr.io nutzt das eingebaute GITHUB_TOKEN, es sind keine
+# eigenen Secrets nötig.
+
+name: Docker image
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/contracts-manager
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      # Datenbank für die Tests, gleiches Image wie im Betrieb
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: contracts
+          POSTGRES_USER: contracts
+          POSTGRES_PASSWORD: contracts
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U contracts -d contracts"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      # Erst nur für den Rechner des Builds bauen und die Tests im fertigen
+      # Image ausführen. Schlagen sie fehl, wird nichts veröffentlicht.
+      - name: Image für die Tests bauen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: contracts-manager:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Tests
+        run: >-
+          docker run --rm --network host --entrypoint python
+          -e SECRET_KEY=nur-fuer-tests
+          -e DATABASE_URL=postgres://contracts:contracts@localhost:5432/contracts
+          contracts-manager:test manage.py test
+
+      - name: Namen und Tags des Images
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          # v0.1.0 -> 0.1.0, dazu latest
+          flavor: latest=false
+          tags: |
+            type=match,pattern=v(.*),group=1
+            type=raw,value=latest
+
+      - name: Anmeldung an ghcr.io
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Optional: zusätzlich Docker Hub (siehe docs/development.md).
+      # Dafür die Secrets DOCKERHUB_USERNAME und DOCKERHUB_TOKEN anlegen,
+      # den Schritt einkommentieren und oben unter "images" den Namen bei
+      # Docker Hub ergänzen.
+      # - name: Anmeldung an Docker Hub
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Image für amd64 und arm64 bauen und veröffentlichen
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,5 @@
+{% load i18n %}{# Kennzeichen eines Benutzers (badges aus web.manage_views.user_badges) #}
+{% if badges.superuser %}<span class="badge text-bg-danger">{% translate "Superuser" %}</span>{% endif %}
+{% if badges.administrator %}<span class="badge text-bg-primary">{% translate "Administrator" %}</span>{% endif %}
+{% if badges.inactive %}<span class="badge text-bg-secondary">{% translate "Deactivated" %}</span>{% elif badges.never_logged_in %}<span class="badge text-bg-warning">{% translate "Never signed in" %}</span>{% endif %}
+{% if badges.sso_only and not badges.never_logged_in %}<span class="badge text-bg-light border">{% translate "SSO only" %}</span>{% endif %}

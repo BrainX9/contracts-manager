@@ -1,0 +1,27 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Categories" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{% translate "Categories" %}</h1>
+  {% if perms.contracts.add_category %}
+  <a class="btn btn-primary" href="{% url 'category_create' %}"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "New category" %}</a>
+  {% endif %}
+</div>
+
+<form id="category-filters" class="card card-body mb-3" method="get" action="{% url 'category_list' %}"
+      hx-get="{% url 'category_list' %}" hx-target="#results" hx-push-url="true"
+      hx-trigger="submit" hx-indicator="#results-indicator">
+  <label class="visually-hidden" for="filter-q">{% translate "Search" %}</label>
+  <input type="search" id="filter-q" name="q" value="{{ q }}" class="form-control"
+         placeholder="{% translate 'Search name' %}"
+         hx-get="{% url 'category_list' %}" hx-target="#results" hx-push-url="true"
+         hx-trigger="input changed delay:300ms, search" hx-include="#category-filters"
+         hx-indicator="#results-indicator" autocomplete="off">
+  <noscript><button type="submit" class="btn btn-primary mt-2">{% translate "Search" %}</button></noscript>
+</form>
+
+<div id="results" class="position-relative">
+  {% include "web/categories/_results.html" %}
+</div>
+{% endblock %}

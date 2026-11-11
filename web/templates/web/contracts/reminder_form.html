@@ -1,0 +1,53 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Reminder" %} · {{ contract.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'contract_list' %}">{% translate "Contracts" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'contract_detail' contract.pk %}">{{ contract.reference }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% translate "Reminder" %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-1">{% translate "Reminder" %}</h1>
+<p class="text-body-secondary mb-4">{{ contract.name }}</p>
+
+<form method="post" novalidate style="max-width: 48rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <div class="form-check form-switch mb-3">
+      {{ form.enabled }}
+      <label class="form-check-label fw-medium" for="{{ form.enabled.id_for_label }}">{{ form.enabled.label }}</label>
+    </div>
+    <div class="row g-2">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.remind_on %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.reason %}</div>
+    </div>
+    {% include "web/includes/field.html" with field=form.lead_days %}
+    <p class="small text-body-secondary mt-n2">{% translate "Example: reminder date 31 March and 14 days in advance – an email is sent every day from 17 March up to and including 31 March. After that the reminder switches itself off." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-1">{{ form.recipients.label }}</h2>
+    <p class="small text-body-secondary">{% translate "Only users who may view this contract can be selected. Each user maintains their email address under Settings." %}</p>
+    {% for checkbox in form.recipients %}
+    <div class="form-check">
+      {{ checkbox.tag }}
+      <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+    </div>
+    {% endfor %}
+    {% for error in form.recipients.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    {% include "web/includes/field.html" with field=form.note %}
+  </div></div>
+
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  <a class="btn btn-link" href="{% url 'contract_detail' contract.pk %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

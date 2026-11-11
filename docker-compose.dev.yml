@@ -1,0 +1,33 @@
+# Ergänzung für die Entwicklung. Aufruf:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# oder einmalig in .env: COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+#
+# Unterschiede zum Betrieb:
+# - Das Image wird lokal aus dem Dockerfile gebaut statt geladen
+# - Datenbank im Docker-Volume postgres_data statt unter DATA_PATH
+# - Code wird eingebunden, gunicorn lädt Änderungen automatisch neu
+# - Uploads im Projektordner unter ./media
+
+services:
+  db:
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    image: contracts-manager-app
+    environment:
+      GUNICORN_CMD_ARGS: "--bind 0.0.0.0:8000 --workers 1 --reload --no-control-socket"
+    volumes:
+      - .:/app
+      - ./media:/app/media
+
+  worker:
+    # Code eingebunden; nach Änderungen an Aufgaben neu starten:
+    #   docker compose restart worker
+    image: contracts-manager-app
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:

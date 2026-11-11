@@ -1,0 +1,15 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Delete group" %}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Delete group" %}</h1>
+<div class="card" style="max-width: 36rem"><div class="card-body">
+  <p>{% blocktranslate with name=group.name %}Do you really want to delete the group “{{ name }}”? This cannot be undone.{% endblocktranslate %}</p>
+  {% if shares %}<div class="alert alert-warning">{% blocktranslate count counter=shares %}The group has access to {{ counter }} object. These shares are removed with the group.{% plural %}The group has access to {{ counter }} objects. These shares are removed with the group.{% endblocktranslate %}</div>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+    <a class="btn btn-link" href="{% url 'manage_group_edit' group.pk %}">{% translate "Cancel" %}</a>
+  </form>
+</div></div>
+{% endblock %}

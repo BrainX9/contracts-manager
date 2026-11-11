@@ -1,0 +1,33 @@
+{% load i18n %}
+<div class="chat-proposal card border-{% if proposal.status == 'approved' %}success{% elif proposal.status == 'pending' %}primary{% elif proposal.status == 'failed' %}danger{% else %}secondary{% endif %}">
+  <div class="card-body py-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+      <h3 class="h6 mb-0"><i class="bi bi-clipboard-check me-2" aria-hidden="true"></i>{% translate "Proposal" %}: {{ proposal.get_kind_display }}</h3>
+      <span class="badge {% if proposal.status == 'approved' %}text-bg-success{% elif proposal.status == 'pending' %}text-bg-primary{% elif proposal.status == 'failed' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ proposal.get_status_display }}</span>
+    </div>
+    <dl class="row small mb-2">
+      {% for label, value in proposal.summary %}
+      <dt class="col-sm-4 text-body-secondary fw-normal">{{ label }}</dt>
+      <dd class="col-sm-8 mb-1 text-break" style="white-space: pre-line">{{ value }}</dd>
+      {% endfor %}
+    </dl>
+    {% if proposal.is_pending %}
+    <div class="d-flex gap-2">
+      <form method="post" action="{% url 'assistant_proposal' proposal.pk 'approve' %}"
+            hx-post="{% url 'assistant_proposal' proposal.pk 'approve' %}" hx-target="#chat-messages" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-success"{% if conversation.is_running %} disabled{% endif %}><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Approve" %}</button>
+      </form>
+      <form method="post" action="{% url 'assistant_proposal' proposal.pk 'reject' %}"
+            hx-post="{% url 'assistant_proposal' proposal.pk 'reject' %}" hx-target="#chat-messages" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-secondary"{% if conversation.is_running %} disabled{% endif %}><i class="bi bi-x-lg me-1" aria-hidden="true"></i>{% translate "Reject" %}</button>
+      </form>
+    </div>
+    {% elif proposal.status == "approved" and proposal.result.url %}
+    <a class="small" href="{{ proposal.result.url }}"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{{ proposal.result.label }}</a>
+    {% elif proposal.status == "failed" %}
+    <div class="small text-danger text-break">{{ proposal.error }}</div>
+    {% endif %}
+  </div>
+</div>

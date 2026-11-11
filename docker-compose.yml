@@ -1,0 +1,98 @@
+# Docker Compose für den Betrieb (z. B. auf der Synology).
+#
+# Datenbank und Uploads liegen außerhalb des Containers, standardmäßig in den
+# Ordnern db und media neben dieser Datei, z. B.
+#   /volume1/docker/contracts-manager/docker-compose.yml
+#   /volume1/docker/contracts-manager/db      (Datenbank)
+#   /volume1/docker/contracts-manager/media   (Uploads, Logos, Dokumente)
+# Die Ordner müssen vor dem ersten Start existieren. Mit DATA_PATH in .env
+# liegen sie stattdessen unter DATA_PATH (bestehende Installationen).
+#
+# app und worker laden das fertige Image; auf dem Server wird nichts gebaut.
+# Für die Entwicklung (oder um selbst zu bauen) zusätzlich
+# docker-compose.dev.yml verwenden (siehe README).
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: contracts-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # create_host_path: false verhindert, dass Docker einen leeren Ordner
+      # anlegt, wenn der verschlüsselte Ordner noch nicht entsperrt ist.
+      # Der Container startet dann nicht, statt eine neue, leere Datenbank
+      # an einem unverschlüsselten Ort anzulegen.
+      - type: bind
+        source: ${DATA_PATH:-.}/db
+        target: /var/lib/postgresql/data
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    # Fertiges Image aus der GitHub Container Registry (gebaut bei jedem
+    # Versions-Tag). APP_IMAGE_TAG in .env hält eine Version fest, z. B.
+    # 0.1.0; Standard ist die neueste Version.
+    image: ghcr.io/brainx9/contracts-manager:${APP_IMAGE_TAG:-latest}
+    container_name: contracts-manager-app
+    restart: unless-stopped
+    # Nicht als root: Benutzer, dem der Ordner media gehört (siehe README)
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      MEDIA_ROOT: /app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ${DATA_PATH:-.}/media
+        target: /app/media
+        bind:
+          create_host_path: false
+    healthcheck:
+      # Das Image enthält kein curl, daher die Prüfung mit Python
+      test:
+        - CMD
+        - python
+        - -c
+        - "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health/', timeout=5).status == 200 else 1)"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Hintergrund-Worker (django-q2, Version 0.5 beta): verschickt täglich die
+  # Erinnerungen und beantwortet den KI-Assistenten (liest dafür Anhänge aus
+  # media). Gleiches Image wie app; startet erst, wenn app läuft und die
+  # Migrationen eingespielt hat.
+  worker:
+    image: ghcr.io/brainx9/contracts-manager:${APP_IMAGE_TAG:-latest}
+    container_name: contracts-manager-worker
+    restart: unless-stopped
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    command: ["python", "manage.py", "qcluster"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      MEDIA_ROOT: /app/media
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ${DATA_PATH:-.}/media
+        target: /app/media
+        bind:
+          create_host_path: false

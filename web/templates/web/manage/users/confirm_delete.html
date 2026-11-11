@@ -1,0 +1,15 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Delete user" %}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Delete user" %}</h1>
+<div class="card" style="max-width: 36rem"><div class="card-body">
+  <p>{% blocktranslate with name=target.get_username %}Do you really want to delete the user “{{ name }}”? Shares for this user are removed. This cannot be undone.{% endblocktranslate %}</p>
+  <p class="small text-body-secondary">{% translate "Alternatively deactivate the user: data and shares are kept, but the user can no longer sign in." %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+    <a class="btn btn-link" href="{% url 'manage_user_detail' target.pk %}">{% translate "Cancel" %}</a>
+  </form>
+</div></div>
+{% endblock %}

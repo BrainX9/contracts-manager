@@ -1,0 +1,18 @@
+# Zugangsdaten und lokale Daten (nie ins Repository)
+.env
+data/
+media/
+backups/
+# Backups der Anwendung (export_backup, Download aus der Oberfläche)
+/*.zip
+
+# Python und Django
+__pycache__/
+*.pyc
+staticfiles/
+venv/
+# Kompilierte Übersetzungen (entstehen beim Bauen bzw. Start des Containers)
+*.mo
+
+# macOS
+.DS_Store

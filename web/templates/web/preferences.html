@@ -1,0 +1,34 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Settings" %}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Settings" %}</h1>
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Profile" %}</h2>
+        <p class="text-body-secondary">{% translate "Your email address and the language of the user interface and emails on all your devices." %}</p>
+        <form method="post">
+          {% csrf_token %}
+          {% include "web/includes/form_fields.html" %}
+          <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Password" %}</h2>
+        {% if user.has_usable_password %}
+        <p class="text-body-secondary">{% translate "Change the password you use to log in." %}</p>
+        <a class="btn btn-outline-secondary" href="{% url 'password_change' %}">{% translate "Change password" %}</a>
+        {% else %}
+        <p class="text-body-secondary mb-0">{% translate "You sign in via single sign-on and have no local password." %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

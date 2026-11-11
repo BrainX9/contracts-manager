@@ -1,0 +1,28 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% if object %}{% translate "Edit category" %}{% else %}{% translate "New category" %}{% endif %}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'category_list' %}">{% translate "Categories" %}</a></li>
+    {% if object %}<li class="breadcrumb-item"><a href="{% url 'category_detail' object.pk %}">{{ object }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if object %}{% translate "Edit" %}{% else %}{% translate "New category" %}{% endif %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-4">{% if object %}{% translate "Edit category" %}{% else %}{% translate "New category" %}{% endif %}</h1>
+
+<form method="post" novalidate style="max-width: 48rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+  <div class="card mb-3"><div class="card-body">
+    <div class="row g-2">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.name %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.parent %}</div>
+    </div>
+  </div></div>
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  <a class="btn btn-link" href="{% if object %}{% url 'category_detail' object.pk %}{% else %}{% url 'category_list' %}{% endif %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

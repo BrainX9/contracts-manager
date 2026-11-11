@@ -1,0 +1,14 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Check your inbox" %}{% endblock %}
+{% block auth_content %}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    <h1 class="h4 mb-1">{% translate "Check your inbox" %}</h1>
+    <p class="text-body-secondary">{% translate "If an account with this email address exists, we have sent you a link to choose a new password. The link is valid for 7 days." %}</p>
+    <p class="text-body-secondary small">{% translate "No email? Check your spam folder. Accounts that sign in via single sign-on have no local password and receive no email." %}</p>
+    <a class="btn btn-outline-primary w-100" href="{% url 'login' %}">{% translate "Back to login" %}</a>
+  </div>
+</div>
+{% endblock %}

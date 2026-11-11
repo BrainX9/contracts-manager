@@ -1,0 +1,8 @@
+{% load i18n %}{% blocktranslate with name=user.get_username %}Hello {{ name }},{% endblocktranslate %}
+
+{% blocktranslate with inviter=invited_by.get_username %}{{ inviter }} has created an account for you in Contracts Manager. Open this link to choose your password:{% endblocktranslate %}
+
+{{ reset_url }}
+
+{% blocktranslate with name=user.get_username %}Your user name: {{ name }}{% endblocktranslate %}
+{% translate "The link is valid for 7 days and can only be used once. If it has expired, use “Forgot password?” on the login page." %}

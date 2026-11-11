@@ -1,0 +1,14 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Login temporarily locked" %}{% endblock %}
+{% block auth_content %}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    <h1 class="h4 mb-1">{% translate "Login temporarily locked" %}</h1>
+    <p class="text-body-secondary">{% translate "Too many failed login attempts. For your security, logging in with this user name is locked for a few minutes." %}</p>
+    {% if cooloff_timedelta %}<p class="text-body-secondary">{% translate "Please try again later." %}</p>{% endif %}
+    <a class="btn btn-outline-primary w-100" href="{% url 'password_reset' %}">{% translate "Forgot password?" %}</a>
+  </div>
+</div>
+{% endblock %}

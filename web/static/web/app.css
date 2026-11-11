@@ -1,0 +1,697 @@
+/*
+ * Design von Contracts Manager (Version 0.4 beta)
+ *
+ * Ergänzt Bootstrap 5.3: eigene Farben über CSS-Variablen (hell und
+ * dunkel), App-Gerüst mit Seitenleiste, Karten, Tabellen und Kennzahlen.
+ */
+
+/* --- Farben und Grundwerte ------------------------------------------------ */
+
+:root,
+[data-bs-theme="light"] {
+  --app-primary: #4f46e5;
+  --app-primary-rgb: 79, 70, 229;
+  --app-primary-hover: #4338ca;
+  --app-primary-subtle: #eef2ff;
+  --app-bg: #f4f6fb;
+  --app-surface: #ffffff;
+  --app-sidebar-bg: #ffffff;
+  --app-border: #e6e8f0;
+  --app-muted: #6b7280;
+  --app-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --app-shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
+
+  --bs-body-bg: var(--app-bg);
+  --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bs-body-font-size: 0.9375rem;
+  --bs-primary: var(--app-primary);
+  --bs-primary-rgb: var(--app-primary-rgb);
+  --bs-primary-text-emphasis: #3730a3;
+  --bs-primary-bg-subtle: var(--app-primary-subtle);
+  --bs-primary-border-subtle: #c7d2fe;
+  --bs-link-color: var(--app-primary);
+  --bs-link-color-rgb: var(--app-primary-rgb);
+  --bs-link-hover-color: var(--app-primary-hover);
+  --bs-link-hover-color-rgb: 67, 56, 202;
+  --bs-border-color: var(--app-border);
+  --bs-border-radius: 0.5rem;
+  --bs-border-radius-lg: 0.75rem;
+  --bs-focus-ring-color: rgba(var(--app-primary-rgb), 0.25);
+}
+
+[data-bs-theme="dark"] {
+  --app-primary: #818cf8;
+  --app-primary-rgb: 129, 140, 248;
+  --app-primary-hover: #a5b4fc;
+  --app-primary-subtle: rgba(129, 140, 248, 0.14);
+  --app-bg: #0d111a;
+  --app-surface: #151a26;
+  --app-sidebar-bg: #111622;
+  --app-border: #252c3d;
+  --app-muted: #9aa3b5;
+  --app-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --app-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  --bs-body-bg: var(--app-bg);
+  --bs-body-color: #e3e7ef;
+  --bs-secondary-color: rgba(227, 231, 239, 0.65);
+  --bs-tertiary-bg: #1b2131;
+  --bs-primary: var(--app-primary);
+  --bs-primary-rgb: var(--app-primary-rgb);
+  --bs-primary-text-emphasis: #c7d2fe;
+  --bs-primary-bg-subtle: var(--app-primary-subtle);
+  --bs-primary-border-subtle: #3f4a8a;
+  --bs-link-color: var(--app-primary);
+  --bs-link-color-rgb: var(--app-primary-rgb);
+  --bs-link-hover-color: var(--app-primary-hover);
+  --bs-link-hover-color-rgb: 165, 180, 252;
+  --bs-border-color: var(--app-border);
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  background: var(--app-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5 {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* --- Bootstrap-Bausteine in den eigenen Farben ------------------------------ */
+
+.btn-primary {
+  --bs-btn-bg: var(--app-primary);
+  --bs-btn-border-color: var(--app-primary);
+  --bs-btn-hover-bg: var(--app-primary-hover);
+  --bs-btn-hover-border-color: var(--app-primary-hover);
+  --bs-btn-active-bg: var(--app-primary-hover);
+  --bs-btn-active-border-color: var(--app-primary-hover);
+  --bs-btn-disabled-bg: var(--app-primary);
+  --bs-btn-disabled-border-color: var(--app-primary);
+  --bs-btn-focus-shadow-rgb: var(--app-primary-rgb);
+}
+
+[data-bs-theme="dark"] .btn-primary {
+  --bs-btn-color: #0d111a;
+  --bs-btn-hover-color: #0d111a;
+  --bs-btn-active-color: #0d111a;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--app-primary);
+  --bs-btn-border-color: rgba(var(--app-primary-rgb), 0.45);
+  --bs-btn-hover-bg: var(--app-primary);
+  --bs-btn-hover-border-color: var(--app-primary);
+  --bs-btn-active-bg: var(--app-primary);
+  --bs-btn-active-border-color: var(--app-primary);
+  --bs-btn-focus-shadow-rgb: var(--app-primary-rgb);
+}
+
+.btn {
+  font-weight: 500;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: rgba(var(--app-primary-rgb), 0.6);
+  box-shadow: 0 0 0 0.25rem rgba(var(--app-primary-rgb), 0.2);
+}
+
+/* Kräftigerer Rand, damit leere Kästchen gut sichtbar sind */
+.form-check-input {
+  border-color: rgba(var(--bs-body-color-rgb), 0.35);
+}
+
+.form-check-input:checked {
+  background-color: var(--app-primary);
+  border-color: var(--app-primary);
+}
+
+.form-control,
+.form-select {
+  background-color: var(--app-surface);
+}
+
+.dropdown-menu {
+  --bs-dropdown-link-active-bg: var(--app-primary);
+  --bs-dropdown-border-color: var(--app-border);
+  --bs-dropdown-border-radius: 0.625rem;
+  padding: 0.375rem;
+}
+
+.dropdown-item {
+  border-radius: 0.375rem;
+}
+
+.progress {
+  --bs-progress-bar-bg: var(--app-primary);
+  --bs-progress-bg: var(--bs-tertiary-bg);
+}
+
+.breadcrumb {
+  --bs-breadcrumb-divider-color: var(--app-muted);
+  font-size: 0.875rem;
+}
+
+.card {
+  --bs-card-bg: var(--app-surface);
+  --bs-card-border-color: var(--app-border);
+  --bs-card-border-radius: 0.875rem;
+  --bs-card-inner-border-radius: calc(0.875rem - 1px);
+  --bs-card-spacer-x: 1.25rem;
+  --bs-card-spacer-y: 1.25rem;
+  box-shadow: var(--app-shadow);
+}
+
+.alert {
+  border-radius: 0.75rem;
+}
+
+/* --- Gerüst: Seitenleiste und Inhalt -------------------------------------- */
+
+:root {
+  --app-sidebar-width: 16rem;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-content {
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: 2rem 2.25rem 3rem;
+}
+
+.app-sidebar {
+  --bs-offcanvas-width: var(--app-sidebar-width);
+  --bs-offcanvas-bg: var(--app-sidebar-bg);
+  background: var(--app-sidebar-bg);
+  border-right: 1px solid var(--app-border);
+}
+
+.app-sidebar .offcanvas-header {
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.app-sidebar .offcanvas-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.875rem 1rem;
+}
+
+@media (min-width: 992px) {
+  .app-sidebar {
+    position: sticky;
+    top: 0;
+    flex: 0 0 var(--app-sidebar-width);
+    width: var(--app-sidebar-width);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* Bootstrap macht offcanvas-lg ab lg durchsichtig und blendet den Kopf aus */
+    background-color: var(--app-sidebar-bg) !important;
+  }
+
+  .app-sidebar .offcanvas-header {
+    display: flex;
+  }
+
+  .app-sidebar .offcanvas-body {
+    flex: 1;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .app-content {
+    padding: 1.25rem 1rem 2.5rem;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .app-content {
+    padding: 1.5rem 1.5rem 2.5rem;
+  }
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 3.5rem;
+  padding: 0 0.75rem;
+  background: var(--app-sidebar-bg);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  font-size: 1.5rem;
+  color: var(--bs-body-color);
+  border: 0;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  white-space: nowrap;
+  font-weight: 650;
+  font-size: 1.0625rem;
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+
+.app-brand:hover {
+  color: var(--bs-body-color);
+}
+
+.app-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, var(--app-primary), #7c3aed);
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+/* Navigation */
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.app-nav-heading {
+  margin: 1.25rem 0.75rem 0.375rem;
+  color: var(--app-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--bs-body-color);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.app-nav-link .bi {
+  font-size: 1.1rem;
+  color: var(--app-muted);
+}
+
+.app-nav-link:hover {
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+}
+
+.app-nav-link.active {
+  background: var(--app-primary-subtle);
+  color: var(--app-primary);
+}
+
+.app-nav-link.active .bi {
+  color: var(--app-primary);
+}
+
+/* Benutzermenü unten in der Seitenleiste */
+
+.app-user {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.app-user .dropdown-menu {
+  width: 100%;
+}
+
+.app-user-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--app-border);
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--bs-body-color);
+  font-weight: 500;
+  text-align: left;
+}
+
+.app-user-toggle:hover {
+  background: var(--bs-tertiary-bg);
+}
+
+.app-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--app-primary-subtle);
+  color: var(--app-primary);
+  font-weight: 650;
+}
+
+/* --- Anmeldeseite --------------------------------------------------------- */
+
+.auth-body {
+  background:
+    radial-gradient(60rem 30rem at 10% -10%, rgba(var(--app-primary-rgb), 0.18), transparent 60%),
+    radial-gradient(50rem 30rem at 110% 110%, rgba(124, 58, 237, 0.14), transparent 60%),
+    var(--app-bg);
+}
+
+.auth-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem 1rem;
+}
+
+.auth-main > .alert {
+  width: 100%;
+  max-width: 26rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 26rem;
+  box-shadow: var(--app-shadow-lg);
+}
+
+.auth-card .card-body {
+  padding: 2rem;
+}
+
+/* --- Seitenkopf, Tabellen, Kennzahlen ------------------------------------- */
+
+main h1.h3 {
+  font-size: 1.625rem;
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: rgba(var(--app-primary-rgb), 0.04);
+  margin-bottom: 0;
+}
+
+.table > thead th {
+  color: var(--app-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom-color: var(--app-border);
+}
+
+/* Sortier-Links in der Kopfzeile wie die übrigen Spaltenköpfe */
+.table > thead th a {
+  color: inherit !important;
+}
+
+.table > tbody a:not(.btn) {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.table > tbody a:not(.btn):hover {
+  text-decoration: underline;
+}
+
+/* Hervorgehobene Zeile (z. B. aktueller Kosteneintrag) */
+.table-active {
+  --bs-table-bg-state: rgba(var(--app-primary-rgb), 0.06);
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.75rem 0.75rem;
+  border-bottom-color: var(--app-border);
+}
+
+.table-sm > :not(caption) > * > * {
+  padding: 0.5rem 0.5rem;
+}
+
+.table > tbody > tr:last-child > * {
+  border-bottom: 0;
+}
+
+/* Tabelle als Karte (Listenseiten) */
+.card-table {
+  overflow: hidden;
+}
+
+.card-table .table > :not(caption) > * > *:first-child {
+  padding-left: 1.25rem;
+}
+
+.card-table .table > :not(caption) > * > *:last-child {
+  padding-right: 1.25rem;
+}
+
+.card-table .table > thead th {
+  background: var(--bs-tertiary-bg);
+}
+
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  color: var(--bs-secondary-color);
+  font-size: 0.875rem;
+}
+
+/* Kennzahl-Karte mit Symbol */
+.stat-card .card-body {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.25rem;
+}
+
+.stat-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: var(--app-primary-subtle);
+  color: var(--app-primary);
+  font-size: 1.25rem;
+}
+
+.stat-icon-green { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.stat-icon-amber { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+
+[data-bs-theme="dark"] .stat-icon-green { color: #34d399; }
+[data-bs-theme="dark"] .stat-icon-amber { color: #fbbf24; }
+
+.share-bar {
+  height: 0.5rem;
+  border-radius: 1rem;
+}
+
+/* Rangliste (teuerste Verträge) */
+.rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rank-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.rank-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.rank-list .rank-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-list .rank-name a,
+.rank-list .rank-name div {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Logo eines Vertragspartners oder Platzhalter mit Anfangsbuchstaben ---- */
+
+.provider-logo {
+  --logo-size: 2.5rem;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--logo-size);
+  height: var(--logo-size);
+  overflow: hidden;
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 0.5rem;
+  background: var(--app-primary-subtle);
+  color: var(--app-primary);
+  font-size: calc(var(--logo-size) * 0.42);
+  font-weight: 650;
+  line-height: 1;
+}
+
+.provider-logo img {
+  width: 100%;
+  height: 100%;
+  padding: 8%;
+  object-fit: contain;
+  /* Heller Hintergrund, damit dunkle Logos auch im dunklen Design lesbar sind */
+  background: #fff;
+}
+
+.provider-logo-sm { --logo-size: 1.75rem; border-radius: 0.375rem; }
+.provider-logo-lg { --logo-size: 4.5rem; border-radius: 0.875rem; }
+
+/* Trenner "oder" auf der Anmeldeseite (SSO und lokale Anmeldung) */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--app-muted);
+  font-size: 0.8125rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--app-border);
+}
+
+/* --- Dokumente (Version 0.7 beta): Symbol für den Ablageort -------------- */
+
+.document-source {
+  --source-size: 2.25rem;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--source-size);
+  height: var(--source-size);
+  border-radius: 0.5rem;
+  font-size: calc(var(--source-size) * 0.48);
+  line-height: 1;
+}
+
+.document-source-upload {
+  background: var(--app-primary-subtle);
+  color: var(--app-primary);
+}
+
+/* Paperless: eigene Farbe (grün), damit die Quelle auf einen Blick erkennbar ist */
+.document-source-paperless {
+  background: var(--bs-success-bg-subtle);
+  color: var(--bs-success-text-emphasis);
+}
+
+.document-source-sm { --source-size: 1.5rem; border-radius: 0.375rem; }
+
+.min-w-0 { min-width: 0; }
+
+/* --- KI-Assistent (Version 0.8a): Chat ----------------------------------- */
+
+.chat-card > .card-body { min-height: 28rem; }
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.chat-message { display: flex; }
+.chat-message-user { justify-content: flex-end; }
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.875rem;
+  background: var(--bs-tertiary-bg);
+  overflow-wrap: anywhere;
+}
+
+.chat-message-user .chat-bubble {
+  background: var(--app-primary);
+  color: #fff;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.chat-message-user .chat-bubble a { color: inherit; }
+.chat-message-assistant .chat-bubble { border-bottom-left-radius: 0.25rem; }
+.chat-text { white-space: pre-line; }
+
+.chat-form textarea { resize: vertical; }
+
+/* KI-Assistent (Version 0.8b): Anhänge und Vorschläge */
+.chat-attachment { opacity: 0.95; }
+.chat-proposal { max-width: 85%; }
+@media (max-width: 575.98px) { .chat-proposal { max-width: 100%; } }

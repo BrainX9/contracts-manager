@@ -1,0 +1,62 @@
+{% load i18n web_format %}
+<div id="costs-section" class="card"{% if costs_oob %} hx-swap-oob="true"{% endif %}>
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <h2 class="h5 card-title mb-0">{% translate "Cost history" %}</h2>
+      {% if can_change %}
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'cost_add' contract.pk %}"
+         hx-get="{% url 'cost_add' contract.pk %}" hx-target="#cost-form"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "Add cost entry" %}</a>
+      {% endif %}
+    </div>
+    <div id="cost-form"></div>
+    {% if costs %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col" class="text-nowrap">{% translate "Valid from" %}</th>
+            <th scope="col" class="text-end">{% translate "Amount" %}</th>
+            <th scope="col" class="text-end text-nowrap d-none d-sm-table-cell">{% translate "Per month" %}</th>
+            <th scope="col">{% translate "Document" %}</th>
+            {% if can_change %}<th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in costs %}
+          <tr{% if item.is_current %} class="table-active"{% endif %}>
+            <td>{{ item.entry.valid_from|date:"SHORT_DATE_FORMAT" }}
+              {% if item.is_current %}<span class="badge text-bg-success ms-1">{% translate "current" %}</span>{% endif %}
+              {% if item.is_future %}<span class="badge text-bg-info ms-1">{% translate "planned" %}</span>{% endif %}
+            </td>
+            <td class="text-end amount">{{ item.entry.amount|euro }}
+              <div class="small text-body-secondary">{{ item.entry.get_payment_interval_display }}</div></td>
+            <td class="text-end amount d-none d-sm-table-cell">{{ item.monthly|euro }}</td>
+            <td>{% with document=item.entry.document %}{% if document %}<span class="d-inline-flex align-items-center gap-2">{% include "web/includes/document_source_icon.html" with small=True %}{% if document.is_upload %}<a class="text-break" href="{{ document.file.url }}"{% if document.opens_inline %} target="_blank" rel="noopener"{% endif %}>{{ document.name }}</a>{% elif document.paperless_url %}<a class="text-break" href="{{ document.paperless_url }}" target="_blank" rel="noopener noreferrer">{{ document.name }}</a>{% else %}<span class="text-break">{{ document.name }}</span>{% endif %}</span>{% else %}–{% endif %}{% endwith %}</td>
+            {% if can_change %}
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-link px-1" href="{% url 'cost_edit' item.entry.pk %}"
+                 hx-get="{% url 'cost_edit' item.entry.pk %}" hx-target="#cost-form" title="{% translate 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">{% translate "Edit" %}</span></a>
+              <form class="d-inline" method="post" action="{% url 'cost_delete' item.entry.pk %}"
+                    hx-post="{% url 'cost_delete' item.entry.pk %}" hx-target="#costs-section" hx-swap="outerHTML"
+                    hx-confirm="{% translate 'Delete this cost entry?' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-link link-danger px-1" title="{% translate 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">{% translate "Delete" %}</span></button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% if item.entry.notes %}
+          <tr{% if item.is_current %} class="table-active"{% endif %}>
+            <td colspan="{% if can_change %}5{% else %}4{% endif %}" class="small text-body-secondary border-top-0 pt-0" style="white-space: pre-line">{{ item.entry.notes }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-body-secondary mb-0">{% translate "No cost entries yet." %}</p>
+    {% endif %}
+  </div>
+</div>
+{% if oob %}{% include "web/contracts/_current_amount.html" %}{% endif %}

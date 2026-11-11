@@ -1,0 +1,49 @@
+{% load i18n web_format %}
+{# Gehört über das form-Attribut zum Suchformular, wird mit dem Ergebnis aktualisiert #}
+<input type="hidden" name="sort" value="{{ sort }}" form="provider-filters">
+<div id="results-indicator" class="htmx-indicator position-absolute top-0 end-0">
+  <div class="spinner-border spinner-border-sm text-secondary" role="status">
+    <span class="visually-hidden">{% translate "Loading…" %}</span>
+  </div>
+</div>
+
+<p class="stat-label mb-3">
+  {% blocktranslate count counter=rows|length %}{{ counter }} contract partner{% plural %}{{ counter }} contract partners{% endblocktranslate %}{% if q %} · {% blocktranslate with total=visible_count %}filtered from {{ total }}{% endblocktranslate %} · <a href="{% url 'provider_list' %}">{% translate "Reset filters" %}</a>{% endif %}
+</p>
+
+{% if rows %}
+<div class="card card-table">
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th scope="col">{% include "web/includes/sort_link.html" with key="name" label=_("Contract partner") %}</th>
+        <th scope="col" class="d-none d-md-table-cell">{% include "web/includes/sort_link.html" with key="city" label=_("City") %}</th>
+        <th scope="col" class="d-none d-lg-table-cell">{% translate "Customer number" %}</th>
+        <th scope="col" class="text-end d-none d-sm-table-cell">{% include "web/includes/sort_link.html" with key="contracts" label=_("Contracts") %}</th>
+        <th scope="col" class="text-end">{% include "web/includes/sort_link.html" with key="monthly" label=_("Per month") %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><div class="d-flex align-items-center gap-2">
+          {% include "web/includes/provider_logo.html" with provider=row.object size="md" %}
+          <div><a href="{% url 'provider_detail' row.object.pk %}" class="fw-medium">{{ row.object.name }}</a>
+          {% if row.object.contact_person %}<div class="small text-body-secondary">{{ row.object.contact_person }}</div>{% endif %}</div>
+        </div></td>
+        <td class="d-none d-md-table-cell">{{ row.object.city|default:"–" }}</td>
+        <td class="d-none d-lg-table-cell">{{ row.object.customer_number|default:"–" }}</td>
+        <td class="text-end d-none d-sm-table-cell">{{ row.contract_count }}</td>
+        <td class="text-end amount">{{ row.monthly|euro }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  {% if q %}{% translate "No contract partners match the search." %}{% else %}{% translate "There are no contract partners yet that you are allowed to see." %}{% endif %}
+</div>
+{% endif %}

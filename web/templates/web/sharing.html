@@ -1,0 +1,41 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Sharing" %} · {{ object.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ list_url }}">{{ list_label }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ detail_url }}">{{ object.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% translate "Sharing" %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-2">{% translate "Sharing" %}</h1>
+<p class="text-body-secondary mb-4" style="max-width: 48rem">{{ help_text }}</p>
+
+<form method="post" style="max-width: 48rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title">{% translate "Owner" %}</h2>
+    {% include "web/includes/field.html" with field=form.owner %}
+    <div class="form-text mt-n2">{% translate "If you hand over ownership, the previous owner automatically becomes an editor. You can remove this role afterwards." %}</div>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title">{% translate "Users" %}</h2>
+    {% include "web/includes/sharing_rows.html" with rows=form.user_fields kind="user" %}
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title">{% translate "Groups" %}</h2>
+    <p class="small text-body-secondary">{% translate "A role for a group applies to all its members. The group “Alle” contains every user." %}</p>
+    {% include "web/includes/sharing_rows.html" with rows=form.group_fields kind="group" %}
+  </div></div>
+
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  <a class="btn btn-link" href="{{ detail_url }}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

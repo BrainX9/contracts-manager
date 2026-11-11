@@ -1,0 +1,29 @@
+{% load i18n %}
+<div class="card card-body bg-body-tertiary mb-3">
+  <h3 class="h6 mb-3">{% if entry %}{% translate "Edit cost entry" %}{% else %}{% translate "New cost entry" %}{% endif %}</h3>
+  <form method="post" action="{{ action_url }}" novalidate
+        {% if use_htmx %}hx-post="{{ action_url }}" hx-target="#costs-section" hx-swap="outerHTML"{% endif %}>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+    {% endif %}
+    <div class="row g-2">
+      {% for field in form.visible_fields %}
+      <div class="{% if field.name == 'notes' %}col-12{% else %}col-sm-6{% endif %}">
+        <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-3">
+      <button type="submit" class="btn btn-primary btn-sm">{% translate "Save" %}</button>
+      {% if use_htmx %}
+      <button type="button" class="btn btn-link btn-sm" onclick="this.closest('#cost-form').replaceChildren()">{% translate "Cancel" %}</button>
+      {% else %}
+      <a class="btn btn-link btn-sm" href="{% url 'contract_detail' contract.pk %}">{% translate "Cancel" %}</a>
+      {% endif %}
+    </div>
+  </form>
+</div>

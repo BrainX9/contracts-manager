@@ -1,0 +1,3 @@
+{% load i18n %}{% if sort == key %}{% querystring sort="-"|add:key as url %}{% else %}{% querystring sort=key as url %}{% endif %}<a href="{{ list_url }}{{ url }}" class="link-body-emphasis text-decoration-none"
+   hx-get="{{ list_url }}{{ url }}" hx-target="#results" hx-push-url="true"
+   hx-indicator="#results-indicator">{{ label }}{% if sort == key %} <span aria-hidden="true">▲</span><span class="visually-hidden">({% translate "sorted ascending" %})</span>{% elif sort == "-"|add:key %} <span aria-hidden="true">▼</span><span class="visually-hidden">({% translate "sorted descending" %})</span>{% endif %}</a>

@@ -1,0 +1,16 @@
+{% load i18n %}{% blocktranslate with name=recipient.get_username %}Hello {{ name }},{% endblocktranslate %}
+
+{% if days_left == 0 %}{% blocktranslate with reason=reminder.get_reason_display %}today is the reminder date for this contract ({{ reason }}).{% endblocktranslate %}{% else %}{% blocktranslate with reason=reminder.get_reason_display count days=days_left %}the reminder date for this contract ({{ reason }}) is in {{ days }} day.{% plural %}the reminder date for this contract ({{ reason }}) is in {{ days }} days.{% endblocktranslate %}{% endif %}
+
+{% translate "Contract" %}: {{ contract.name }} ({{ contract.reference }})
+{% translate "Contract partner" %}: {{ contract.provider.name }}{% if contract.contract_number %}
+{% translate "Contract number" %}: {{ contract.contract_number }}{% endif %}
+{% translate "Reason" %}: {{ reminder.get_reason_display }}
+{% translate "Reminder date" %}: {{ reminder.remind_on|date:"SHORT_DATE_FORMAT" }}
+{% if reminder.note %}
+{% translate "Note" %}:
+{{ reminder.note }}
+{% endif %}
+{% translate "Open contract" %}: {{ contract_url }}
+
+{% if days_left == 0 %}{% translate "This is the last reminder. It has now been switched off." %}{% else %}{% translate "You will receive this reminder every day up to and including the reminder date." %}{% endif %}

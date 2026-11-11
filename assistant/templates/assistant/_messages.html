@@ -1,0 +1,33 @@
+{% load i18n %}
+<div id="chat-messages" class="chat-messages" aria-live="polite"
+     {% if conversation.is_running %}hx-get="{% url 'assistant_messages' conversation.pk %}" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
+  {% for message in chat_messages %}
+  <div class="chat-message chat-message-{{ message.role }}">
+    <div class="chat-bubble">
+      {% if message.tools %}<div class="chat-tools small text-body-secondary mb-1"><i class="bi bi-search me-1" aria-hidden="true"></i>{{ message.tools|join:", " }}</div>{% endif %}
+      {% if message.content %}<div class="chat-text">{{ message.content|urlize }}</div>{% endif %}
+      {% for attachment in message.attachments %}
+      <div class="chat-attachment small mt-1"><i class="bi bi-paperclip me-1" aria-hidden="true"></i>{{ attachment.original_name }}
+        <span class="opacity-75">· {{ attachment.size|filesizeformat }}{% if attachment.method != "pending" %} · {{ attachment.get_method_display }}{% endif %}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% for proposal in message.proposals %}{% include "assistant/_proposal.html" %}{% endfor %}
+  {% endfor %}
+  {% if conversation.is_running %}
+  <div class="chat-message chat-message-assistant">
+    <div class="chat-bubble text-body-secondary"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{% translate "The assistant is answering …" %}</div>
+  </div>
+  {% elif conversation.status == "error" and conversation.error|slice:":7" == "refusal" %}
+  <div class="alert alert-warning small mb-0" role="alert">
+    <i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{% translate "The assistant declined this request. Please rephrase your question." %}
+  </div>
+  {% elif conversation.status == "error" %}
+  <div class="alert alert-danger small mb-0" role="alert">
+    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% translate "The AI provider could not answer. Please try again later." %}
+    {% if conversation.error %}<div class="text-break mt-1 opacity-75">{{ conversation.error }}</div>{% endif %}
+  </div>
+  {% endif %}
+  {% for error in form.non_field_errors %}<div class="alert alert-warning small mb-0" role="alert">{{ error }}</div>{% endfor %}
+  {% if notice %}<div class="alert alert-warning small mb-0" role="alert">{{ notice }}</div>{% endif %}
+</div>

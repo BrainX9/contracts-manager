@@ -1,0 +1,21 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Delete category" %}{% endblock %}
+{% block content %}
+<div class="card border-danger" style="max-width: 36rem">
+  <div class="card-body">
+    <h1 class="h4 card-title">{% translate "Delete category" %}</h1>
+    {% if in_use %}
+    <p>{% blocktranslate with name=category %}The category “{{ name }}” is still used in contracts or has subcategories and cannot be deleted. Assign these contracts to a different category and remove the subcategories first.{% endblocktranslate %}</p>
+    <a class="btn btn-secondary" href="{% url 'category_detail' category.pk %}">{% translate "Back" %}</a>
+    {% else %}
+    <p>{% blocktranslate with name=category %}Do you really want to delete the category “{{ name }}”? This cannot be undone.{% endblocktranslate %}</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+      <a class="btn btn-link" href="{% url 'category_detail' category.pk %}">{% translate "Cancel" %}</a>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% load i18n web_format %}
+<div id="results-indicator" class="htmx-indicator position-absolute top-0 end-0">
+  <div class="spinner-border spinner-border-sm text-secondary" role="status">
+    <span class="visually-hidden">{% translate "Loading…" %}</span>
+  </div>
+</div>
+
+<p class="stat-label mb-3">
+  {% blocktranslate count counter=rows|length %}{{ counter }} category{% plural %}{{ counter }} categories{% endblocktranslate %}{% if q %} · {% blocktranslate with total=visible_count %}filtered from {{ total }}{% endblocktranslate %} · <a href="{% url 'category_list' %}">{% translate "Reset filters" %}</a>{% endif %}
+</p>
+
+{% if rows %}
+<div class="card card-table">
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th scope="col">{% translate "Category" %}</th>
+        <th scope="col" class="text-end d-none d-sm-table-cell">{% translate "Contracts" %}</th>
+        <th scope="col" class="text-end">{% translate "Per month" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td{% if row.indent %} class="ps-4"{% endif %}>
+          {% if row.indent %}<span class="text-body-secondary" aria-hidden="true">↳ </span>{% endif %}
+          <a href="{% url 'category_detail' row.object.pk %}" class="{% if row.object.parent_id %}{% else %}fw-semibold{% endif %}">{% if row.indent %}{{ row.object.name }}{% else %}{{ row.object }}{% endif %}</a>
+        </td>
+        <td class="text-end d-none d-sm-table-cell">{{ row.contract_count }}</td>
+        <td class="text-end amount">{{ row.monthly|euro }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+<p class="small text-body-secondary mt-2">{% translate "Main categories include the contracts of their subcategories." %}</p>
+{% else %}
+<div class="alert alert-info">
+  {% if q %}{% translate "No categories match the search." %}{% else %}{% translate "There are no categories yet that you are allowed to see." %}{% endif %}
+</div>
+{% endif %}

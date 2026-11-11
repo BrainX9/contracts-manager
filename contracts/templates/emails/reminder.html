@@ -1,0 +1,33 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+{% block content %}
+<p style="margin:0 0 8px; font-size:13px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:#4f46e5;">{% translate "Reminder" %} · {{ reminder.get_reason_display }}</p>
+<h1 style="margin:0 0 16px; font-size:20px; color:#111827;">{{ contract.name }}</h1>
+<p style="margin:0 0 12px; line-height:1.5;">{% blocktranslate with name=recipient.get_username %}Hello {{ name }},{% endblocktranslate %}</p>
+<p style="margin:0 0 20px; line-height:1.5;">
+  {% if days_left == 0 %}{% blocktranslate with reason=reminder.get_reason_display %}today is the reminder date for this contract ({{ reason }}).{% endblocktranslate %}{% else %}{% blocktranslate with reason=reminder.get_reason_display count days=days_left %}the reminder date for this contract ({{ reason }}) is in {{ days }} day.{% plural %}the reminder date for this contract ({{ reason }}) is in {{ days }} days.{% endblocktranslate %}{% endif %}
+</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px; border-collapse:collapse; font-size:14px;">
+  <tr><td style="padding:8px 0; border-bottom:1px solid #e6e8f0; color:#6b7280; width:40%;">{% translate "Reminder date" %}</td>
+      <td style="padding:8px 0; border-bottom:1px solid #e6e8f0; font-weight:600;">{{ reminder.remind_on|date:"SHORT_DATE_FORMAT" }}</td></tr>
+  <tr><td style="padding:8px 0; border-bottom:1px solid #e6e8f0; color:#6b7280;">{% translate "Reference" %}</td>
+      <td style="padding:8px 0; border-bottom:1px solid #e6e8f0;">{{ contract.reference }}</td></tr>
+  <tr><td style="padding:8px 0; border-bottom:1px solid #e6e8f0; color:#6b7280;">{% translate "Contract partner" %}</td>
+      <td style="padding:8px 0; border-bottom:1px solid #e6e8f0;">{{ contract.provider.name }}</td></tr>
+  {% if contract.contract_number %}
+  <tr><td style="padding:8px 0; border-bottom:1px solid #e6e8f0; color:#6b7280;">{% translate "Contract number" %}</td>
+      <td style="padding:8px 0; border-bottom:1px solid #e6e8f0;">{{ contract.contract_number }}</td></tr>
+  {% endif %}
+  <tr><td style="padding:8px 0; color:#6b7280;">{% translate "Reason" %}</td>
+      <td style="padding:8px 0;">{{ reminder.get_reason_display }}</td></tr>
+</table>
+{% if reminder.note %}
+<div style="margin:0 0 20px; padding:12px 14px; background:#eef2ff; border-radius:8px; font-size:14px; line-height:1.5; white-space:pre-line;">{{ reminder.note }}</div>
+{% endif %}
+<p style="margin:0 0 20px;">
+  <a href="{{ contract_url }}" style="display:inline-block; background:#4f46e5; color:#ffffff; text-decoration:none; font-weight:600; padding:10px 18px; border-radius:8px;">{% translate "Open contract" %}</a>
+</p>
+<p style="margin:0; font-size:13px; line-height:1.5; color:#6b7280;">
+  {% if days_left == 0 %}{% translate "This is the last reminder. It has now been switched off." %}{% else %}{% translate "You will receive this reminder every day up to and including the reminder date." %}{% endif %}
+</p>
+{% endblock %}

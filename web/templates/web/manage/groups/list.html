@@ -1,0 +1,41 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Groups" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{% translate "Groups" %}</h1>
+  {% if can_add %}<a class="btn btn-primary" href="{% url 'manage_group_create' %}"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "New group" %}</a>{% endif %}
+</div>
+<p class="text-body-secondary">{% translate "Groups bundle users for shares: a role for a group applies to all its members." %}</p>
+
+<div class="card card-table">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th scope="col">{% translate "Group" %}</th>
+          <th scope="col" class="text-end">{% translate "Members" %}</th>
+          <th scope="col" class="text-end">{% translate "Shared objects" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            {% if row.editable %}
+            <a href="{% url 'manage_group_edit' row.group.pk %}">{{ row.group.name }}</a>
+            {% else %}{{ row.group.name }}{% endif %}
+            {% if row.protected %}<span class="badge text-bg-light border ms-1">{% translate "Default group" %}</span>{% endif %}
+            {% if row.group.name == "Alle" %}<div class="small text-body-secondary">{% translate "Contains every user automatically." %}</div>
+            {% elif row.group.name == "Benutzer" %}<div class="small text-body-secondary">{% translate "May create own contracts and master data." %}</div>
+            {% elif row.group.name == "Administratoren" %}<div class="small text-body-secondary">{% translate "May manage users and groups." %}</div>{% endif %}
+          </td>
+          <td class="text-end">{{ row.members }}</td>
+          <td class="text-end">{{ row.shares }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

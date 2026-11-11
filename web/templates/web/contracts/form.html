@@ -1,0 +1,52 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% if object %}{% translate "Edit contract" %}{% else %}{% translate "New contract" %}{% endif %}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'contract_list' %}">{% translate "Contracts" %}</a></li>
+    {% if object %}<li class="breadcrumb-item"><a href="{% url 'contract_detail' object.pk %}">{{ object.name }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if object %}{% translate "Edit" %}{% else %}{% translate "New contract" %}{% endif %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-4">{% if object %}{% translate "Edit contract" %}{% else %}{% translate "New contract" %}{% endif %}</h1>
+
+<form method="post" novalidate style="max-width: 48rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+  {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-3">{% translate "Master data" %}</h2>
+    {% include "web/includes/field.html" with field=form.name %}
+    {% include "web/includes/field.html" with field=form.short_description %}
+    <div class="row g-2">
+      {% for field, add_perm, add_url, add_label in new_links %}
+      <div class="col-md-4">{% include "web/includes/field.html" with field=field %}
+        {% if add_perm %}<div class="form-text mt-n2 mb-3"><a href="{{ add_url }}" target="_blank" rel="noopener">{{ add_label }}</a> ({% translate "opens in a new tab" %})</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-3">{% translate "Term" %}</h2>
+    <div class="row g-2">
+      <div class="col-md-4">{% include "web/includes/field.html" with field=form.start_date %}</div>
+      <div class="col-6 col-md-4">{% include "web/includes/field.html" with field=form.term_value %}</div>
+      <div class="col-6 col-md-4">{% include "web/includes/field.html" with field=form.term_unit %}</div>
+    </div>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-3">{% translate "Information" %}</h2>
+    {% include "web/includes/field.html" with field=form.contract_number %}
+    {% include "web/includes/field.html" with field=form.notes %}
+  </div></div>
+
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  <a class="btn btn-link" href="{% if object %}{% url 'contract_detail' object.pk %}{% else %}{% url 'contract_list' %}{% endif %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

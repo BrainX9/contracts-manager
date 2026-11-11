@@ -1,0 +1,21 @@
+# Nicht ins Image: Zugangsdaten, lokale Daten, Entwicklungs- und Doku-Dateien
+.git
+.github/
+.gitignore
+.env
+.env.*
+!.env.example
+data/
+media/
+backups/
+/*.zip
+staticfiles/
+venv/
+__pycache__/
+*.pyc
+*.mo
+.DS_Store
+docs/
+*.md
+LICENSE
+docker-compose*.yml

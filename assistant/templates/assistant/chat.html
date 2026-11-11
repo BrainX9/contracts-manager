@@ -1,0 +1,123 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% if conversation %}{{ conversation }}{% else %}{% translate "Assistant" %}{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><i class="bi bi-stars me-2 text-primary" aria-hidden="true"></i>{% translate "Assistant" %}</h1>
+    <p class="text-body-secondary small mb-0">{% if allow_files %}{% blocktranslate %}Answers questions about your contracts and creates contracts from documents. Changes only after your approval; it never deletes anything.{% endblocktranslate %}{% else %}{% blocktranslate %}Answers questions about your contracts. It can only read data and never changes or deletes anything.{% endblocktranslate %}{% endif %}</p>
+  </div>
+  {% if conversation %}
+  <a class="btn btn-outline-primary btn-sm" href="{% url 'assistant_home' %}"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "New conversation" %}</a>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8 order-lg-2">
+    <div class="card chat-card">
+      <div class="card-body d-flex flex-column">
+        {% if conversation %}
+        {% include "assistant/_messages.html" %}
+        {% else %}
+        <div class="chat-empty text-center text-body-secondary my-auto py-5">
+          <i class="bi bi-chat-dots fs-1 d-block mb-2" aria-hidden="true"></i>
+          <p class="mb-1">{% translate "For example:" %}</p>
+          <ul class="list-unstyled small mb-0">
+            <li>{% translate "How much do I pay per month for insurance?" %}</li>
+            <li>{% translate "Which contracts do I have with my electricity provider?" %}</li>
+            <li>{% translate "What are my five most expensive contracts?" %}</li>
+            {% if allow_files %}<li>{% translate "Or attach a contract, invoice or letter: the assistant checks it and proposes a new contract." %}</li>{% endif %}
+          </ul>
+        </div>
+        {% endif %}
+        <form class="chat-form mt-3" method="post" enctype="multipart/form-data" action="{% if conversation %}{% url 'assistant_conversation' conversation.pk %}{% else %}{% url 'assistant_home' %}{% endif %}"
+              {% if conversation %}hx-post="{% url 'assistant_conversation' conversation.pk %}" hx-target="#chat-messages" hx-swap="outerHTML" hx-encoding="multipart/form-data"
+              hx-on::after-request="if (event.detail.successful) { this.reset(); this.querySelector('.chat-file-name').textContent = '' }"{% endif %}>
+          {% csrf_token %}
+          <label class="visually-hidden" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+          <div class="d-flex gap-2 align-items-end">
+            {% if form.file %}
+            <label class="btn btn-outline-secondary" for="{{ form.file.id_for_label }}" title="{% translate 'Attach document' %}">
+              <i class="bi bi-paperclip" aria-hidden="true"></i><span class="visually-hidden">{% translate "Attach document" %}</span>
+            </label>
+            <input type="file" name="file" id="{{ form.file.id_for_label }}" class="visually-hidden" accept="{{ form.file.field.widget.attrs.accept }}"
+                   onchange="this.form.querySelector('.chat-file-name').textContent = this.files.length ? this.files[0].name : ''">
+            {% endif %}
+            {{ form.text }}
+            <button type="submit" class="btn btn-primary" title="{% translate 'Send' %}"><i class="bi bi-send" aria-hidden="true"></i><span class="visually-hidden">{% translate "Send" %}</span></button>
+          </div>
+          {% if form.file %}<div class="chat-file-name small text-primary mt-1"></div>{% endif %}
+          {% if not conversation %}{% for error in form.non_field_errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}{% endif %}
+          {% for error in form.text.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          {% for error in form.file.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          <div class="form-text">{% blocktranslate with provider=provider model=model %}Your question and the contract data needed for the answer are sent to the AI provider ({{ provider }}, {{ model }}). Conversations are stored in Contracts Manager.{% endblocktranslate %}{% if allow_files %} {% blocktranslate %}Text in documents is recognised locally; only the text needed goes to the provider (the file itself only if no text can be recognised).{% endblocktranslate %}{% endif %}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 order-lg-1">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h6 card-title mb-3">{% translate "Conversations" %}</h2>
+        {% if conversations %}
+        <div class="list-group list-group-flush">
+          {% for item in conversations %}
+          <a class="list-group-item list-group-item-action px-2{% if conversation and item.pk == conversation.pk %} active{% endif %}" href="{% url 'assistant_conversation' item.pk %}"
+             {% if conversation and item.pk == conversation.pk %}aria-current="page"{% endif %}>
+            <div class="text-truncate">{{ item }}</div>
+            <div class="small{% if not conversation or item.pk != conversation.pk %} text-body-secondary{% endif %}">{{ item.updated_at|date:"SHORT_DATETIME_FORMAT" }}</div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-body-secondary small mb-0">{% translate "No conversations yet." %}</p>
+        {% endif %}
+        {% if conversation %}
+        <form class="mt-3" method="post" action="{% url 'assistant_delete' conversation.pk %}"
+              onsubmit="return confirm(this.dataset.confirm)" data-confirm="{% translate 'Delete this conversation?' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% translate "Delete conversation" %}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% if conversation %}
+<script>
+  // Die Nachrichtenliste wird während der Antwort alle 2 Sekunden ersetzt und
+  // stünde danach wieder am Anfang. Deshalb nach jedem Austausch ans Ende
+  // scrollen – außer der Benutzer hat selbst nach oben gescrollt, dann bleibt
+  // seine Position erhalten.
+  (function () {
+    var NEAR_END = 40; // Pixel Abstand zum Ende, die noch als "unten" gelten
+    var follow = true;
+    var position = 0;
+
+    function messages() { return document.getElementById("chat-messages"); }
+    function isChatSwap(event) { return event.detail.target && event.detail.target.id === "chat-messages"; }
+    function scrollToEnd() {
+      var list = messages();
+      if (list) { list.scrollTop = list.scrollHeight; }
+    }
+
+    document.body.addEventListener("htmx:beforeSwap", function (event) {
+      if (!isChatSwap(event)) { return; }
+      var list = messages();
+      var sent = event.detail.requestConfig && event.detail.requestConfig.verb === "post";
+      position = list.scrollTop;
+      // Nach dem Senden einer eigenen Nachricht immer ans Ende
+      follow = sent || list.scrollHeight - list.scrollTop - list.clientHeight <= NEAR_END;
+    });
+
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+      if (!isChatSwap(event)) { return; }
+      if (follow) { scrollToEnd(); } else { messages().scrollTop = position; }
+    });
+
+    scrollToEnd();
+  })();
+</script>
+{% endif %}
+{% endblock %}

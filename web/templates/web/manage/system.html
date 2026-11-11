@@ -1,0 +1,122 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "System" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{% translate "System" %}</h1>
+    <p class="text-body-secondary mb-0">Contracts Manager {{ version }}</p>
+  </div>
+  {% if user.is_superuser %}
+  <a class="btn btn-outline-secondary" href="{% url 'admin:index' %}"><i class="bi bi-shield-lock me-1" aria-hidden="true"></i>{% translate "Django administration" %}</a>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-4"><div class="card stat-card h-100"><div class="card-body">
+    <span class="stat-icon" aria-hidden="true"><i class="bi bi-people"></i></span>
+    <div><div class="stat-label">{% translate "Active users" %}</div><div class="stat-value">{{ counts.users }}</div></div>
+  </div></div></div>
+  <div class="col-sm-4"><div class="card stat-card h-100"><div class="card-body">
+    <span class="stat-icon stat-icon-amber" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+    <div><div class="stat-label">{% translate "Contracts" %}</div><div class="stat-value">{{ counts.contracts }}</div></div>
+  </div></div></div>
+  <div class="col-sm-4"><div class="card stat-card h-100"><div class="card-body">
+    <span class="stat-icon stat-icon-green" aria-hidden="true"><i class="bi bi-bell"></i></span>
+    <div><div class="stat-label">{% translate "Active reminders" %}</div><div class="stat-value">{{ counts.reminders }}</div></div>
+  </div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5 card-title mb-3"><i class="bi bi-cpu me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Background worker" %}</h2>
+      {% if worker.stale %}
+      <div class="alert alert-warning py-2">{% translate "No reminder run in the last 26 hours. Is the “worker” container running?" %}</div>
+      {% endif %}
+      <dl class="row mb-0">
+        <dt class="col-sm-5">{% translate "Last reminder run" %}</dt>
+        <dd class="col-sm-7">{% if worker.last_success %}{{ worker.last_success.stopped|date:"SHORT_DATETIME_FORMAT" }}{% with result=worker.last_result %}{% if result %}<div class="small text-body-secondary">{% blocktranslate trimmed with sent=result.sent reminders=result.reminders failed=result.failed completed=result.completed %}{{ sent }} emails for {{ reminders }} reminders sent, {{ failed }} errors, {{ completed }} completed{% endblocktranslate %}</div>{% endif %}{% endwith %}{% else %}–{% endif %}</dd>
+        <dt class="col-sm-5">{% translate "Next reminder run" %}</dt>
+        <dd class="col-sm-7">{{ worker.next_run|date:"SHORT_DATETIME_FORMAT"|default:"–" }}</dd>
+        <dt class="col-sm-5">{% translate "Daily at" %}</dt>
+        <dd class="col-sm-7">{{ reminder_time }}</dd>
+        <dt class="col-sm-5">{% translate "Failed tasks (7 days)" %}</dt>
+        <dd class="col-sm-7 mb-0">{% if worker.recent_failures %}<span class="text-danger fw-semibold">{{ worker.recent_failures }}</span>{% else %}0{% endif %}</dd>
+      </dl>
+    </div></div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5 card-title mb-3"><i class="bi bi-envelope me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Email" %}</h2>
+      {% if not email.smtp %}
+      <div class="alert alert-info py-2">{% translate "No SMTP server configured: emails are only written to the log." %}</div>
+      {% endif %}
+      <dl class="row">
+        <dt class="col-sm-5">{% translate "SMTP server" %}</dt>
+        <dd class="col-sm-7">{% if email.smtp %}{{ email.host }}:{{ email.port }} ({{ email.security }}){% else %}–{% endif %}</dd>
+        <dt class="col-sm-5">{% translate "SMTP user" %}</dt>
+        <dd class="col-sm-7">{{ email.user|default:"–" }}</dd>
+        <dt class="col-sm-5">{% translate "Sender" %}</dt>
+        <dd class="col-sm-7">{{ email.sender }}</dd>
+        <dt class="col-sm-5">{% translate "Address of the app" %}</dt>
+        <dd class="col-sm-7">{{ app_base_url|default:"–" }}{% if not app_base_url %}<div class="small text-warning">{% translate "Not set: links in reminders are incomplete." %}</div>{% endif %}</dd>
+      </dl>
+      <form method="post" action="{% url 'manage_system' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-send me-1" aria-hidden="true"></i>{% translate "Send test email to me" %}</button>
+        <span class="small text-body-secondary ms-2">{{ user.email|default:_("no email address") }}</span>
+      </form>
+    </div></div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5 card-title mb-3"><i class="bi bi-shield-check me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Single sign-on" %}</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-5">{% translate "Status" %}</dt>
+        <dd class="col-sm-7">{% if sso.enabled %}<span class="badge text-bg-success">{% translate "On" %}</span>{% else %}<span class="badge text-bg-secondary">{% translate "Off" %}</span>{% endif %}</dd>
+        {% if sso.enabled %}
+        <dt class="col-sm-5">{% translate "SSO server" %}</dt>
+        <dd class="col-sm-7">{{ sso.base_url|default:"–" }}</dd>
+        <dt class="col-sm-5">{% translate "Create unknown users" %}</dt>
+        <dd class="col-sm-7 mb-0">{% if sso.create_users %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</dd>
+        {% endif %}
+      </dl>
+      <p class="small text-body-secondary mt-3">{% translate "Settings are changed in the .env file on the server, followed by a restart." %}</p>
+      <form method="post" action="{% url 'manage_system' %}" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="settings">
+        {% with field=settings_form.sso_login_label %}
+        <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label|capfirst }}</label>
+        <div class="input-group input-group-sm">
+          {{ field }}
+          <button type="submit" class="btn btn-outline-primary">{% translate "Save" %}</button>
+        </div>
+        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        <div class="form-text">{{ field.help_text }}</div>
+        {% endwith %}
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5 card-title mb-3"><i class="bi bi-stars me-2 text-body-secondary" aria-hidden="true"></i>{% translate "AI assistant" %}</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-5">{% translate "Status" %}</dt>
+        <dd class="col-sm-7">{% if ai.enabled %}<span class="badge text-bg-success">{% translate "On" %}</span>{% else %}<span class="badge text-bg-secondary">{% translate "Off" %}</span>{% endif %}</dd>
+        {% if ai.enabled %}
+        <dt class="col-sm-5">{% translate "Provider" %}</dt>
+        <dd class="col-sm-7">{{ ai.provider }}{% if ai.base_url %}<div class="small text-body-secondary text-break">{{ ai.base_url }}</div>{% endif %}</dd>
+        <dt class="col-sm-5">{% translate "Model" %}</dt>
+        <dd class="col-sm-7">{{ ai.model|default:"–" }}</dd>
+        <dt class="col-sm-5">{% translate "Members of “KI”" %}</dt>
+        <dd class="col-sm-7 mb-0">{{ ai.users }}</dd>
+        {% endif %}
+      </dl>
+      <p class="small text-body-secondary mt-3 mb-0">{% translate "Only members of the group “KI” and superusers can use the assistant." %}</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

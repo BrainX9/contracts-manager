@@ -1,0 +1,18 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Forgot password" %}{% endblock %}
+{% block auth_content %}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    <h1 class="h4 mb-1">{% translate "Forgot password" %}</h1>
+    <p class="text-body-secondary mb-4">{% translate "Enter the email address of your account. We will send you a link to choose a new password." %}</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "web/includes/form_fields.html" %}
+      <button type="submit" class="btn btn-primary w-100">{% translate "Send link" %}</button>
+    </form>
+    <p class="text-center small mt-3 mb-0"><a href="{% url 'login' %}">{% translate "Back to login" %}</a></p>
+  </div>
+</div>
+{% endblock %}

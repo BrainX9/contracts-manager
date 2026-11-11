@@ -1,0 +1,44 @@
+{% load i18n %}
+<div class="card card-body bg-body-tertiary mb-3">
+  <h3 class="h6 mb-3">{% if document %}{% translate "Edit document" %}{% else %}{% translate "New document" %}{% endif %}</h3>
+  {% if not document %}
+  <ul class="nav nav-pills nav-fill small mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link py-1{% if source == 'upload' %} active{% endif %}" href="{{ action_url }}?source=upload"
+         {% if use_htmx %}hx-get="{{ action_url }}?source=upload" hx-target="#document-form"{% endif %}{% if source == 'upload' %} aria-current="true"{% endif %}><i class="bi bi-upload me-1" aria-hidden="true"></i>{% translate "Upload file" %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link py-1{% if source == 'paperless' %} active{% endif %}" href="{{ action_url }}?source=paperless"
+         {% if use_htmx %}hx-get="{{ action_url }}?source=paperless" hx-target="#document-form"{% endif %}{% if source == 'paperless' %} aria-current="true"{% endif %}><i class="bi bi-archive me-1" aria-hidden="true"></i>{% translate "Link Paperless document" %}</a>
+    </li>
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate
+        {% if use_htmx %}hx-post="{{ action_url }}" hx-target="#documents-section" hx-swap="outerHTML"{% endif %}>
+    {% csrf_token %}
+    {% if form.source %}{{ form.source }}{% endif %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+    {% endif %}
+    <div class="row g-2">
+      {% if source == "upload" and form.file %}
+      {% include "web/contracts/_document_field.html" with field=form.file width="col-12" %}
+      {% endif %}
+      {% if source == "paperless" and form.paperless_document_id %}
+      {% include "web/contracts/_document_field.html" with field=form.paperless_document_id width="col-sm-5" %}
+      {% include "web/contracts/_document_field.html" with field=form.name width="col-sm-7" %}
+      {% else %}
+      {% include "web/contracts/_document_field.html" with field=form.name width="col-12" %}
+      {% endif %}
+      {% include "web/contracts/_document_field.html" with field=form.notes width="col-12" %}
+    </div>
+    <div class="mt-3">
+      <button type="submit" class="btn btn-primary btn-sm">{% if source == "upload" and not document %}{% translate "Upload" %}{% else %}{% translate "Save" %}{% endif %}</button>
+      {% if use_htmx %}
+      <button type="button" class="btn btn-link btn-sm" onclick="this.closest('#document-form').replaceChildren()">{% translate "Cancel" %}</button>
+      {% else %}
+      <a class="btn btn-link btn-sm" href="{% url 'contract_detail' contract.pk %}">{% translate "Cancel" %}</a>
+      {% endif %}
+    </div>
+  </form>
+</div>

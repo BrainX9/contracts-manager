@@ -1,0 +1,16 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Delete contract" %}{% endblock %}
+{% block content %}
+<div class="card border-danger" style="max-width: 36rem">
+  <div class="card-body">
+    <h1 class="h4 card-title">{% translate "Delete contract" %}</h1>
+    <p>{% blocktranslate with name=contract.name reference=contract.reference %}Do you really want to delete the contract “{{ name }}” ({{ reference }}) including all its cost entries? This cannot be undone.{% endblocktranslate %}</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">{% translate "Delete" %}</button>
+      <a class="btn btn-link" href="{% url 'contract_detail' contract.pk %}">{% translate "Cancel" %}</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

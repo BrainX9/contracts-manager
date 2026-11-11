@@ -1,0 +1,42 @@
+{% load i18n web_format %}
+{# Verträge eines Stammdaten-Objekts; hide blendet die Spalte des Objekts selbst aus #}
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-2">
+      <h2 class="h5 card-title mb-0">{% translate "Contracts" %}</h2>
+      {% if rows %}
+      <span class="stat-label">{% translate "Total per month" %} <span class="fw-semibold amount text-body">{{ totals.monthly|euro }}</span>
+        · {% translate "Total per year" %} <span class="fw-semibold amount text-body">{{ totals.yearly|euro }}</span></span>
+      {% endif %}
+    </div>
+    {% if rows %}
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">{% translate "Contract" %}</th>
+            {% if hide != "provider" %}<th scope="col" class="d-none d-xl-table-cell">{% translate "Contract partner" %}</th>{% endif %}
+            {% if hide != "category" %}<th scope="col" class="d-none d-md-table-cell">{% translate "Category" %}</th>{% endif %}
+            {% if hide != "consumer" %}<th scope="col" class="d-none d-sm-table-cell">{% translate "Consumer" %}</th>{% endif %}
+            <th scope="col" class="text-end text-nowrap">{% translate "Per month" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td><a href="{% url 'contract_detail' row.contract.pk %}">{{ row.contract.name }}</a>
+              <div class="small text-body-secondary">{{ row.contract.reference }}</div></td>
+            {% if hide != "provider" %}<td class="d-none d-xl-table-cell"><span class="d-inline-flex align-items-center gap-2">{% if row.provider_visible %}{% include "web/includes/provider_logo.html" with provider=row.contract.provider size="sm" %}<a href="{% url 'provider_detail' row.contract.provider.pk %}" class="link-body-emphasis">{{ row.contract.provider.name }}</a>{% else %}{{ row.contract.provider.name }}{% endif %}</span></td>{% endif %}
+            {% if hide != "category" %}<td class="d-none d-md-table-cell">{{ row.contract.category }}</td>{% endif %}
+            {% if hide != "consumer" %}<td class="d-none d-sm-table-cell">{{ row.contract.consumer.name|default:"–" }}</td>{% endif %}
+            <td class="text-end amount">{{ row.monthly|euro }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-body-secondary mb-0">{{ empty_text }}</p>
+    {% endif %}
+  </div>
+</div>

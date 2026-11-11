@@ -1,0 +1,69 @@
+{% extends "web/base.html" %}
+{% load i18n web_format %}
+{% block title %}{{ provider.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'provider_list' %}">{% translate "Contract partners" %}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ provider.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    {% include "web/includes/provider_logo.html" with provider=provider size="lg" %}
+    <h1 class="h3 mb-0">{{ provider.name }}</h1>
+  </div>
+  {% include "web/includes/object_actions.html" with prefix="provider" object=provider %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3">{% translate "Contact" %}</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">{% translate "Address" %}</dt>
+          <dd class="col-sm-8">
+            {% if provider.street or provider.postal_code or provider.city %}
+            {% if provider.street %}{{ provider.street }}<br>{% endif %}
+            {% if provider.postal_code or provider.city %}{{ provider.postal_code }} {{ provider.city }}<br>{% endif %}
+            {% endif %}
+            {{ provider.get_country_display }}
+          </dd>
+          <dt class="col-sm-4">{% translate "Contact person" %}</dt>
+          <dd class="col-sm-8">{{ provider.contact_person|default:"–" }}</dd>
+          <dt class="col-sm-4">{% translate "Email" %}</dt>
+          <dd class="col-sm-8">{% if provider.email %}<a href="mailto:{{ provider.email }}">{{ provider.email }}</a>{% else %}–{% endif %}</dd>
+          <dt class="col-sm-4">{% translate "Customer number" %}</dt>
+          <dd class="col-sm-8">{{ provider.customer_number|default:"–" }}</dd>
+          {% if provider.paperless_correspondent_id %}
+          <dt class="col-sm-4">{% translate "Paperless" %}</dt>
+          <dd class="col-sm-8">
+            {% if provider.paperless_correspondent_url %}
+            <a href="{{ provider.paperless_correspondent_url }}" target="_blank" rel="noopener noreferrer">{% translate "Open partner documents" %}</a>
+            {% else %}{% blocktranslate with id=provider.paperless_correspondent_id %}Correspondent {{ id }}{% endblocktranslate %}{% endif %}
+          </dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {% if provider.notes %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Notes" %}</h2>
+        <p class="mb-0" style="white-space: pre-line">{{ provider.notes }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% translate "No contracts with this partner that you are allowed to see." as empty_text %}
+    {% include "web/includes/contract_table.html" with hide="provider" empty_text=empty_text %}
+  </div>
+
+  <div class="col-lg-5">
+    {% include "web/includes/access_card.html" with object=provider %}
+  </div>
+</div>
+{% endblock %}

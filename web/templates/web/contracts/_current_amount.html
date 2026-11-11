@@ -1,0 +1,10 @@
+{% load i18n web_format %}
+{# Aktueller Betrag im Kopf der Detailseite; mit oob=True als HTMX-Zusatzantwort #}
+<div id="current-amount" class="text-lg-end"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% if current %}
+  <div class="stat-value amount">{{ current.amount|euro }}</div>
+  <div class="stat-label">{{ current.get_payment_interval_display }}{% if current.payment_interval != "monthly" %} · {{ current_monthly|euro }} / {% translate "month" %}{% endif %}</div>
+  {% else %}
+  <div class="stat-label">{% translate "No current costs." %}</div>
+  {% endif %}
+</div>

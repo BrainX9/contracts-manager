@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+{% block content %}
+<h1 style="margin:0 0 16px; font-size:20px; color:#111827;">{% translate "Test email" %}</h1>
+<p style="margin:0 0 12px; line-height:1.5;">{% blocktranslate with name=user.get_username %}Hello {{ name }},{% endblocktranslate %}</p>
+<p style="margin:0; line-height:1.5;">{% translate "This is a test email from Contracts Manager. If you can read it, sending emails works." %}</p>
+{% endblock %}
