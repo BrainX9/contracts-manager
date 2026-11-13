@@ -52,7 +52,7 @@ heruntergeladen.
 | `pgvector/pgvector:pg17` | Docker Hub | PostgreSQL 17 |
 
 Das App-Image hat zwei Arten von Namen (Tags): `latest` ist immer die
-neueste Version, `0.1.0` o. Ä. eine feste. Standard ist `latest`;
+neueste Version, `0.2.0` o. Ä. eine feste. Standard ist `latest`;
 wie du eine Version festhältst, steht unter „Updates einspielen“.
 
 ---
@@ -181,7 +181,7 @@ gleich `.env`.
 
 > **Hinweis:** `main` lädt die aktuelle Fassung der Dateien. Willst du genau
 > die Dateien einer bestimmten Version, schreibe statt `main` ihren Tag in
-> die Adresse, z. B. `v0.1.0`.
+> die Adresse, z. B. `v0.2.0`.
 
 Die Container `app` und `worker` laufen nicht als root, sondern als
 Benutzer und Gruppe `1000`. Dieser Benutzer muss in `media` schreiben
@@ -572,7 +572,7 @@ wenn die ganze Synology gestohlen wird.
 
 ## Updates einspielen
 
-Wenn es eine neue Version gibt (Tag `v0.1.0` o. Ä.):
+Wenn es eine neue Version gibt (Tag `v0.2.0` o. Ä.):
 
 1. **Sicherung:** In DSM Aufgabenplanung die Aufgabe `contracts-backup`
    markieren › **Ausführen** (Schritt 10).
@@ -622,7 +622,7 @@ vi /volume1/docker/contracts-manager/.env
 ```
 
 ```
-APP_IMAGE_TAG=0.1.0
+APP_IMAGE_TAG=0.2.0
 ```
 
 Dann ändert `docker compose pull` nichts, bis du die Zeile auf die nächste
@@ -732,7 +732,7 @@ Dann den neuen Ordner ebenfalls in einem verschlüsselten Ordner anlegen
 | `app` oder `worker`-Log: `Permission denied: '/app/media/...'` | `media` gehört nicht dem Benutzer `1000` | `chown` aus Schritt 4 ausführen |
 | `app` bleibt `unhealthy` | Datenbank nicht erreichbar oder Fehler beim Start | `sudo docker compose logs app` lesen |
 | `curl: (22) ... 404` oder `Not Found` beim Holen der Dateien | Die Adresse ist falsch geschrieben, oder der Tag darin existiert nicht | Adresse aus Schritt 4 neu kopieren |
-| `manifest unknown` / `not found` beim Laden des Images | die Version in `APP_IMAGE_TAG` gibt es nicht (Tippfehler, ohne `v`) | Schreibweise prüfen, z. B. `0.1.0`, oder die Zeile entfernen für `latest` |
+| `manifest unknown` / `not found` beim Laden des Images | die Version in `APP_IMAGE_TAG` gibt es nicht (Tippfehler, ohne `v`) | Schreibweise prüfen, z. B. `0.2.0`, oder die Zeile entfernen für `latest` |
 | Anmeldung nicht möglich, kein Benutzer vorhanden | `ADMIN_USERNAME`/`ADMIN_PASSWORD` fehlen in der `.env`, oder es gab schon einen Administrator (dann werden sie ignoriert), oder das Passwort war ungültig | `sudo docker compose logs app \| grep -i administrator` lesen; Werte korrigieren und `sudo docker compose up -d`, oder `createsuperuser` (Schritt 7) |
 | Aufgabe `contracts-backup` meldet „Sicherung fehlgeschlagen“ | Container `contracts-manager-db` läuft nicht oder heißt anders (alte Compose-Datei) | `sudo docker ps` prüfen; ggf. Compose-Datei erneuern (siehe „Updates einspielen“) |
 

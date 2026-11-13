@@ -2,6 +2,7 @@ import shutil
 import sys
 import tempfile
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from contracts import backup
@@ -39,6 +40,11 @@ class Command(BaseCommand):
             f"Backup vom {info.created_at}, Version {info.app_version}: "
             f"{info.total_objects} Datensätze, {info.media_files} Dateien"
         )
+        if info.is_older:
+            self.stdout.write(
+                f"Das Backup stammt aus der älteren Version {info.app_version} und wird beim Import "
+                f"auf Version {settings.APP_VERSION} umgestellt."
+            )
         if not options["yes"]:
             answer = input("Alle vorhandenen Daten und Dateien werden ersetzt. Fortfahren? [ja/NEIN] ")
             if answer.strip().lower() not in ("ja", "j", "yes", "y"):

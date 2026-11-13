@@ -16,7 +16,8 @@ from contracts.backup import PASSWORD_RESET_MARKER
 from contracts import permissions as perms
 from contracts.mail import build_mail, user_language
 from contracts.models import (
-    Category, Consumer, Contract, CostEntry, Document, Provider, Reminder, category_tree_order,
+    Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider, Reminder,
+    category_tree_order,
 )
 
 from .models import UserPreferences
@@ -180,7 +181,7 @@ class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Contract
         fields = [
-            "name", "short_description", "provider", "category", "consumer",
+            "name", "short_description", "provider", "category", "consumer", "payment_method",
             "start_date", "term_value", "term_unit", "contract_number", "notes",
         ]
         widgets = {
@@ -190,7 +191,10 @@ class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, model in (("provider", Provider), ("category", Category), ("consumer", Consumer)):
+        for name, model in (
+            ("provider", Provider), ("category", Category), ("consumer", Consumer),
+            ("payment_method", PaymentMethod),
+        ):
             self.limit_to_visible(name, model)
 
 
@@ -243,6 +247,34 @@ class ConsumerForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
                 "unique_together": _("The owner already has a consumer with this name."),
             },
         }
+
+
+class PaymentMethodForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
+    """
+    Zahlungsmethode anlegen und bearbeiten (Version 0.2.0). Der Name ist pro
+    Eigentümer eindeutig. Das Icon lässt sich hochladen, ersetzen oder
+    entfernen.
+    """
+    remove_icon = forms.BooleanField(label=_("Remove icon"), required=False)
+
+    class Meta:
+        model = PaymentMethod
+        fields = ["name", "icon"]
+        widgets = {
+            "icon": forms.FileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+        }
+        error_messages = {
+            NON_FIELD_ERRORS: {
+                "unique_together": _("The owner already has a payment method with this name."),
+            },
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # "Entfernen" gilt nur, wenn nicht gleichzeitig ein neues Icon kommt
+        if cleaned_data.get("remove_icon") and "icon" not in self.files:
+            cleaned_data["icon"] = False
+        return cleaned_data
 
 
 class CategoryForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):

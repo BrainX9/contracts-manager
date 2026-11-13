@@ -1,0 +1,6 @@
+{% comment %}
+Icon einer Zahlungsmethode oder neutrales Kartensymbol als Platzhalter.
+Parameter: payment_method, size ("sm", "md", "lg"; Standard "md"),
+optional icon (abweichende Datei, z. B. das gespeicherte Icon im Formular).
+Nur einbinden, wenn der Benutzer die Zahlungsmethode lesen darf.
+{% endcomment %}{% with file=icon|default:payment_method.icon %}<span class="provider-logo provider-logo-{{ size|default:'md' }}" aria-hidden="true">{% if file %}<img src="{{ file.url }}" alt="" loading="lazy">{% else %}<i class="bi bi-credit-card"></i>{% endif %}</span>{% endwith %}

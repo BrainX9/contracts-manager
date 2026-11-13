@@ -1,0 +1,41 @@
+{% load i18n web_format %}
+{# Gehört über das form-Attribut zum Suchformular, wird mit dem Ergebnis aktualisiert #}
+<input type="hidden" name="sort" value="{{ sort }}" form="payment-method-filters">
+<div id="results-indicator" class="htmx-indicator position-absolute top-0 end-0">
+  <div class="spinner-border spinner-border-sm text-secondary" role="status">
+    <span class="visually-hidden">{% translate "Loading…" %}</span>
+  </div>
+</div>
+
+<p class="stat-label mb-3">
+  {% blocktranslate count counter=rows|length %}{{ counter }} payment method{% plural %}{{ counter }} payment methods{% endblocktranslate %}{% if q %} · {% blocktranslate with total=visible_count %}filtered from {{ total }}{% endblocktranslate %} · <a href="{% url 'payment_method_list' %}">{% translate "Reset filters" %}</a>{% endif %}
+</p>
+
+{% if rows %}
+<div class="card card-table">
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th scope="col">{% include "web/includes/sort_link.html" with key="name" label=_("Payment method") %}</th>
+        <th scope="col" class="text-end d-none d-sm-table-cell">{% include "web/includes/sort_link.html" with key="contracts" label=_("Contracts") %}</th>
+        <th scope="col" class="text-end">{% include "web/includes/sort_link.html" with key="monthly" label=_("Per month") %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><span class="d-inline-flex align-items-center gap-2">{% include "web/includes/payment_method_icon.html" with payment_method=row.object size="sm" %}<a href="{% url 'payment_method_detail' row.object.pk %}" class="fw-medium">{{ row.object.name }}</a></span></td>
+        <td class="text-end d-none d-sm-table-cell">{{ row.contract_count }}</td>
+        <td class="text-end amount">{{ row.monthly|euro }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  {% if q %}{% translate "No payment methods match the search." %}{% else %}{% translate "There are no payment methods yet that you are allowed to see." %}{% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,64 @@
+name: Feature request
+description: Suggest a new feature or an improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your idea. You can answer in English or German.
+        Please describe one feature per issue and keep each answer to its field.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What do you want to achieve, and what is in the way today?
+      placeholder: |
+        As a user with many subscriptions I want to see which contracts are paid by credit card, so that I can check my card statement.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should it work from the user's point of view? Name pages, fields and buttons where you can.
+      placeholder: |
+        The contract list gets a filter "Payment method". Selecting a value shows only contracts with this payment method, and the total below the list follows the filter.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: A list of checks that tell when the feature is done.
+      placeholder: |
+        - The filter lists only payment methods used in contracts I can see
+        - The filter can be combined with the search and the other filters
+        - The total per month and per year matches the filtered contracts
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Contracts
+        - Costs
+        - Master data
+        - Documents
+        - Reminders and email
+        - Sharing and permissions
+        - Backup and import
+        - AI assistant
+        - Single sign-on
+        - Installation / Docker
+        - Documentation
+        - Other
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other solutions or workarounds you have thought about or use today.
+  - type: textarea
+    id: context
+    attributes:
+      label: Out of scope / additional context
+      description: What this request does not cover, and anything else that helps (links, examples, screenshots without personal data).

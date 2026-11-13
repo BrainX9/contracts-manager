@@ -20,12 +20,14 @@ from django_htmx.http import reswap, retarget
 from contracts import logos
 from contracts import permissions as perms
 from contracts.models import (
-    CENT, Category, Consumer, Contract, CostEntry, Provider, Reminder, category_tree_order, total_current_costs,
+    CENT, Category, Consumer, Contract, CostEntry, PaymentMethod, Provider, Reminder, category_tree_order,
+    total_current_costs,
 )
 from contracts.permissions import visible_to
 
 from .forms import (
-    CategoryForm, ConsumerForm, ContractForm, CostEntryForm, LoginForm, PreferencesForm, ProviderForm, ReminderForm,
+    CategoryForm, ConsumerForm, ContractForm, CostEntryForm, LoginForm, PaymentMethodForm, PreferencesForm,
+    ProviderForm, ReminderForm,
     SharingForm, WebPasswordChangeForm, WebPasswordResetForm, WebSetPasswordForm,
 )
 from .models import SiteSettings, UserPreferences
@@ -356,6 +358,7 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             "category": _selected_id(request, "category"),
             "consumer": _selected_id(request, "consumer"),
             "provider": _selected_id(request, "provider"),
+            "payment_method": _selected_id(request, "payment_method"),
         }
         sort = get_sort(request, CONTRACT_SORTS)
 
@@ -371,7 +374,7 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             contracts = contracts.filter(
                 Q(category_id=filters["main_category"]) | Q(category__parent_id=filters["main_category"])
             )
-        for name in ("category", "consumer", "provider"):
+        for name in ("category", "consumer", "provider", "payment_method"):
             if filters[name]:
                 contracts = contracts.filter(**{f"{name}_id": filters[name]})
 
@@ -397,6 +400,9 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             "categories": category_tree_order(Category.objects.filter(pk__in=visible.values("category"))),
             "consumers": Consumer.objects.filter(pk__in=visible.values("consumer")).order_by("name"),
             "providers": Provider.objects.filter(pk__in=visible.values("provider")).order_by("name"),
+            "payment_methods": PaymentMethod.objects.filter(
+                pk__in=visible.values("payment_method")
+            ).order_by("name"),
         })
         return context
 
@@ -412,7 +418,9 @@ class ContractDetailView(LoginRequiredMixin, OwnedObjectMixin, DetailView):
     context_object_name = "contract"
 
     def get_queryset(self):
-        return Contract.objects.select_related("provider", "category__parent", "consumer", "owner")
+        return Contract.objects.select_related(
+            "provider", "category__parent", "consumer", "payment_method", "owner",
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -428,6 +436,9 @@ class ContractDetailView(LoginRequiredMixin, OwnedObjectMixin, DetailView):
             "provider_visible": perms.can_view(user, contract.provider),
             "category_visible": perms.can_view(user, contract.category),
             "consumer_visible": contract.consumer_id is not None and perms.can_view(user, contract.consumer),
+            "payment_method_visible": (
+                contract.payment_method_id is not None and perms.can_view(user, contract.payment_method)
+            ),
             "roles": perms.get_roles(contract) if can_share else None,
             "reminder": Reminder.objects.filter(contract=contract).prefetch_related("recipients").first(),
         })
@@ -469,8 +480,8 @@ class ReminderView(LoginRequiredMixin, View):
 
 class ContractFormLinksMixin:
     """
-    Im Vertragsformular neben Partner, Kategorie und Verbraucher einen Link
-    zum Anlegen, wenn der Benutzer das darf.
+    Im Vertragsformular neben Partner, Kategorie, Verbraucher und
+    Zahlungsmethode einen Link zum Anlegen, wenn der Benutzer das darf.
     """
 
     def get_context_data(self, **kwargs):
@@ -484,6 +495,8 @@ class ContractFormLinksMixin:
              _("New category")),
             (form["consumer"], user.has_perm("contracts.add_consumer"), reverse("consumer_create"),
              _("New consumer")),
+            (form["payment_method"], user.has_perm("contracts.add_paymentmethod"),
+             reverse("payment_method_create"), _("New payment method")),
         ]
         return context
 
@@ -982,6 +995,74 @@ class ConsumerSharingView(OwnedSharingView):
     list_label = _("Consumers")
     help_text = _(
         "Readers may view the consumer and use it in their contracts. Editors may also "
+        "edit it, but not delete it or change the sharing. The owner has full access."
+    )
+
+
+# --- Zahlungsmethoden (Version 0.2.0) ----------------------------------------
+
+class PaymentMethodMixin:
+    model = PaymentMethod
+    url_prefix = "payment_method"
+    contract_field = "payment_method"
+
+
+class PaymentMethodListView(PaymentMethodMixin, MasterDataListView):
+    template_name = "web/payment_methods/list.html"
+    results_template_name = "web/payment_methods/_results.html"
+
+
+class PaymentMethodDetailView(PaymentMethodMixin, MasterDataDetailView):
+    template_name = "web/payment_methods/detail.html"
+    context_object_name = "payment_method"
+
+
+class PaymentMethodCreateView(PaymentMethodMixin, MasterDataCreateView):
+    form_class = PaymentMethodForm
+    template_name = "web/payment_methods/form.html"
+    success_message = _("The payment method has been created.")
+
+
+class PaymentMethodUpdateView(PaymentMethodMixin, MasterDataUpdateView):
+    form_class = PaymentMethodForm
+    template_name = "web/payment_methods/form.html"
+    success_message = _("The payment method has been saved.")
+
+
+class PaymentMethodDeleteView(PaymentMethodMixin, MasterDataDeleteView):
+    template_name = "web/payment_methods/confirm_delete.html"
+    context_object_name = "payment_method"
+    protected_message = _("The payment method cannot be deleted because it is still used in contracts.")
+    deleted_message = _("The payment method “%(name)s” has been deleted.")
+
+
+@login_required
+def payment_method_icon(request, filename):
+    """
+    Liefert das Icon einer Zahlungsmethode aus (Adresse aus
+    ``PaymentMethod.icon.url``). Nur mit Leserecht, sonst 404.
+    """
+    name = f"{logos.PAYMENT_ICON_DIR}/{filename}"
+    payment_method = visible_to(request.user, PaymentMethod.objects.filter(icon=name)).first()
+    if payment_method is None:
+        raise Http404
+    try:
+        file = payment_method.icon.open("rb")
+    except FileNotFoundError:
+        raise Http404
+    response = FileResponse(file, content_type="image/png")
+    # Wie beim Logo: der Dateiname ändert sich mit jedem neuen Icon
+    patch_cache_control(response, private=True, max_age=7 * 24 * 3600)
+    return response
+
+
+class PaymentMethodSharingView(OwnedSharingView):
+    model = PaymentMethod
+    list_url_name = "payment_method_list"
+    detail_url_name = "payment_method_detail"
+    list_label = _("Payment methods")
+    help_text = _(
+        "Readers may view the payment method and use it in their contracts. Editors may also "
         "edit it, but not delete it or change the sharing. The owner has full access."
     )
 

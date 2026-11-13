@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.2.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -40,7 +40,7 @@ The user interface is available in **English and German** (per user).
 <td width="50%" valign="top">
 
 ### 📄 Contracts and costs
-- Contracts with partner, category, consumer, start date, term, contract number and notes
+- Contracts with partner, category, consumer, **payment method**, start date, term, contract number and notes
 - Automatic reference numbers per year (e.g. `20260001`)
 - Cost history with payment interval (weekly, monthly, quarterly, yearly); the current amount is picked by date
 - **Documents** per contract: upload files (PDF, images, Office, up to 20 MB) or link Paperless-ngx documents, and attach them to cost entries
@@ -54,6 +54,7 @@ The user interface is available in **English and German** (per user).
 - **Contract partners** with address, contact details, customer number and **logo upload** (resized, metadata removed)
 - **Categories** as a two-level tree (e.g. *Insurance › Car insurance*)
 - **Consumers** such as a person, a car or the household
+- **Payment methods** with an icon; PayPal, American Express, Visa and direct debit (“Lastschrift”) come as editable defaults
 - Everything is maintained in the web interface
 
 </td>
@@ -92,7 +93,7 @@ The user interface is available in **English and German** (per user).
 
 ### 🔗 Integrations, AI and design
 - **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, OpenAI or OpenAI-compatible providers; local text recognition (Tesseract)
-- **Backup and import** of all data and files as a single ZIP file (without passwords), in the app or on the command line
+- **Backup and import** of all data and files as a single ZIP file (without passwords), in the app or on the command line; backups of older versions (0.1.0 and later) can be imported
 - **Single sign-on** with the Synology SSO Server (OpenID Connect), local login stays available
 - **Paperless-ngx** links to documents and correspondents (links only, no access to Paperless)
 - Clean, responsive interface with a sidebar, **light and dark mode** following the system setting
@@ -195,33 +196,42 @@ For a production setup on a Synology NAS (project folder, reverse proxy with HTT
 | | |
 |---|---|
 | Image | `ghcr.io/brainx9/contracts-manager` |
-| Tags | `latest` (newest release) and one per version, e.g. `0.1.0` |
+| Tags | `latest` (newest release) and one per version, e.g. `0.2.0` |
 | Platforms | `linux/amd64` and `linux/arm64` |
 | Built by | GitHub Actions on every version tag (`v…`), after the tests passed |
 
-- **Fixed version:** set `APP_IMAGE_TAG=0.1.0` in `.env` to stay on one version; the default is `latest`.
+- **Fixed version:** set `APP_IMAGE_TAG=0.2.0` in `.env` to stay on one version; the default is `latest`.
 - **Update:** `docker compose pull`, `docker compose up -d` (see [Operations](docs/operations.md#update)).
 - **Build it yourself** (for example for another platform): `docker build -t ghcr.io/brainx9/contracts-manager:latest .` in the repository folder, then `docker compose up -d`. Compose uses the local image as long as it exists. For development use `docker-compose.dev.yml`, which builds locally and mounts the code ([Development](docs/development.md)).
 
 ## Configuration
 
-All settings come from environment variables in `.env` – no secrets in the code. The most important ones:
+All settings come from environment variables in `.env` – no secrets in the code.
 
 | Variable | Purpose |
 |---|---|
 | `SECRET_KEY`, `DEBUG` | Django basics |
 | `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `USE_HTTPS` | Host names and HTTPS behind a reverse proxy |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Database |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL` | First administrator, created on the first start if there is no superuser yet |
 | `DATA_PATH`, `APP_PORT` | Where data lives on the host, published port |
-| `APP_IMAGE_TAG` | Version of the Docker image (default `latest`, e.g. `0.1.0` to stay on one version) |
+| `APP_IMAGE_TAG` | Version of the Docker image (default `latest`, e.g. `0.2.0` to stay on one version) |
 | `APP_UID`, `APP_GID` | User and group the containers run as (default `1000`, not root) |
-| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP for reminders, invitations and password reset |
+| `GUNICORN_CMD_ARGS` | Replaces the gunicorn options of the image (bind address, workers, timeout) |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP for reminders, invitations and password reset (`EMAIL_USE_SSL` for port 465) |
 | `APP_BASE_URL` | Public address of the app, used for links in emails |
 | `REMINDER_SEND_TIME` | Daily time for reminders (default `07:00`) |
 | `OIDC_ENABLED`, `OIDC_OP_BASE_URL`, `OIDC_RP_CLIENT_ID`, `OIDC_RP_CLIENT_SECRET`, `OIDC_CREATE_USERS` | Single sign-on |
+| `OIDC_USERNAME_CLAIM`, `OIDC_RP_SCOPES`, `OIDC_RP_SIGN_ALGO` | Single sign-on: claim with the user name (default `username`), scopes, signing algorithm |
+| `OIDC_OP_AUTHORIZATION_ENDPOINT`, `OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT` | Single sign-on endpoints for providers other than the Synology SSO Server (default: derived from `OIDC_OP_BASE_URL`) |
 | `PAPERLESS_URL` | Base address of Paperless-ngx for links |
 | `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | Optional AI assistant |
+| `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT` | AI assistant: thinking depth (Claude), length of an answer, tool rounds per answer, timeout in seconds |
 | `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_MINUTES`, `SECURE_HSTS_SECONDS` | Login lockout after failed attempts, optional HSTS |
+| `DJANGO_LOG_LEVEL` | Log level of Django (default `WARNING`) |
+| `BACKUP_DIR`, `BACKUP_RETENTION_DAYS` | Only for `scripts/backup.sh`: target folder and days to keep database dumps |
+
+Set by `docker-compose.yml` itself, not in `.env`: `DATABASE_URL` (built from the `POSTGRES_*` values) and `MEDIA_ROOT` (`/app/media` in the container).
 
 [`.env.example`](.env.example) lists every variable with comments. Details: [configuration guide](docs/configuration.md).
 
@@ -250,7 +260,7 @@ Planned, not yet implemented:
 > [!IMPORTANT]
 > This project was developed primarily by **[Claude](https://www.anthropic.com/claude)** (Anthropic's AI assistant, via [Claude Code](https://claude.com/claude-code)), working phase by phase under the direction and review of the maintainer. Requirements, decisions and testing are human; most of the code, tests and documentation were written by Claude.
 
-Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 360) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
+Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 420) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
 
 ## License
 

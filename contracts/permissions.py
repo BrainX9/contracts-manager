@@ -336,9 +336,9 @@ def assignable_groups(actor):
 
 
 def owned_models():
-    from .models import Category, Consumer, Contract, Provider
+    from .models import Category, Consumer, Contract, PaymentMethod, Provider
 
-    return (Contract, Provider, Category, Consumer)
+    return (Contract, Provider, Category, Consumer, PaymentMethod)
 
 
 def owned_object_counts(user):
@@ -353,10 +353,10 @@ def ownership_conflicts(from_user, to_user):
     Objekte, die beim Übertragen gegen die Eindeutigkeit pro Eigentümer
     verstoßen würden (gleicher Name beim neuen Eigentümer).
     """
-    from .models import Category, Consumer, Provider
+    from .models import Category, Consumer, PaymentMethod, Provider
 
     conflicts = []
-    for model in (Provider, Consumer):
+    for model in (Provider, Consumer, PaymentMethod):
         names = model.objects.filter(owner=to_user).values_list("name", flat=True)
         for obj in model.objects.filter(owner=from_user, name__in=list(names)):
             conflicts.append(obj)

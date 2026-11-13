@@ -42,6 +42,8 @@
           <dd class="col-sm-8">{% if category_visible %}<a href="{% url 'category_detail' contract.category.pk %}">{{ contract.category }}</a>{% else %}{{ contract.category }}{% endif %}</dd>
           <dt class="col-sm-4">{% translate "Consumer" %}</dt>
           <dd class="col-sm-8">{% if consumer_visible %}<a href="{% url 'consumer_detail' contract.consumer.pk %}">{{ contract.consumer.name }}</a>{% else %}{{ contract.consumer.name|default:"–" }}{% endif %}</dd>
+          <dt class="col-sm-4">{% translate "Payment method" %}</dt>
+          <dd class="col-sm-8">{% if payment_method_visible %}<span class="d-inline-flex align-items-center gap-2">{% include "web/includes/payment_method_icon.html" with payment_method=contract.payment_method size="sm" %}<a href="{% url 'payment_method_detail' contract.payment_method.pk %}">{{ contract.payment_method.name }}</a></span>{% else %}{{ contract.payment_method.name|default:"–" }}{% endif %}</dd>
           <dt class="col-sm-4">{% translate "Start date" %}</dt>
           <dd class="col-sm-8">{{ contract.start_date|date:"SHORT_DATE_FORMAT"|default:"–" }}</dd>
           <dt class="col-sm-4">{% translate "Term" %}</dt>

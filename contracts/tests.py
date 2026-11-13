@@ -12,9 +12,15 @@ from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import ProtectedError
 from . import permissions as perms
 from .models import (
-    Provider, Category, Consumer, Contract, CostEntry, Country, Document, total_current_costs,
+    Provider, Category, Consumer, Contract, CostEntry, Country, Document, PaymentMethod, total_current_costs,
     ProviderGroupObjectPermission, ProviderUserObjectPermission, Reminder,
 )
+
+
+def SimpleUploadedFileFactory(name, content):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    return SimpleUploadedFile(name, content)
 
 
 def default_owner():
@@ -762,6 +768,7 @@ class DefaultGroupsTest(TestCase):
         codenames = set(group.permissions.values_list("codename", flat=True))
         self.assertEqual(codenames, {
             "add_contract", "add_costentry", "add_provider", "add_category", "add_consumer",
+            "add_paymentmethod",
         })
 
     def test_new_users_join_group_all_and_see_shares(self):
@@ -1144,6 +1151,341 @@ class ProviderLogoTest(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             provider.delete()
         self.assertFalse(os.path.exists(path))
+
+
+class PaymentMethodTest(TestCase):
+    """Version 0.2.0: Zahlungsmethode als Stammdaten mit Rollen und Icon"""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=self.media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+
+        self.owner = User.objects.create_user("eigentuemer")
+        self.editor = User.objects.create_user("bearbeiter")
+        self.reader = User.objects.create_user("leser")
+        self.member = User.objects.create_user("familie")
+        self.stranger = User.objects.create_user("fremd")
+        self.admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.family = Group.objects.create(name="Familie")
+        self.member.groups.add(self.family)
+        self.method = PaymentMethod.objects.create(owner=self.owner, name="Lastschrift")
+
+    def upload(self, content, name="icon.png"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        return SimpleUploadedFile(name, content)
+
+    def make_method(self, content=None, name="Kreditkarte"):
+        method = PaymentMethod(owner=self.owner, name=name)
+        if content is not None:
+            method.icon = self.upload(content)
+        method.full_clean()
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        return method
+
+    def make_contract(self, payment_method=None):
+        return Contract.objects.create(
+            owner=self.owner, name="Strom",
+            provider=Provider.objects.create(owner=self.owner, name="Stadtwerke"),
+            category=Category.objects.create(owner=self.owner, name="Energie"),
+            payment_method=payment_method,
+        )
+
+    def rights(self, user):
+        return (
+            perms.can_view(user, self.method), perms.can_change(user, self.method),
+            perms.can_delete(user, self.method), perms.can_share(user, self.method),
+        )
+
+    # Rollen
+
+    def test_rights_per_role(self):
+        perms.grant_role(self.method, self.editor, perms.EDITOR)
+        perms.grant_role(self.method, self.reader, perms.READER)
+        perms.grant_role(self.method, self.family, perms.READER)
+        expected = {
+            self.owner: (True, True, True, True),
+            self.admin: (True, True, True, True),
+            self.editor: (True, True, False, False),
+            self.reader: (True, False, False, False),
+            self.member: (True, False, False, False),
+            self.stranger: (False, False, False, False),
+        }
+        for user, rights in expected.items():
+            with self.subTest(user=user.username):
+                self.assertEqual(self.rights(user), rights)
+
+    def test_visible_and_editable_querysets(self):
+        perms.grant_role(self.method, self.editor, perms.EDITOR)
+        perms.grant_role(self.method, self.reader, perms.READER)
+        queryset = PaymentMethod.objects.all()
+        self.assertEqual(list(perms.visible_to(self.reader, queryset)), [self.method])
+        self.assertEqual(list(perms.visible_to(self.stranger, queryset)), [])
+        self.assertEqual(list(perms.editable_by(self.editor, queryset)), [self.method])
+        self.assertEqual(list(perms.editable_by(self.reader, queryset)), [])
+
+    def test_shares_are_deleted_with_object(self):
+        from .models import PaymentMethodGroupObjectPermission, PaymentMethodUserObjectPermission
+
+        perms.grant_role(self.method, self.editor, perms.EDITOR)
+        perms.grant_role(self.method, self.family, perms.READER)
+        self.assertTrue(PaymentMethodUserObjectPermission.objects.exists())
+        self.assertTrue(PaymentMethodGroupObjectPermission.objects.exists())
+        self.method.delete()
+        self.assertFalse(PaymentMethodUserObjectPermission.objects.exists())
+        self.assertFalse(PaymentMethodGroupObjectPermission.objects.exists())
+
+    def test_users_group_may_add(self):
+        user = User.objects.create_user("neu")
+        self.assertFalse(user.has_perm("contracts.add_paymentmethod"))
+        user.groups.add(Group.objects.get(name=perms.GROUP_USERS))
+        user = User.objects.get(pk=user.pk)
+        self.assertTrue(user.has_perm("contracts.add_paymentmethod"))
+
+    # Modell
+
+    def test_name_is_unique_per_owner(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            PaymentMethod.objects.create(owner=self.owner, name="Lastschrift")
+        # Ein anderer Eigentümer darf denselben Namen verwenden
+        PaymentMethod.objects.create(owner=self.editor, name="Lastschrift")
+
+    def test_contract_field_is_optional(self):
+        contract = self.make_contract()
+        contract.full_clean()
+        self.assertIsNone(contract.payment_method)
+
+    def test_used_payment_method_is_protected(self):
+        contract = self.make_contract(self.method)
+        with self.assertRaises(ProtectedError):
+            self.method.delete()
+        contract.payment_method = None
+        contract.save()
+        self.method.delete()
+        self.assertFalse(PaymentMethod.objects.filter(pk=self.method.pk).exists())
+
+    def test_owner_with_payment_method_cannot_be_deleted(self):
+        with self.assertRaises(ProtectedError):
+            self.owner.delete()
+
+    # Eigentum übertragen
+
+    def test_transfer_includes_payment_methods(self):
+        self.assertEqual(perms.owned_object_counts(self.owner)["paymentmethod"], 1)
+        counts = perms.transfer_all_ownership(self.owner, self.editor, keep_access=True)
+        self.assertEqual(counts["paymentmethod"], 1)
+        self.method.refresh_from_db()
+        self.assertEqual(self.method.owner, self.editor)
+        self.assertTrue(perms.can_change(self.owner, self.method))
+
+    def test_transfer_conflict_on_same_name(self):
+        other = PaymentMethod.objects.create(owner=self.editor, name="Lastschrift")
+        self.assertEqual(perms.ownership_conflicts(self.owner, self.editor), [self.method])
+        self.assertEqual(perms.ownership_conflicts(self.editor, self.owner), [other])
+
+    # Icon
+
+    def test_icon_is_optional(self):
+        self.assertFalse(self.method.icon)
+
+    def test_icon_is_resized_to_png_with_random_name(self):
+        from PIL import Image
+
+        method = self.make_method(make_image("JPEG", (1000, 500)))
+        self.assertRegex(method.icon.name, r"^payment_icons/[0-9a-f]{32}\.png$")
+        with Image.open(method.icon.path) as image:
+            self.assertEqual(image.format, "PNG")
+            self.assertEqual(image.size, (256, 128))
+            self.assertNotIn("exif", image.info)
+
+    def test_icon_rejects_other_formats_and_non_images(self):
+        for name, content in (
+            ("GIF", make_image("GIF")),
+            ("SVG", b"<svg xmlns='http://www.w3.org/2000/svg'></svg>"),
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(ValidationError) as error:
+                    self.make_method(content, name=name)
+                self.assertIn("icon", error.exception.message_dict)
+
+    def test_icon_rejects_large_files(self):
+        from . import logos
+
+        with patch.object(logos, "MAX_UPLOAD_SIZE", 100):
+            with self.assertRaises(ValidationError) as error:
+                self.make_method(make_image())
+        self.assertIn("icon", error.exception.message_dict)
+
+    def test_old_icon_is_deleted_when_replaced_or_removed(self):
+        import os
+
+        method = self.make_method(make_image())
+        first = method.icon.path
+        method.icon = self.upload(make_image("PNG", (300, 300)))
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        self.assertFalse(os.path.exists(first))
+        second = method.icon.path
+        self.assertTrue(os.path.exists(second))
+
+        method.icon = None
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        self.assertFalse(os.path.exists(second))
+
+    def test_unchanged_icon_is_kept_on_save(self):
+        import os
+
+        method = self.make_method(make_image())
+        method.name = "Neuer Name"
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        self.assertTrue(os.path.exists(method.icon.path))
+
+    def test_icon_is_deleted_with_payment_method(self):
+        import os
+
+        method = self.make_method(make_image())
+        path = method.icon.path
+        with self.captureOnCommitCallbacks(execute=True):
+            method.delete()
+        self.assertFalse(os.path.exists(path))
+
+    # Admin
+
+    def test_admin_pages(self):
+        self.client.force_login(self.admin)
+        method = self.make_method(make_image())
+        contract = self.make_contract(method)
+        for url in (
+            reverse("admin:contracts_paymentmethod_changelist"),
+            reverse("admin:contracts_paymentmethod_add"),
+            reverse("admin:contracts_paymentmethod_change", args=[method.pk]),
+            reverse("admin:contracts_contract_change", args=[contract.pk]),
+        ):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 200)
+        response = self.client.get(reverse("admin:contracts_contract_change", args=[contract.pk]))
+        self.assertContains(response, 'name="payment_method"')
+
+
+class DefaultPaymentMethodsTest(TestCase):
+    """Version 0.2.0: Standard-Zahlungsmethoden, einmalig für den ersten Superuser"""
+
+    NAMES = {"PayPal", "American Express", "Visa", "Lastschrift"}
+
+    def setUp(self):
+        import shutil
+        import tempfile
+
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=self.media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+
+    def ensure(self):
+        from .payment_defaults import ensure_default_payment_methods
+
+        return ensure_default_payment_methods()
+
+    def test_nothing_without_superuser(self):
+        from web.models import SiteSettings
+
+        User.objects.create_user("anna")
+        self.assertEqual(self.ensure(), 0)
+        self.assertFalse(PaymentMethod.objects.exists())
+        self.assertFalse(SiteSettings.load().default_payment_methods_created)
+
+    def test_created_for_first_superuser_and_shared_with_all(self):
+        import os
+
+        from PIL import Image
+
+        admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        User.objects.create_superuser("zweiter", "zweiter@example.com", "test")
+        self.assertEqual(self.ensure(), 4)
+        methods = PaymentMethod.objects.all()
+        self.assertEqual({method.name for method in methods}, self.NAMES)
+        reader = User.objects.create_user("leser")
+        for method in methods:
+            with self.subTest(name=method.name):
+                self.assertEqual(method.owner, admin)
+                self.assertRegex(method.icon.name, r"^payment_icons/[0-9a-f]{32}\.png$")
+                self.assertTrue(os.path.exists(method.icon.path))
+                with Image.open(method.icon.path) as image:
+                    self.assertEqual((image.format, image.size), ("PNG", (256, 256)))
+                self.assertEqual(
+                    perms.get_roles(method)[perms.READER]["groups"], {Group.objects.get(name=perms.GROUP_ALL)},
+                )
+                self.assertTrue(perms.can_view(reader, method))
+                self.assertFalse(perms.can_change(reader, method))
+
+    def test_repeated_call_creates_no_duplicates(self):
+        User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.ensure()
+        self.assertEqual(self.ensure(), 0)
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+
+    def test_deleted_or_renamed_default_does_not_come_back(self):
+        User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.ensure()
+        PaymentMethod.objects.get(name="Visa").delete()
+        paypal = PaymentMethod.objects.get(name="PayPal")
+        paypal.name = "PayPal privat"
+        paypal.save()
+        self.assertEqual(self.ensure(), 0)
+        self.assertEqual(
+            set(PaymentMethod.objects.values_list("name", flat=True)),
+            {"PayPal privat", "American Express", "Lastschrift"},
+        )
+
+    def test_existing_method_with_same_name_is_kept(self):
+        admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        own = PaymentMethod.objects.create(owner=admin, name="Visa")
+        self.assertEqual(self.ensure(), 3)
+        own.refresh_from_db()
+        self.assertFalse(own.icon)
+        self.assertEqual(PaymentMethod.objects.filter(name="Visa").count(), 1)
+
+    def test_new_superuser_triggers_creation(self):
+        # Neuinstallation: ensure_admin oder createsuperuser nach den Migrationen
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+
+    def test_normal_user_does_not_trigger_creation(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_user("anna")
+        self.assertFalse(PaymentMethod.objects.exists())
+
+    def test_after_migrate_creates_for_existing_superuser(self):
+        # Update von 0.1.0: der Superuser existiert schon
+        from django.apps import apps as django_apps
+
+        from .payment_defaults import after_migrate
+
+        User.objects.create_superuser("admin", "admin@example.com", "test")
+        after_migrate(sender=django_apps.get_app_config("contracts"))
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+
+    def test_error_does_not_break_saving_the_superuser(self):
+        from . import payment_defaults
+
+        with patch.object(payment_defaults, "ICON_SOURCE_DIR", payment_defaults.ICON_SOURCE_DIR / "fehlt"):
+            with self.assertLogs("contracts.payment_defaults", level="ERROR"):
+                with self.captureOnCommitCallbacks(execute=True):
+                    User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.assertFalse(PaymentMethod.objects.exists())
+        # Beim nächsten Versuch klappt es
+        self.assertEqual(self.ensure(), 4)
 
 
 @override_settings(APP_BASE_URL="https://vertraege.example.test")
@@ -1801,13 +2143,104 @@ class BackupTest(TestCase):
 
         return self.rewrite(buffer, change)
 
-    def test_other_version_rejected(self):
+    def error_for(self, buffer):
+        from . import backup
+
+        with self.assertRaises(backup.BackupError) as error:
+            backup.inspect_backup(buffer)
+        return str(error.exception)
+
+    def test_newer_version_rejected(self):
         buffer, _info = self.export()
-        self.assert_rejected(self.change_manifest(buffer, app_version="0.1"))
+        newer = self.change_manifest(buffer, app_version="99.0.0")
+        self.assertIn("neueren Version 99.0.0", self.error_for(newer))
+        newer.seek(0)
+        self.assert_rejected(newer)
+
+    def test_beta_and_unknown_versions_rejected(self):
+        for version in ("0.9.1 beta", "0.9 beta", "0.1", "0.0.9", "", None, 7):
+            with self.subTest(version=version):
+                buffer, _info = self.export()
+                changed = self.change_manifest(buffer, app_version=version)
+                self.assertIn("Beta-Versionen", self.error_for(changed))
+                changed.seek(0)
+                self.assert_rejected(changed)
 
     def test_other_migration_state_rejected(self):
         buffer, _info = self.export()
         self.assert_rejected(self.change_manifest(buffer, migrations={"contracts": ["0001_initial"]}))
+        buffer, _info = self.export()
+        self.assert_rejected(self.change_manifest(buffer, migrations="kaputt"))
+        # Version 0.1.0 behauptet, aber der Stand der aktuellen Version
+        buffer, _info = self.export()
+        self.assert_rejected(self.change_manifest(buffer, app_version="0.1.0"))
+
+    def test_third_party_migration_state_is_not_compared(self):
+        from . import backup
+
+        buffer, _info = self.export()
+        manifest = self.read_json(buffer, "manifest.json")
+        migrations = dict(manifest["migrations"], auth=["0099_spaeter"], guardian=["0099_spaeter"])
+        backup.inspect_backup(self.change_manifest(buffer, migrations=migrations))
+
+    def test_current_version_is_registered(self):
+        # Bei einer neuen Version backup_upgrades.VERSIONS ergänzen
+        from django.conf import settings
+
+        from . import backup, backup_upgrades
+
+        self.assertEqual(backup_upgrades.CURRENT.version, settings.APP_VERSION)
+        state = backup.migration_state()
+        self.assertEqual(
+            backup_upgrades.CURRENT.migrations, {app: state[app] for app in backup_upgrades.OWN_APPS},
+        )
+        # Jede ältere Version hat einen Schritt zur nächsten
+        self.assertTrue(all(entry.upgrade for entry in backup_upgrades.VERSIONS[:-1]))
+
+    def test_export_import_with_payment_methods_and_icons(self):
+        from . import backup
+
+        with self.captureOnCommitCallbacks(execute=True):
+            admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        # Standardwerte sind da; einer wird gelöscht, einer kommt dazu
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+        PaymentMethod.objects.get(name="Visa").delete()
+        own = PaymentMethod(owner=self.anna, name="Überweisung")
+        own.icon = SimpleUploadedFileFactory("icon.png", make_image())
+        own.save()
+        perms.grant_role(own, self.ben, perms.EDITOR)
+        perms.grant_role(own, self.family, perms.READER)
+        self.contract.payment_method = own
+        self.contract.save()
+        icon_name = own.icon.name
+        icon_content = self.file_content(icon_name)
+        paypal_icon = PaymentMethod.objects.get(name="PayPal").icon.name
+
+        buffer, info = self.export()
+        self.assertEqual(info.counts["contracts.paymentmethod"], 4)
+        self.assertFalse(info.is_older)
+        self.assertEqual(info.media_files, 6)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            Contract.objects.all().delete()
+            PaymentMethod.objects.all().delete()
+        backup.import_backup(buffer)
+
+        self.assertEqual(
+            set(PaymentMethod.objects.values_list("name", flat=True)),
+            {"PayPal", "American Express", "Lastschrift", "Überweisung"},
+        )
+        own = PaymentMethod.objects.get(name="Überweisung")
+        self.assertEqual(Contract.objects.get().payment_method, own)
+        self.assertEqual(own.icon.name, icon_name)
+        self.assertEqual(self.file_content(icon_name), icon_content)
+        self.assertTrue(self.file_content(paypal_icon))
+        ben = User.objects.get(username="ben")
+        self.assertTrue(perms.can_change(ben, own))
+        self.assertEqual(perms.get_roles(own)[perms.READER]["groups"], {Group.objects.get(name="Familie")})
+        # Der gelöschte Standardwert kommt nicht wieder
+        self.assertFalse(PaymentMethod.objects.filter(name="Visa").exists())
+        self.assertEqual(admin.username, PaymentMethod.objects.get(name="PayPal").owner.username)
 
     def test_unknown_format_rejected(self):
         buffer, _info = self.export()
@@ -1876,6 +2309,158 @@ class BackupTest(TestCase):
         self.assertFalse(User.objects.filter(username="carla").exists())
         with self.assertRaises(CommandError):
             call_command("import_backup", os.path.join(self.media_root, "fehlt.zip"), yes=True)
+
+
+class OldBackupImportTest(TestCase):
+    """
+    Version 0.2.0: Import eines echten Backups aus 0.1.0
+    (contracts/test_data/backup-0.1.0.zip, mit dem Image 0.1.0 erzeugt,
+    nur erfundene Demodaten).
+    """
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=self.media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.path = Path(__file__).resolve().parent / "test_data" / "backup-0.1.0.zip"
+
+        # Vorhandener Bestand, der ersetzt wird
+        other = User.objects.create_user("vorher")
+        PaymentMethod.objects.create(owner=other, name="Alt")
+
+    def file_content(self, name):
+        import os
+
+        with open(os.path.join(self.media_root, name), "rb") as handle:
+            return handle.read()
+
+    def test_inspect_reports_older_version(self):
+        from . import backup
+
+        info = backup.inspect_backup(self.path)
+        self.assertEqual(info.app_version, "0.1.0")
+        self.assertTrue(info.is_older)
+        self.assertEqual(info.counts["contracts.contract"], 3)
+        self.assertEqual(info.counts["contracts.paymentmethod"], 0)
+        # Nur geprüft, nichts geändert
+        self.assertTrue(User.objects.filter(username="vorher").exists())
+
+    def test_import_is_complete(self):
+        from assistant.models import Attachment, Conversation
+        from web.models import SiteSettings, UserPreferences
+
+        from . import backup
+
+        info = backup.import_backup(self.path)
+        self.assertTrue(info.is_older)
+
+        # Benutzer, Gruppen, Einstellungen
+        self.assertEqual(
+            list(User.objects.order_by("username").values_list("username", flat=True)), ["admin", "anna", "ben"],
+        )
+        admin, anna, ben = (User.objects.get(username=name) for name in ("admin", "anna", "ben"))
+        self.assertTrue(admin.is_superuser)
+        self.assertEqual(anna.password, backup.PASSWORD_RESET_MARKER)
+        self.assertFalse(ben.has_usable_password())
+        self.assertNotEqual(ben.password, backup.PASSWORD_RESET_MARKER)
+        self.assertTrue(ben.groups.filter(name="Familie").exists())
+        self.assertEqual(UserPreferences.objects.get(user=ben).language, "en")
+        self.assertEqual(SiteSettings.load().sso_login_label, "Demo SSO")
+
+        # Verträge, Kosten, Dokumente, Erinnerung
+        self.assertEqual(Contract.objects.count(), 3)
+        power = Contract.objects.get(name="Strom")
+        self.assertEqual((power.owner, power.provider.name, power.category.name, power.consumer.name),
+                         (anna, "Stadtwerke Musterstadt", "Energie", "Haushalt"))
+        self.assertEqual((power.contract_number, power.term_value, power.term_unit), ("V-4711", 12, "months"))
+        self.assertEqual(power.reference, "20260001")
+        self.assertEqual(
+            list(power.costs.order_by("valid_from").values_list("amount", flat=True)),
+            [Decimal("75.00"), Decimal("82.50")],
+        )
+        self.assertEqual(power.costs.get(amount=Decimal("82.50")).document.name, "Preisanpassung 2025")
+        self.assertEqual(power.documents.count(), 2)
+        upload = power.documents.get(source=Document.Source.UPLOAD)
+        self.assertEqual(self.file_content(upload.file.name).decode(), "Neuer Abschlag ab 2025: 82,50 EUR")
+        self.assertEqual(power.documents.get(source=Document.Source.PAPERLESS).paperless_document_id, 42)
+        kfz = Contract.objects.get(name="Kfz-Versicherung")
+        self.assertEqual(str(kfz.category), "Versicherung / KFZ-Versicherung")
+        self.assertEqual(kfz.costs.get().payment_interval, "yearly")
+        self.assertEqual((kfz.reminder.lead_days, list(kfz.reminder.recipients.all())), (14, [anna]))
+        internet = Contract.objects.get(name="Internet")
+        self.assertEqual((internet.owner, internet.consumer, internet.start_date), (admin, None, None))
+
+        # Logo
+        energy = Provider.objects.get(name="Stadtwerke Musterstadt")
+        self.assertRegex(energy.logo.name, r"^logos/[0-9a-f]{32}\.png$")
+        self.assertTrue(self.file_content(energy.logo.name).startswith(b"\x89PNG"))
+
+        # Freigaben an Benutzer und Gruppen
+        self.assertTrue(perms.can_change(ben, power))
+        self.assertTrue(perms.can_view(ben, kfz))
+        self.assertFalse(perms.can_change(ben, kfz))
+        self.assertTrue(perms.can_view(ben, energy))
+        self.assertTrue(perms.can_view(ben, Consumer.objects.get(name="Haushalt")))
+        self.assertFalse(perms.can_view(ben, internet))
+        self.assertEqual(
+            perms.get_roles(Category.objects.get(name="Energie"))[perms.READER]["groups"],
+            {Group.objects.get(name=perms.GROUP_ALL)},
+        )
+
+        # Assistent
+        conversation = Conversation.objects.get()
+        self.assertEqual((conversation.user, conversation.messages.count()), (anna, 2))
+        self.assertEqual(self.file_content(Attachment.objects.get().file.name), b"Notiz")
+
+        # Neu in 0.2.0: keine Zahlungsmethode an den Verträgen, Standardwerte vorhanden
+        self.assertFalse(Contract.objects.exclude(payment_method=None).exists())
+        self.assertEqual(
+            set(PaymentMethod.objects.values_list("name", flat=True)),
+            {"PayPal", "American Express", "Visa", "Lastschrift"},
+        )
+        for method in PaymentMethod.objects.all():
+            self.assertEqual(method.owner, admin)
+            self.assertTrue(self.file_content(method.icon.name))
+            self.assertTrue(perms.can_view(ben, method))
+        self.assertTrue(SiteSettings.load().default_payment_methods_created)
+        self.assertTrue(Group.objects.get(name=perms.GROUP_USERS).permissions.filter(
+            codename="add_paymentmethod").exists())
+
+        # Zähler stehen hinter den importierten Datensätzen
+        PaymentMethod.objects.create(owner=anna, name="Überweisung")
+        Contract.objects.create(owner=anna, name="Neu", provider=energy, category=power.category)
+
+    def test_export_after_import_is_current_version(self):
+        import io
+
+        from . import backup
+
+        backup.import_backup(self.path)
+        buffer = io.BytesIO()
+        info = backup.write_backup(buffer)
+        self.assertFalse(info.is_older)
+        self.assertEqual(info.counts["contracts.paymentmethod"], 4)
+        buffer.seek(0)
+        backup.import_backup(buffer)
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+        self.assertEqual(Contract.objects.count(), 3)
+
+    def test_command_mentions_older_version(self):
+        import io
+
+        from django.core.management import call_command
+
+        output = io.StringIO()
+        call_command("import_backup", str(self.path), yes=True, stdout=output)
+        self.assertIn("Version 0.1.0", output.getvalue())
+        self.assertIn("älteren Version 0.1.0", output.getvalue())
+        self.assertEqual(Contract.objects.count(), 3)
 
 
 class EnsureAdminTest(TestCase):

@@ -18,6 +18,9 @@ from .models import (
     Consumer,
     ConsumerGroupObjectPermission,
     ConsumerUserObjectPermission,
+    PaymentMethod,
+    PaymentMethodGroupObjectPermission,
+    PaymentMethodUserObjectPermission,
     Contract,
     ContractGroupObjectPermission,
     ContractUserObjectPermission,
@@ -479,6 +482,25 @@ class ConsumerAdmin(OwnedAdmin):
     content_fieldsets = ((None, {'fields': ('name', 'number', 'notes')}),)
 
 
+@admin.register(PaymentMethod)
+class PaymentMethodAdmin(OwnedAdmin):
+    list_display = ['icon_preview', 'name']
+    list_display_links = ['name']
+    list_filter = [('owner', admin.RelatedOnlyFieldListFilter)]
+    search_fields = ['name']
+    readonly_fields = ['icon_preview']
+    content_fieldsets = ((None, {'fields': ('name', 'icon_preview', 'icon')}),)
+
+    @admin.display(description=_('Icon'))
+    def icon_preview(self, obj):
+        # Adresse wird nur mit Leserecht ausgeliefert (Ansicht in web)
+        if not obj.icon:
+            return "–"
+        return format_html(
+            '<img src="{}" alt="" style="max-width: 4rem; max-height: 4rem; background: #fff">', obj.icon.url
+        )
+
+
 @admin.register(Contract)
 class ContractAdmin(OwnedAdmin):
     list_display = ['reference', 'name', 'provider', 'category', 'consumer', 'current_cost_display']
@@ -488,6 +510,7 @@ class ContractAdmin(OwnedAdmin):
         ('category', admin.RelatedOnlyFieldListFilter),
         ('consumer', admin.RelatedOnlyFieldListFilter),
         ('provider', admin.RelatedOnlyFieldListFilter),
+        ('payment_method', admin.RelatedOnlyFieldListFilter),
         ('owner', admin.RelatedOnlyFieldListFilter),
     ]
     list_select_related = ['provider', 'category__parent', 'consumer', 'owner']
@@ -495,10 +518,10 @@ class ContractAdmin(OwnedAdmin):
     inlines = [DocumentInline, CostEntryInline, ReminderInline]
     # reference ist editable=False und darf nur schreibgeschützt angezeigt werden
     readonly_fields = ['reference', 'provider_paperless_link']
-    visible_fk_fields = ('provider', 'category', 'consumer')
+    visible_fk_fields = ('provider', 'category', 'consumer', 'payment_method')
     content_fieldsets = (
         (_('Master data'), {
-            'fields': ('reference', 'name', 'provider', 'category', 'consumer')
+            'fields': ('reference', 'name', 'provider', 'category', 'consumer', 'payment_method')
         }),
         (_('Term'), {
             'fields': ('start_date', 'term_value', 'term_unit')
@@ -576,12 +599,12 @@ class ObjectPermissionAdmin(admin.ModelAdmin):
 
 for _model in (
     ProviderUserObjectPermission, CategoryUserObjectPermission,
-    ConsumerUserObjectPermission, ContractUserObjectPermission,
+    ConsumerUserObjectPermission, PaymentMethodUserObjectPermission, ContractUserObjectPermission,
 ):
     admin.site.register(_model, ObjectPermissionAdmin, list_display=['content_object', 'user', 'permission'])
 
 for _model in (
     ProviderGroupObjectPermission, CategoryGroupObjectPermission,
-    ConsumerGroupObjectPermission, ContractGroupObjectPermission,
+    ConsumerGroupObjectPermission, PaymentMethodGroupObjectPermission, ContractGroupObjectPermission,
 ):
     admin.site.register(_model, ObjectPermissionAdmin, list_display=['content_object', 'group', 'permission'])

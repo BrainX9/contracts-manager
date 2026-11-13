@@ -1,0 +1,30 @@
+{% extends "web/base.html" %}
+{% load i18n web_format %}
+{% block title %}{{ payment_method.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'payment_method_list' %}">{% translate "Payment methods" %}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ payment_method.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    {% include "web/includes/payment_method_icon.html" with payment_method=payment_method size="lg" %}
+    <h1 class="h3 mb-0">{{ payment_method.name }}</h1>
+  </div>
+  {% include "web/includes/object_actions.html" with prefix="payment_method" object=payment_method %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    {% translate "No contracts for this payment method that you are allowed to see." as empty_text %}
+    {% include "web/includes/contract_table.html" with hide="" empty_text=empty_text %}
+  </div>
+
+  <div class="col-lg-5">
+    {% include "web/includes/access_card.html" with object=payment_method %}
+  </div>
+</div>
+{% endblock %}

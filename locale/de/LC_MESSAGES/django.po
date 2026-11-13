@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 10:17+0100\n"
+"POT-Creation-Date: 2026-11-13 16:09+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -64,7 +64,7 @@ msgid "toolset"
 msgstr "Werkzeuge"
 
 #: assistant/models.py:40 assistant/models.py:87 assistant/models.py:138
-#: assistant/models.py:180 contracts/models.py:350
+#: assistant/models.py:180 contracts/models.py:391
 msgid "created at"
 msgstr "angelegt am"
 
@@ -157,7 +157,7 @@ msgstr "E-Mail"
 msgid "no text found"
 msgstr "kein Text erkannt"
 
-#: assistant/models.py:128 contracts/models.py:342
+#: assistant/models.py:128 contracts/models.py:383
 msgid "file"
 msgstr "Datei"
 
@@ -177,7 +177,7 @@ msgstr "erkannter Text"
 msgid "recognised data"
 msgstr "erkannte Daten"
 
-#: assistant/models.py:136 contracts/models.py:357 contracts/models.py:449
+#: assistant/models.py:136 contracts/models.py:398 contracts/models.py:490
 msgid "document"
 msgstr "Dokument"
 
@@ -254,8 +254,8 @@ msgid "proposals"
 msgstr "Vorschläge"
 
 #: assistant/proposals.py:110 assistant/proposals.py:128
-#: assistant/proposals.py:138 assistant/proposals.py:180
-#: assistant/proposals.py:205 web/templates/web/manage/users/detail.html:50
+#: assistant/proposals.py:138 assistant/proposals.py:181
+#: assistant/proposals.py:206 web/templates/web/manage/users/detail.html:50
 msgid "Name"
 msgstr "Name"
 
@@ -280,8 +280,8 @@ msgid "Contact person"
 msgstr "Ansprechpartner"
 
 #: assistant/proposals.py:115 assistant/proposals.py:138
-#: assistant/proposals.py:185 web/templates/web/consumers/detail.html:25
-#: web/templates/web/contracts/detail.html:56
+#: assistant/proposals.py:186 web/templates/web/consumers/detail.html:25
+#: web/templates/web/contracts/detail.html:58
 #: web/templates/web/providers/detail.html:55
 msgid "Notes"
 msgstr "Notizen"
@@ -296,17 +296,17 @@ msgstr "Hauptkategorie"
 msgid "Number"
 msgstr "Nummer"
 
-#: assistant/proposals.py:180 contracts/templates/emails/reminder.html:15
+#: assistant/proposals.py:181 contracts/templates/emails/reminder.html:15
 #: contracts/templates/emails/reminder.txt:6
 #: web/templates/web/contracts/_results.html:28
 #: web/templates/web/contracts/detail.html:31
-#: web/templates/web/contracts/list.html:52
+#: web/templates/web/contracts/list.html:63
 #: web/templates/web/includes/contract_table.html:18
 #: web/templates/web/providers/_results.html:20
 msgid "Contract partner"
 msgstr "Vertragspartner"
 
-#: assistant/proposals.py:181 web/templates/web/categories/_results.html:18
+#: assistant/proposals.py:182 web/templates/web/categories/_results.html:18
 #: web/templates/web/contracts/_results.html:29
 #: web/templates/web/contracts/detail.html:41
 #: web/templates/web/contracts/list.html:34
@@ -314,7 +314,7 @@ msgstr "Vertragspartner"
 msgid "Category"
 msgstr "Kategorie"
 
-#: assistant/proposals.py:181 web/templates/web/consumers/_results.html:20
+#: assistant/proposals.py:182 web/templates/web/consumers/_results.html:20
 #: web/templates/web/contracts/_results.html:30
 #: web/templates/web/contracts/detail.html:43
 #: web/templates/web/contracts/list.html:43
@@ -322,41 +322,41 @@ msgstr "Kategorie"
 msgid "Consumer"
 msgstr "Verbraucher"
 
-#: assistant/proposals.py:182 web/templates/web/contracts/detail.html:45
+#: assistant/proposals.py:183 web/templates/web/contracts/detail.html:47
 msgid "Start date"
 msgstr "Vertragsbeginn"
 
-#: assistant/proposals.py:182 contracts/templates/emails/reminder.html:18
+#: assistant/proposals.py:183 contracts/templates/emails/reminder.html:18
 #: contracts/templates/emails/reminder.txt:7
 #: web/templates/web/contracts/detail.html:38
 msgid "Contract number"
 msgstr "Vertragsnummer"
 
-#: assistant/proposals.py:183
+#: assistant/proposals.py:184
 msgid "Short description"
 msgstr "Kurzbeschreibung"
 
-#: assistant/proposals.py:184 contracts/admin.py:503
-#: web/templates/web/contracts/detail.html:47
+#: assistant/proposals.py:185 contracts/admin.py:526
+#: web/templates/web/contracts/detail.html:49
 #: web/templates/web/contracts/form.html:35
 msgid "Term"
 msgstr "Laufzeit"
 
-#: assistant/proposals.py:188
+#: assistant/proposals.py:189
 msgid "Costs"
 msgstr "Kosten"
 
-#: assistant/proposals.py:188
+#: assistant/proposals.py:189
 #, python-format
 msgid "%(amount)s € %(interval)s from %(date)s"
 msgstr "%(amount)s € %(interval)s ab %(date)s"
 
-#: assistant/proposals.py:193 assistant/proposals.py:205
+#: assistant/proposals.py:194 assistant/proposals.py:206
 #: web/templates/web/contracts/_costs.html:20
 msgid "Document"
 msgstr "Dokument"
 
-#: assistant/proposals.py:204 contracts/templates/emails/reminder.txt:5
+#: assistant/proposals.py:205 contracts/templates/emails/reminder.txt:5
 #: web/templates/web/contracts/_results.html:27
 #: web/templates/web/includes/contract_table.html:17
 #: web/templates/web/manage/reminders.html:19
@@ -544,105 +544,109 @@ msgstr "Deutsch"
 msgid "English"
 msgstr "Englisch"
 
-#: contracts/admin.py:48
+#: contracts/admin.py:51
 msgid "Open in Paperless"
 msgstr "In Paperless öffnen"
 
-#: contracts/admin.py:73
+#: contracts/admin.py:76
 msgid "Readers (users)"
 msgstr "Leser (Benutzer)"
 
-#: contracts/admin.py:74 contracts/admin.py:83
+#: contracts/admin.py:77 contracts/admin.py:86
 msgid "users"
 msgstr "Benutzer"
 
-#: contracts/admin.py:75
+#: contracts/admin.py:78
 msgid "May view the object."
 msgstr "Dürfen das Objekt anzeigen."
 
-#: contracts/admin.py:78
+#: contracts/admin.py:81
 msgid "Readers (groups)"
 msgstr "Leser (Gruppen)"
 
-#: contracts/admin.py:79 contracts/admin.py:88
+#: contracts/admin.py:82 contracts/admin.py:91
 msgid "groups"
 msgstr "Gruppen"
 
-#: contracts/admin.py:82
+#: contracts/admin.py:85
 msgid "Editors (users)"
 msgstr "Bearbeiter (Benutzer)"
 
-#: contracts/admin.py:84
+#: contracts/admin.py:87
 msgid "May view and edit the object, but not delete it."
 msgstr "Dürfen das Objekt anzeigen und bearbeiten, aber nicht löschen."
 
-#: contracts/admin.py:87
+#: contracts/admin.py:90
 msgid "Editors (groups)"
 msgstr "Bearbeiter (Gruppen)"
 
-#: contracts/admin.py:175
+#: contracts/admin.py:178
 msgid "Owner and sharing"
 msgstr "Eigentümer und Freigaben"
 
-#: contracts/admin.py:247 contracts/models.py:128
+#: contracts/admin.py:250 contracts/models.py:128
 msgid "main category"
 msgstr "Hauptkategorie"
 
-#: contracts/admin.py:333 contracts/admin.py:436 contracts/admin.py:444
-#: contracts/models.py:334 web/templates/web/providers/detail.html:41
+#: contracts/admin.py:336 contracts/admin.py:439 contracts/admin.py:447
+#: contracts/models.py:375 web/templates/web/providers/detail.html:41
 msgid "Paperless"
 msgstr "Paperless"
 
-#: contracts/admin.py:335
+#: contracts/admin.py:338
 msgid "Open document"
 msgstr "Dokument öffnen"
 
-#: contracts/admin.py:427 contracts/admin.py:500 web/templates/web/base.html:67
+#: contracts/admin.py:430 contracts/admin.py:523 web/templates/web/base.html:67
 #: web/templates/web/contracts/form.html:22
 #: web/templates/web/providers/form.html:21
 msgid "Master data"
 msgstr "Stammdaten"
 
-#: contracts/admin.py:430 contracts/admin.py:448
+#: contracts/admin.py:433 contracts/admin.py:451
 #: web/templates/web/providers/form.html:44
 msgid "Logo"
 msgstr "Logo"
 
-#: contracts/admin.py:433
+#: contracts/admin.py:436
 msgid "Contact details"
 msgstr "Kontaktdaten"
 
-#: contracts/admin.py:439 contracts/models.py:42 contracts/models.py:502
+#: contracts/admin.py:442 contracts/models.py:42 contracts/models.py:543
 msgid "Other"
 msgstr "Sonstiges"
 
-#: contracts/admin.py:446
+#: contracts/admin.py:449
 msgid "Open documents"
 msgstr "Dokumente öffnen"
 
-#: contracts/admin.py:506 web/templates/web/contracts/form.html:44
+#: contracts/admin.py:494 web/templates/web/payment_methods/form.html:24
+msgid "Icon"
+msgstr "Icon"
+
+#: contracts/admin.py:529 web/templates/web/contracts/form.html:44
 #: web/templates/web/providers/form.html:58
 msgid "Information"
 msgstr "Informationen"
 
-#: contracts/admin.py:511
+#: contracts/admin.py:534
 msgid "Paperless (partner)"
 msgstr "Paperless (Partner)"
 
-#: contracts/admin.py:518 web/templates/web/contracts/detail.html:34
+#: contracts/admin.py:541 web/templates/web/contracts/detail.html:34
 #: web/templates/web/providers/detail.html:44
 msgid "Open partner documents"
 msgstr "Dokumente des Partners öffnen"
 
-#: contracts/admin.py:520 web/templates/web/contracts/_results.html:31
+#: contracts/admin.py:543 web/templates/web/contracts/_results.html:31
 msgid "Current amount"
 msgstr "Aktueller Betrag"
 
-#: contracts/admin.py:527 web/templates/web/contracts/_results.html:44
+#: contracts/admin.py:550 web/templates/web/contracts/_results.html:44
 msgid "No costs"
 msgstr "Keine Kosten"
 
-#: contracts/apps.py:111 web/templates/web/base.html:58
+#: contracts/apps.py:112 web/templates/web/base.html:58
 #: web/templates/web/categories/_results.html:19
 #: web/templates/web/consumers/_results.html:22
 #: web/templates/web/contracts/cost_form.html:7
@@ -656,32 +660,48 @@ msgstr "Keine Kosten"
 #: web/templates/web/includes/contract_table.html:6
 #: web/templates/web/manage/system.html:22
 #: web/templates/web/manage/users/detail.html:74
-#: web/templates/web/providers/_results.html:23 web/views.py:638
+#: web/templates/web/payment_methods/_results.html:21
+#: web/templates/web/providers/_results.html:23 web/views.py:651
 msgid "Contracts"
 msgstr "Verträge"
 
-#: contracts/backup.py:248 contracts/backup.py:250 contracts/backup.py:279
+#: contracts/backup.py:270
+#, python-format
+msgid ""
+"This backup was created with the newer version %(backup)s (installed: "
+"%(installed)s). Update Contracts Manager first, then import the backup."
+msgstr "Dieses Backup wurde mit der neueren Version %(backup)s erstellt (installiert: %(installed)s). Aktualisiere zuerst Contracts Manager und importiere das Backup danach."
+
+#: contracts/backup.py:274
+#, python-format
+msgid ""
+"This backup was created with version %(backup)s, which this version cannot "
+"import (installed: %(installed)s). Backups of the beta versions are not "
+"supported."
+msgstr "Dieses Backup wurde mit Version %(backup)s erstellt, die diese Version nicht importieren kann (installiert: %(installed)s). Backups der Beta-Versionen werden nicht unterstützt."
+
+#: contracts/backup.py:282
+#, python-format
+msgid ""
+"This backup does not match version %(backup)s (different database state) and "
+"cannot be imported."
+msgstr "Dieses Backup passt nicht zu Version %(backup)s (anderer Stand der Datenbank) und kann nicht importiert werden."
+
+#: contracts/backup.py:291 contracts/backup.py:293 contracts/backup.py:317
 msgid "This file is not a Contracts Manager backup."
 msgstr "Diese Datei ist kein Backup von Contracts Manager."
 
-#: contracts/backup.py:252
+#: contracts/backup.py:295
 msgid "This backup has a format that this version cannot read."
 msgstr "Dieses Backup hat ein Format, das diese Version nicht lesen kann."
 
-#: contracts/backup.py:255
-#, python-format
-msgid ""
-"This backup was created with version %(backup)s. It can only be imported "
-"into the same version (installed: %(installed)s)."
-msgstr "Dieses Backup wurde mit Version %(backup)s erstellt. Es kann nur in dieselbe Version importiert werden (installiert: %(installed)s)."
-
-#: contracts/backup.py:270
+#: contracts/backup.py:308
 #, python-format
 msgid "The backup contains a file with an invalid path: %(name)s"
 msgstr "Das Backup enthält eine Datei mit unzulässigem Pfad: %(name)s"
 
-#: contracts/backup.py:298 contracts/backup.py:301 contracts/backup.py:303
-#: contracts/backup.py:306 contracts/backup.py:372 contracts/backup.py:413
+#: contracts/backup.py:340 contracts/backup.py:343 contracts/backup.py:345
+#: contracts/backup.py:348 contracts/backup.py:414 contracts/backup.py:457
 msgid "The backup is damaged."
 msgstr "Das Backup ist beschädigt."
 
@@ -695,20 +715,20 @@ msgstr "Dieser Dateityp ist nicht erlaubt. Erlaubt: %(types)s."
 msgid "The file may be at most %(size)s."
 msgstr "Die Datei darf höchstens %(size)s groß sein."
 
-#: contracts/logos.py:48
+#: contracts/logos.py:67
 #, python-format
-msgid "The logo may be at most %(size)s."
-msgstr "Das Logo darf höchstens %(size)s groß sein."
+msgid "The image may be at most %(size)s."
+msgstr "Das Bild darf höchstens %(size)s groß sein."
 
-#: contracts/logos.py:58
+#: contracts/logos.py:77
 msgid "The file is not a valid image."
 msgstr "Die Datei ist kein gültiges Bild."
 
-#: contracts/logos.py:63
+#: contracts/logos.py:82
 msgid "Only PNG, JPEG and WebP images are allowed."
 msgstr "Nur PNG-, JPEG- und WebP-Bilder sind erlaubt."
 
-#: contracts/logos.py:66
+#: contracts/logos.py:85
 msgid "The image is too large."
 msgstr "Das Bild ist zu groß."
 
@@ -781,7 +801,7 @@ msgid "owner"
 msgstr "Eigentümer"
 
 #: contracts/models.py:70 contracts/models.py:125 contracts/models.py:185
-#: contracts/models.py:206 contracts/models.py:339
+#: contracts/models.py:208 contracts/models.py:239 contracts/models.py:380
 msgid "name"
 msgstr "Name"
 
@@ -809,8 +829,8 @@ msgstr "Kundennummer"
 msgid "contact person"
 msgstr "Ansprechpartner"
 
-#: contracts/models.py:78 contracts/models.py:189 contracts/models.py:219
-#: contracts/models.py:349 contracts/models.py:445
+#: contracts/models.py:78 contracts/models.py:189 contracts/models.py:260
+#: contracts/models.py:390 contracts/models.py:486
 msgid "notes"
 msgstr "Notizen"
 
@@ -826,12 +846,12 @@ msgstr "ID des Korrespondenten in Paperless-ngx"
 msgid "logo"
 msgstr "Logo"
 
-#: contracts/models.py:92
+#: contracts/models.py:92 contracts/models.py:215
 msgid "PNG, JPEG or WebP, at most 2 MB. It is reduced to 256 pixels."
 msgstr ""
 "PNG, JPEG oder WebP, höchstens 2 MB. Es wird auf 256 Pixel verkleinert."
 
-#: contracts/models.py:112 contracts/models.py:208
+#: contracts/models.py:112 contracts/models.py:241
 msgid "contract partner"
 msgstr "Vertragspartner"
 
@@ -852,7 +872,7 @@ msgid "A category with subcategories cannot become a subcategory itself."
 msgstr ""
 "Eine Kategorie mit Unterkategorien kann nicht selbst Unterkategorie werden."
 
-#: contracts/models.py:155 contracts/models.py:210
+#: contracts/models.py:155 contracts/models.py:244
 msgid "category"
 msgstr "Kategorie"
 
@@ -864,7 +884,7 @@ msgstr "Kategorien"
 msgid "number"
 msgstr "Nummer"
 
-#: contracts/models.py:195 contracts/models.py:211
+#: contracts/models.py:195 contracts/models.py:247
 msgid "consumer"
 msgstr "Verbraucher"
 
@@ -872,78 +892,90 @@ msgstr "Verbraucher"
 msgid "consumers"
 msgstr "Verbraucher"
 
-#: contracts/models.py:209
+#: contracts/models.py:211
+msgid "icon"
+msgstr "Icon"
+
+#: contracts/models.py:228 contracts/models.py:251
+msgid "payment method"
+msgstr "Zahlungsmethode"
+
+#: contracts/models.py:229
+msgid "payment methods"
+msgstr "Zahlungsmethoden"
+
+#: contracts/models.py:243
 msgid "start date"
 msgstr "Vertragsbeginn"
 
-#: contracts/models.py:215
+#: contracts/models.py:256
 msgid "reference"
 msgstr "Referenz"
 
-#: contracts/models.py:217
+#: contracts/models.py:258
 msgid "contract number"
 msgstr "Vertragsnummer"
 
-#: contracts/models.py:218
+#: contracts/models.py:259
 msgid "short description"
 msgstr "Kurzbeschreibung"
 
-#: contracts/models.py:220
+#: contracts/models.py:261
 msgid "term"
 msgstr "Laufzeit"
 
-#: contracts/models.py:222
+#: contracts/models.py:263
 msgid "term unit"
 msgstr "Laufzeiteinheit"
 
-#: contracts/models.py:225
+#: contracts/models.py:266
 msgid "days"
 msgstr "Tage"
 
-#: contracts/models.py:226
+#: contracts/models.py:267
 msgid "weeks"
 msgstr "Wochen"
 
-#: contracts/models.py:227
+#: contracts/models.py:268
 msgid "months"
 msgstr "Monate"
 
-#: contracts/models.py:228
+#: contracts/models.py:269
 msgid "quarters"
 msgstr "Quartale"
 
-#: contracts/models.py:229
+#: contracts/models.py:270
 msgid "years"
 msgstr "Jahre"
 
-#: contracts/models.py:277
+#: contracts/models.py:318
 msgid "Term and term unit must either both be set or both be empty."
 msgstr ""
 "Laufzeit und Laufzeiteinheit müssen entweder beide ausgefüllt oder beide "
 "leer sein."
 
-#: contracts/models.py:320 contracts/models.py:337 contracts/models.py:429
-#: contracts/models.py:505
+#: contracts/models.py:361 contracts/models.py:378 contracts/models.py:470
+#: contracts/models.py:546
 msgid "contract"
 msgstr "Vertrag"
 
-#: contracts/models.py:321
+#: contracts/models.py:362
 msgid "contracts"
 msgstr "Verträge"
 
-#: contracts/models.py:333
+#: contracts/models.py:374
 msgid "Local"
 msgstr "Lokal"
 
-#: contracts/models.py:340
+#: contracts/models.py:381
 msgid "source"
 msgstr "Quelle"
 
-#: contracts/models.py:346
+#: contracts/models.py:387
 msgid "document ID (Paperless)"
 msgstr "Dokument-ID (Paperless)"
 
-#: contracts/models.py:347
+#: contracts/models.py:388
 msgid ""
 "ID of the document in Paperless-ngx (shown in its address, e.g. /documents/"
 "123/details)."
@@ -951,201 +983,217 @@ msgstr ""
 "ID des Dokuments in Paperless-ngx (steht in der Adresse, z. B. /documents/"
 "123/details)."
 
-#: contracts/models.py:353
+#: contracts/models.py:394
 msgid "created by"
 msgstr "angelegt von"
 
-#: contracts/models.py:358
+#: contracts/models.py:399
 msgid "documents"
 msgstr "Dokumente"
 
-#: contracts/models.py:416
+#: contracts/models.py:457
 msgid "Please choose a file."
 msgstr "Bitte wähle eine Datei aus."
 
-#: contracts/models.py:419
+#: contracts/models.py:460
 msgid "A Paperless document has no file."
 msgstr "Ein Paperless-Dokument hat keine Datei."
 
-#: contracts/models.py:421
+#: contracts/models.py:462
 msgid "Please enter the document ID from Paperless."
 msgstr "Bitte gib die Dokument-ID aus Paperless an."
 
-#: contracts/models.py:431
+#: contracts/models.py:472
 msgid "amount"
 msgstr "Betrag"
 
-#: contracts/models.py:432
+#: contracts/models.py:473
 msgid "valid from"
 msgstr "Gültig ab"
 
-#: contracts/models.py:434
+#: contracts/models.py:475
 msgid "payment interval"
 msgstr "Zahlweise"
 
-#: contracts/models.py:437
+#: contracts/models.py:478
 msgid "weekly"
 msgstr "wöchentlich"
 
-#: contracts/models.py:438
+#: contracts/models.py:479
 msgid "monthly"
 msgstr "monatlich"
 
-#: contracts/models.py:439
+#: contracts/models.py:480
 msgid "quarterly"
 msgstr "quartalsweise"
 
-#: contracts/models.py:440
+#: contracts/models.py:481
 msgid "yearly"
 msgstr "jährlich"
 
-#: contracts/models.py:449
+#: contracts/models.py:490
 msgid "e.g. invoice or notice of a price change"
 msgstr "z. B. Rechnung oder Preisanpassung"
 
-#: contracts/models.py:453
+#: contracts/models.py:494
 #, python-format
 msgid "%(contract)s – %(amount)s from %(date)s"
 msgstr "%(contract)s – %(amount)s ab %(date)s"
 
-#: contracts/models.py:460
+#: contracts/models.py:501
 msgid "The document belongs to another contract."
 msgstr "Das Dokument gehört zu einem anderen Vertrag."
 
-#: contracts/models.py:479
+#: contracts/models.py:520
 msgid "cost entry"
 msgstr "Kosteneintrag"
 
-#: contracts/models.py:480
+#: contracts/models.py:521
 msgid "cost entries"
 msgstr "Kosteneinträge"
 
-#: contracts/models.py:500
+#: contracts/models.py:541
 msgid "Cancellation"
 msgstr "Kündigung"
 
-#: contracts/models.py:501
+#: contracts/models.py:542
 msgid "Contract review"
 msgstr "Vertragsüberprüfung"
 
-#: contracts/models.py:507
+#: contracts/models.py:548
 msgid "reminder active"
 msgstr "Erinnerung aktiv"
 
-#: contracts/models.py:508
+#: contracts/models.py:549
 msgid "reminder date"
 msgstr "Datum Erinnerung"
 
-#: contracts/models.py:510
+#: contracts/models.py:551
 msgid "remind in advance"
 msgstr "Erinnerung zuvor"
 
-#: contracts/models.py:514
+#: contracts/models.py:555
 msgid "Days before the reminder date from which an email is sent every day."
 msgstr ""
 "So viele Tage vor dem Erinnerungsdatum wird täglich eine E-Mail verschickt."
 
-#: contracts/models.py:516
+#: contracts/models.py:557
 msgid "reason"
 msgstr "Grund"
 
-#: contracts/models.py:517
+#: contracts/models.py:558
 msgid "note"
 msgstr "Hinweis"
 
-#: contracts/models.py:517
+#: contracts/models.py:558
 msgid "Included in the email."
 msgstr "Wird in der E-Mail mitgeschickt."
 
-#: contracts/models.py:519
+#: contracts/models.py:560
 msgid "recipients"
 msgstr "Empfänger"
 
-#: contracts/models.py:522
+#: contracts/models.py:563
 msgid "last sent on"
 msgstr "zuletzt verschickt am"
 
-#: contracts/models.py:523
+#: contracts/models.py:564
 msgid "completed on"
 msgstr "erledigt am"
 
-#: contracts/models.py:526
+#: contracts/models.py:567
 msgid "reminder"
 msgstr "Erinnerung"
 
-#: contracts/models.py:527
+#: contracts/models.py:568
 msgid "reminders"
 msgstr "Erinnerungen"
 
-#: contracts/models.py:572
+#: contracts/models.py:613
 msgid "Please enter a reminder date."
 msgstr "Bitte gib ein Erinnerungsdatum an."
 
-#: contracts/models.py:574
+#: contracts/models.py:615
 msgid "The reminder date must not be in the past."
 msgstr "Das Erinnerungsdatum darf nicht in der Vergangenheit liegen."
 
-#: contracts/models.py:587
+#: contracts/models.py:628
 msgid "contract partner share (user)"
 msgstr "Freigabe Vertragspartner (Benutzer)"
 
-#: contracts/models.py:588
+#: contracts/models.py:629
 msgid "contract partner shares (users)"
 msgstr "Freigaben Vertragspartner (Benutzer)"
 
-#: contracts/models.py:595
+#: contracts/models.py:636
 msgid "contract partner share (group)"
 msgstr "Freigabe Vertragspartner (Gruppe)"
 
-#: contracts/models.py:596
+#: contracts/models.py:637
 msgid "contract partner shares (groups)"
 msgstr "Freigaben Vertragspartner (Gruppen)"
 
-#: contracts/models.py:603
+#: contracts/models.py:644
 msgid "category share (user)"
 msgstr "Freigabe Kategorie (Benutzer)"
 
-#: contracts/models.py:604
+#: contracts/models.py:645
 msgid "category shares (users)"
 msgstr "Freigaben Kategorie (Benutzer)"
 
-#: contracts/models.py:611
+#: contracts/models.py:652
 msgid "category share (group)"
 msgstr "Freigabe Kategorie (Gruppe)"
 
-#: contracts/models.py:612
+#: contracts/models.py:653
 msgid "category shares (groups)"
 msgstr "Freigaben Kategorie (Gruppen)"
 
-#: contracts/models.py:619
+#: contracts/models.py:660
 msgid "consumer share (user)"
 msgstr "Freigabe Verbraucher (Benutzer)"
 
-#: contracts/models.py:620
+#: contracts/models.py:661
 msgid "consumer shares (users)"
 msgstr "Freigaben Verbraucher (Benutzer)"
 
-#: contracts/models.py:627
+#: contracts/models.py:668
 msgid "consumer share (group)"
 msgstr "Freigabe Verbraucher (Gruppe)"
 
-#: contracts/models.py:628
+#: contracts/models.py:669
 msgid "consumer shares (groups)"
 msgstr "Freigaben Verbraucher (Gruppen)"
 
-#: contracts/models.py:635
+#: contracts/models.py:676
+msgid "payment method share (user)"
+msgstr "Freigabe Zahlungsmethode (Benutzer)"
+
+#: contracts/models.py:677
+msgid "payment method shares (users)"
+msgstr "Freigaben Zahlungsmethode (Benutzer)"
+
+#: contracts/models.py:684
+msgid "payment method share (group)"
+msgstr "Freigabe Zahlungsmethode (Gruppe)"
+
+#: contracts/models.py:685
+msgid "payment method shares (groups)"
+msgstr "Freigaben Zahlungsmethode (Gruppen)"
+
+#: contracts/models.py:692
 msgid "contract share (user)"
 msgstr "Freigabe Vertrag (Benutzer)"
 
-#: contracts/models.py:636
+#: contracts/models.py:693
 msgid "contract shares (users)"
 msgstr "Freigaben Vertrag (Benutzer)"
 
-#: contracts/models.py:643
+#: contracts/models.py:700
 msgid "contract share (group)"
 msgstr "Freigabe Vertrag (Gruppe)"
 
-#: contracts/models.py:644
+#: contracts/models.py:701
 msgid "contract shares (groups)"
 msgstr "Freigaben Vertrag (Gruppen)"
 
@@ -1358,99 +1406,107 @@ msgstr "Das Dokument wurde gespeichert."
 msgid "The document has been deleted."
 msgstr "Das Dokument wurde gelöscht."
 
-#: web/forms.py:99
+#: web/forms.py:100
 msgid "Email address"
 msgstr "E-Mail-Adresse"
 
-#: web/forms.py:101
+#: web/forms.py:102
 msgid "Used for reminders and to reset your password."
 msgstr "Für Erinnerungen und zum Zurücksetzen des Passworts."
 
-#: web/forms.py:116 web/manage_forms.py:66
+#: web/forms.py:117 web/manage_forms.py:66
 msgid "This email address is already used by another account."
 msgstr "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet."
 
-#: web/forms.py:202
+#: web/forms.py:206
 msgid "Remove logo"
 msgstr "Logo entfernen"
 
-#: web/forms.py:218
+#: web/forms.py:222
 msgid "The owner already has a contract partner with this name."
 msgstr "Der Eigentümer hat bereits einen Vertragspartner mit diesem Namen."
 
-#: web/forms.py:243
+#: web/forms.py:247
 msgid "The owner already has a consumer with this name."
 msgstr "Der Eigentümer hat bereits einen Verbraucher mit diesem Namen."
 
-#: web/forms.py:260
+#: web/forms.py:258
+msgid "Remove icon"
+msgstr "Icon entfernen"
+
+#: web/forms.py:268
+msgid "The owner already has a payment method with this name."
+msgstr "Der Eigentümer hat bereits eine Zahlungsmethode mit diesem Namen."
+
+#: web/forms.py:292
 msgid "The owner already has a category with this name in this main category."
 msgstr ""
 "Der Eigentümer hat bereits eine Kategorie mit diesem Namen in dieser "
 "Hauptkategorie."
 
-#: web/forms.py:271
+#: web/forms.py:303
 msgid "– none (this is a main category) –"
 msgstr "– keine (dies ist eine Hauptkategorie) –"
 
-#: web/forms.py:272
+#: web/forms.py:304
 msgid "Leave empty for a main category."
 msgstr "Für eine Hauptkategorie leer lassen."
 
-#: web/forms.py:296
+#: web/forms.py:328
 msgid "No document"
 msgstr "Kein Dokument"
 
-#: web/forms.py:327
+#: web/forms.py:359
 msgid "Leave empty to use the file name."
 msgstr "Leer lassen, um den Dateinamen zu verwenden."
 
-#: web/forms.py:328
+#: web/forms.py:360
 #, python-format
 msgid "PDF, images, Office documents, text or emails, up to %(size)s."
 msgstr "PDF, Bilder, Office-Dokumente, Text oder E-Mails, bis %(size)s."
 
-#: web/forms.py:356
+#: web/forms.py:388
 msgid "Please enter a name."
 msgstr "Bitte gib einen Namen an."
 
-#: web/forms.py:362
+#: web/forms.py:394
 msgid "This Paperless document is already linked to this contract."
 msgstr "Dieses Paperless-Dokument ist bereits mit diesem Vertrag verknüpft."
 
-#: web/forms.py:393
+#: web/forms.py:425
 #, python-format
 msgid "%(days)s day"
 msgid_plural "%(days)s days"
 msgstr[0] "%(days)s Tag"
 msgstr[1] "%(days)s Tage"
 
-#: web/forms.py:401 web/templates/web/manage/system.html:69
+#: web/forms.py:433 web/templates/web/manage/system.html:69
 msgid "no email address"
 msgstr "keine E-Mail-Adresse"
 
-#: web/forms.py:408
+#: web/forms.py:440
 msgid "Please select at least one recipient with an email address."
 msgstr "Bitte wähle mindestens einen Empfänger mit E-Mail-Adresse."
 
-#: web/forms.py:414 web/templates/web/includes/sharing_rows.html:8
+#: web/forms.py:446 web/templates/web/includes/sharing_rows.html:8
 msgid "No access"
 msgstr "Kein Zugriff"
 
-#: web/forms.py:415 web/templates/web/includes/sharing_rows.html:9
+#: web/forms.py:447 web/templates/web/includes/sharing_rows.html:9
 msgid "Reader"
 msgstr "Leser"
 
-#: web/forms.py:416 web/templates/web/includes/sharing_rows.html:10
+#: web/forms.py:448 web/templates/web/includes/sharing_rows.html:10
 msgid "Editor"
 msgstr "Bearbeiter"
 
-#: web/forms.py:426 web/templates/web/includes/access_card.html:6
+#: web/forms.py:458 web/templates/web/includes/access_card.html:6
 #: web/templates/web/includes/sharing_rows.html:18
 #: web/templates/web/sharing.html:22
 msgid "Owner"
 msgstr "Eigentümer"
 
-#: web/manage_forms.py:33 web/templates/web/base.html:93
+#: web/manage_forms.py:33 web/templates/web/base.html:97
 #: web/templates/web/manage/groups/form.html:7
 #: web/templates/web/manage/groups/list.html:3
 #: web/templates/web/manage/groups/list.html:6
@@ -1510,7 +1566,7 @@ msgstr ""
 "Der neue Eigentümer hat bereits Objekte mit diesen Namen: %(names)s. Bitte "
 "zuerst umbenennen."
 
-#: web/manage_forms.py:172 web/models.py:68
+#: web/manage_forms.py:172 web/models.py:73
 msgid "SSO Login"
 msgstr "SSO Login"
 
@@ -1598,19 +1654,22 @@ msgstr "Die Test-E-Mail konnte nicht verschickt werden: %(error)s"
 msgid "A test email has been sent to %(email)s."
 msgstr "Eine Test-E-Mail wurde an %(email)s geschickt."
 
-#: web/manage_views.py:623
+#: web/manage_views.py:624
 msgid "The uploaded backup is no longer available. Please upload it again."
-msgstr "Das hochgeladene Backup ist nicht mehr vorhanden. Bitte lade es erneut hoch."
+msgstr ""
+"Das hochgeladene Backup ist nicht mehr vorhanden. Bitte lade es erneut hoch."
 
-#: web/manage_views.py:627
+#: web/manage_views.py:628
 msgid "The import was cancelled. Nothing has been changed."
 msgstr "Der Import wurde abgebrochen. Es wurde nichts geändert."
 
-#: web/manage_views.py:641
+#: web/manage_views.py:642
 msgid ""
 "The backup has been imported. No user has a password now: choose a new one "
 "via “Forgot password?”."
-msgstr "Das Backup wurde importiert. Kein Benutzer hat jetzt ein Passwort: Wähle über „Passwort vergessen?“ ein neues."
+msgstr ""
+"Das Backup wurde importiert. Kein Benutzer hat jetzt ein Passwort: Wähle "
+"über „Passwort vergessen?“ ein neues."
 
 #: web/models.py:18
 msgid "language"
@@ -1628,11 +1687,15 @@ msgstr "Beschriftung der SSO-Schaltfläche"
 msgid "Shown on the login page. Leave empty for “SSO Login”."
 msgstr "Erscheint auf der Anmeldeseite. Leer lassen für „SSO Login“."
 
-#: web/models.py:51 web/models.py:52
+#: web/models.py:52
+msgid "default payment methods created"
+msgstr "Standard-Zahlungsmethoden angelegt"
+
+#: web/models.py:56 web/models.py:57
 msgid "application settings"
 msgstr "Anwendungseinstellungen"
 
-#: web/models.py:55
+#: web/models.py:60
 msgid "Application settings"
 msgstr "Anwendungseinstellungen"
 
@@ -1684,7 +1747,7 @@ msgstr "Übersicht"
 #: web/templates/web/providers/detail.html:7
 #: web/templates/web/providers/form.html:7
 #: web/templates/web/providers/list.html:3
-#: web/templates/web/providers/list.html:6 web/views.py:929
+#: web/templates/web/providers/list.html:6 web/views.py:942
 msgid "Contract partners"
 msgstr "Vertragspartner"
 
@@ -1692,7 +1755,7 @@ msgstr "Vertragspartner"
 #: web/templates/web/categories/form.html:7
 #: web/templates/web/categories/list.html:3
 #: web/templates/web/categories/list.html:6
-#: web/templates/web/manage/users/detail.html:76 web/views.py:1088
+#: web/templates/web/manage/users/detail.html:76 web/views.py:1169
 msgid "Categories"
 msgstr "Kategorien"
 
@@ -1700,15 +1763,23 @@ msgstr "Kategorien"
 #: web/templates/web/consumers/form.html:7
 #: web/templates/web/consumers/list.html:3
 #: web/templates/web/consumers/list.html:6
-#: web/templates/web/manage/users/detail.html:77 web/views.py:982
+#: web/templates/web/manage/users/detail.html:77 web/views.py:995
 msgid "Consumers"
 msgstr "Verbraucher"
 
-#: web/templates/web/base.html:83
+#: web/templates/web/base.html:82 web/templates/web/manage/users/detail.html:78
+#: web/templates/web/payment_methods/detail.html:7
+#: web/templates/web/payment_methods/form.html:7
+#: web/templates/web/payment_methods/list.html:3
+#: web/templates/web/payment_methods/list.html:6 web/views.py:1063
+msgid "Payment methods"
+msgstr "Zahlungsmethoden"
+
+#: web/templates/web/base.html:87
 msgid "Administration"
 msgstr "Verwaltung"
 
-#: web/templates/web/base.html:87 web/templates/web/manage/users/detail.html:7
+#: web/templates/web/base.html:91 web/templates/web/manage/users/detail.html:7
 #: web/templates/web/manage/users/form.html:7
 #: web/templates/web/manage/users/list.html:3
 #: web/templates/web/manage/users/list.html:6
@@ -1717,44 +1788,45 @@ msgstr "Verwaltung"
 msgid "Users"
 msgstr "Benutzer"
 
-#: web/templates/web/base.html:99 web/templates/web/manage/reminders.html:3
+#: web/templates/web/base.html:103 web/templates/web/manage/reminders.html:3
 #: web/templates/web/manage/reminders.html:6
 msgid "Reminders"
 msgstr "Erinnerungen"
 
-#: web/templates/web/base.html:105 web/templates/web/manage/system.html:3
+#: web/templates/web/base.html:109 web/templates/web/manage/system.html:3
 #: web/templates/web/manage/system.html:7
 msgid "System"
 msgstr "System"
 
-#: web/templates/web/base.html:111 web/templates/web/manage/backup.html:3
+#: web/templates/web/base.html:115 web/templates/web/manage/backup.html:3
 #: web/templates/web/manage/backup.html:6
 msgid "Backup"
 msgstr "Backup"
 
-#: web/templates/web/base.html:124 web/templates/web/preferences.html:3
+#: web/templates/web/base.html:128 web/templates/web/preferences.html:3
 #: web/templates/web/preferences.html:5
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: web/templates/web/base.html:126 web/templates/web/password_change.html:3
+#: web/templates/web/base.html:130 web/templates/web/password_change.html:3
 #: web/templates/web/password_change.html:5
 #: web/templates/web/password_change.html:11
 #: web/templates/web/preferences.html:26
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: web/templates/web/base.html:129 web/templates/web/manage/system.html:11
+#: web/templates/web/base.html:133 web/templates/web/manage/system.html:11
 msgid "Django administration"
 msgstr "Django-Verwaltung"
 
-#: web/templates/web/base.html:135
+#: web/templates/web/base.html:139
 msgid "Log out"
 msgstr "Abmelden"
 
 #: web/templates/web/categories/_results.html:4
 #: web/templates/web/consumers/_results.html:6
 #: web/templates/web/contracts/_results.html:6
+#: web/templates/web/payment_methods/_results.html:6
 #: web/templates/web/providers/_results.html:6
 msgid "Loading…"
 msgstr "Wird geladen …"
@@ -1769,6 +1841,7 @@ msgstr[1] "%(counter)s Kategorien"
 #: web/templates/web/categories/_results.html:9
 #: web/templates/web/consumers/_results.html:11
 #: web/templates/web/contracts/_results.html:16
+#: web/templates/web/payment_methods/_results.html:11
 #: web/templates/web/providers/_results.html:11
 #, python-format
 msgid "filtered from %(total)s"
@@ -1778,6 +1851,7 @@ msgstr "gefiltert aus %(total)s"
 #: web/templates/web/consumers/_results.html:11
 #: web/templates/web/contracts/_results.html:16
 #: web/templates/web/manage/users/list.html:16
+#: web/templates/web/payment_methods/_results.html:11
 #: web/templates/web/providers/_results.html:11
 msgid "Reset filters"
 msgstr "Filter zurücksetzen"
@@ -1787,6 +1861,7 @@ msgstr "Filter zurücksetzen"
 #: web/templates/web/contracts/_costs.html:19
 #: web/templates/web/contracts/_results.html:32
 #: web/templates/web/includes/contract_table.html:21
+#: web/templates/web/payment_methods/_results.html:22
 #: web/templates/web/providers/_results.html:24
 msgid "Per month"
 msgstr "Pro Monat"
@@ -1821,6 +1896,7 @@ msgstr ""
 
 #: web/templates/web/categories/confirm_delete.html:10
 #: web/templates/web/consumers/confirm_delete.html:10
+#: web/templates/web/payment_methods/confirm_delete.html:10
 #: web/templates/web/providers/confirm_delete.html:10
 msgid "Back"
 msgstr "Zurück"
@@ -1843,6 +1919,7 @@ msgstr ""
 #: web/templates/web/manage/groups/form.html:13
 #: web/templates/web/manage/users/confirm_delete.html:11
 #: web/templates/web/manage/users/detail.html:39
+#: web/templates/web/payment_methods/confirm_delete.html:15
 #: web/templates/web/providers/confirm_delete.html:15
 msgid "Delete"
 msgstr "Löschen"
@@ -1858,13 +1935,15 @@ msgstr "Löschen"
 #: web/templates/web/contracts/confirm_delete.html:12
 #: web/templates/web/contracts/form.html:50
 #: web/templates/web/contracts/reminder_form.html:51
-#: web/templates/web/manage/backup_confirm.html:51
+#: web/templates/web/manage/backup_confirm.html:55
 #: web/templates/web/manage/groups/confirm_delete.html:12
 #: web/templates/web/manage/groups/form.html:32
 #: web/templates/web/manage/users/confirm_delete.html:12
 #: web/templates/web/manage/users/form.html:52
 #: web/templates/web/manage/users/transfer.html:26
 #: web/templates/web/password_change.html:12
+#: web/templates/web/payment_methods/confirm_delete.html:16
+#: web/templates/web/payment_methods/form.html:37
 #: web/templates/web/providers/confirm_delete.html:16
 #: web/templates/web/providers/form.html:63 web/templates/web/sharing.html:39
 msgid "Cancel"
@@ -1895,7 +1974,7 @@ msgstr "Kategorie bearbeiten"
 #: web/templates/web/categories/form.html:3
 #: web/templates/web/categories/form.html:9
 #: web/templates/web/categories/form.html:12
-#: web/templates/web/categories/list.html:8 web/views.py:484
+#: web/templates/web/categories/list.html:8 web/views.py:495
 msgid "New category"
 msgstr "Neue Kategorie"
 
@@ -1908,6 +1987,7 @@ msgstr "Neue Kategorie"
 #: web/templates/web/includes/object_actions.html:5
 #: web/templates/web/manage/users/detail.html:22
 #: web/templates/web/manage/users/form.html:9
+#: web/templates/web/payment_methods/form.html:9
 #: web/templates/web/providers/form.html:9
 msgid "Edit"
 msgstr "Bearbeiten"
@@ -1921,6 +2001,7 @@ msgstr "Bearbeiten"
 #: web/templates/web/manage/groups/form.html:31
 #: web/templates/web/manage/system.html:95
 #: web/templates/web/manage/users/form.html:51
+#: web/templates/web/payment_methods/form.html:36
 #: web/templates/web/preferences.html:15
 #: web/templates/web/providers/form.html:62 web/templates/web/sharing.html:38
 msgid "Save"
@@ -1932,12 +2013,15 @@ msgstr "Speichern"
 #: web/templates/web/consumers/list.html:21
 #: web/templates/web/contracts/list.html:17
 #: web/templates/web/manage/users/list.html:11
+#: web/templates/web/payment_methods/list.html:15
+#: web/templates/web/payment_methods/list.html:21
 #: web/templates/web/providers/list.html:15
 #: web/templates/web/providers/list.html:21
 msgid "Search"
 msgstr "Suche"
 
 #: web/templates/web/categories/list.html:17
+#: web/templates/web/payment_methods/list.html:17
 msgid "Search name"
 msgstr "Name suchen"
 
@@ -1990,7 +2074,7 @@ msgstr "Verbraucher bearbeiten"
 #: web/templates/web/consumers/form.html:3
 #: web/templates/web/consumers/form.html:9
 #: web/templates/web/consumers/form.html:12
-#: web/templates/web/consumers/list.html:8 web/views.py:486
+#: web/templates/web/consumers/list.html:8 web/views.py:497
 msgid "New consumer"
 msgstr "Neuer Verbraucher"
 
@@ -2204,6 +2288,12 @@ msgstr ""
 msgid "Contract details"
 msgstr "Vertragsdaten"
 
+#: web/templates/web/contracts/detail.html:45
+#: web/templates/web/contracts/list.html:53
+#: web/templates/web/payment_methods/_results.html:20
+msgid "Payment method"
+msgstr "Zahlungsmethode"
+
 #: web/templates/web/contracts/form.html:3
 #: web/templates/web/contracts/form.html:12
 msgid "Edit contract"
@@ -2236,11 +2326,15 @@ msgstr "Alle Kategorien"
 msgid "All consumers"
 msgstr "Alle Verbraucher"
 
-#: web/templates/web/contracts/list.html:54
+#: web/templates/web/contracts/list.html:55
+msgid "All payment methods"
+msgstr "Alle Zahlungsmethoden"
+
+#: web/templates/web/contracts/list.html:65
 msgid "All contract partners"
 msgstr "Alle Vertragspartner"
 
-#: web/templates/web/contracts/list.html:61
+#: web/templates/web/contracts/list.html:72
 msgid "Apply filters"
 msgstr "Filter anwenden"
 
@@ -2397,7 +2491,9 @@ msgstr "Nur SSO"
 msgid ""
 "Save all data and files in one file, or restore them from a backup. Visible "
 "to superusers only."
-msgstr "Alle Daten und Dateien in einer Datei sichern oder aus einem Backup wiederherstellen. Nur für Superuser sichtbar."
+msgstr ""
+"Alle Daten und Dateien in einer Datei sichern oder aus einem Backup "
+"wiederherstellen. Nur für Superuser sichtbar."
 
 #: web/templates/web/manage/backup.html:13
 msgid "Create backup"
@@ -2408,7 +2504,10 @@ msgid ""
 "The ZIP file contains users, groups, contracts with costs, documents and "
 "reminders, master data, shares, the assistant's conversations and all "
 "uploaded files."
-msgstr "Die ZIP-Datei enthält Benutzer, Gruppen, Verträge mit Kosten, Dokumenten und Erinnerungen, Stammdaten, Freigaben, die Unterhaltungen des Assistenten und alle hochgeladenen Dateien."
+msgstr ""
+"Die ZIP-Datei enthält Benutzer, Gruppen, Verträge mit Kosten, Dokumenten und "
+"Erinnerungen, Stammdaten, Freigaben, die Unterhaltungen des Assistenten und "
+"alle hochgeladenen Dateien."
 
 #: web/templates/web/manage/backup.html:16
 msgid "Passwords are not included."
@@ -2420,7 +2519,8 @@ msgstr "Die Einstellungen aus der Datei .env sind nicht enthalten."
 
 #: web/templates/web/manage/backup.html:18
 msgid "The file contains personal data. Store it in a safe place."
-msgstr "Die Datei enthält persönliche Daten. Bewahre sie an einem sicheren Ort auf."
+msgstr ""
+"Die Datei enthält persönliche Daten. Bewahre sie an einem sicheren Ort auf."
 
 #: web/templates/web/manage/backup.html:22
 msgid "Download backup"
@@ -2435,12 +2535,15 @@ msgstr "Backup importieren"
 #: web/templates/web/manage/backup.html:30
 msgid ""
 "The import replaces all existing data and files with the content of the "
-"backup. The backup must come from the same version."
-msgstr "Der Import ersetzt alle vorhandenen Daten und Dateien durch den Inhalt des Backups. Das Backup muss aus derselben Version stammen."
+"backup. Backups from this version and from older versions (0.1.0 and later) "
+"can be imported."
+msgstr "Der Import ersetzt alle vorhandenen Daten und Dateien durch den Inhalt des Backups. Importiert werden können Backups dieser Version und älterer Versionen (ab 0.1.0)."
 
 #: web/templates/web/manage/backup.html:37
 msgid "The file is only checked first. Nothing is changed before you confirm."
-msgstr "Die Datei wird zunächst nur geprüft. Vor deiner Bestätigung wird nichts geändert."
+msgstr ""
+"Die Datei wird zunächst nur geprüft. Vor deiner Bestätigung wird nichts "
+"geändert."
 
 #: web/templates/web/manage/backup.html:39
 msgid "Check backup"
@@ -2463,44 +2566,64 @@ msgstr "Version"
 msgid "Files"
 msgstr "Dateien"
 
-#: web/templates/web/manage/backup_confirm.html:26
+#: web/templates/web/manage/backup_confirm.html:25
+#, python-format
+msgid ""
+"This backup comes from the older version %(backup)s. It is converted to "
+"version %(installed)s during the import."
+msgstr "Dieses Backup stammt aus der älteren Version %(backup)s. Es wird beim Import auf Version %(installed)s umgestellt."
+
+#: web/templates/web/manage/backup_confirm.html:30
 msgid ""
 "These files were already missing when the backup was created and are not "
 "included:"
-msgstr "Diese Dateien fehlten schon beim Erstellen des Backups und sind nicht enthalten:"
+msgstr ""
+"Diese Dateien fehlten schon beim Erstellen des Backups und sind nicht "
+"enthalten:"
 
-#: web/templates/web/manage/backup_confirm.html:32
+#: web/templates/web/manage/backup_confirm.html:36
 msgid "All existing data and files will be replaced. This cannot be undone."
-msgstr "Alle vorhandenen Daten und Dateien werden ersetzt. Das lässt sich nicht rückgängig machen."
+msgstr ""
+"Alle vorhandenen Daten und Dateien werden ersetzt. Das lässt sich nicht "
+"rückgängig machen."
 
-#: web/templates/web/manage/backup_confirm.html:34
+#: web/templates/web/manage/backup_confirm.html:38
 msgid "All users are signed out, including you."
 msgstr "Alle Benutzer werden abgemeldet, auch du."
 
-#: web/templates/web/manage/backup_confirm.html:35
+#: web/templates/web/manage/backup_confirm.html:39
 msgid ""
 "No user has a password afterwards. Everyone who had one chooses a new one "
 "via “Forgot password?” on the sign-in page (requires an email address in the "
 "account)."
-msgstr "Danach hat kein Benutzer ein Passwort. Wer eines hatte, wählt über „Passwort vergessen?“ auf der Anmeldeseite ein neues (dafür muss im Konto eine E-Mail-Adresse stehen)."
+msgstr ""
+"Danach hat kein Benutzer ein Passwort. Wer eines hatte, wählt über „Passwort "
+"vergessen?“ auf der Anmeldeseite ein neues (dafür muss im Konto eine E-Mail-"
+"Adresse stehen)."
 
-#: web/templates/web/manage/backup_confirm.html:36
+#: web/templates/web/manage/backup_confirm.html:40
 msgid "Users who are not in the backup no longer exist afterwards."
 msgstr "Benutzer, die nicht im Backup stehen, gibt es danach nicht mehr."
 
-#: web/templates/web/manage/backup_confirm.html:41
+#: web/templates/web/manage/backup_confirm.html:45
 msgid ""
 "This backup contains no users. Nobody can sign in after the import; a new "
 "superuser must be created with “manage.py createsuperuser”."
-msgstr "Dieses Backup enthält keine Benutzer. Nach dem Import kann sich niemand anmelden; ein neuer Superuser muss mit „manage.py createsuperuser“ angelegt werden."
+msgstr ""
+"Dieses Backup enthält keine Benutzer. Nach dem Import kann sich niemand "
+"anmelden; ein neuer Superuser muss mit „manage.py createsuperuser“ angelegt "
+"werden."
 
-#: web/templates/web/manage/backup_confirm.html:44
+#: web/templates/web/manage/backup_confirm.html:48
 msgid ""
 "Email delivery is not configured. “Forgot password?” will not work; set "
 "passwords with “manage.py changepassword &lt;user&gt;” instead."
-msgstr "Der E-Mail-Versand ist nicht eingerichtet. „Passwort vergessen?“ funktioniert dann nicht; setze Passwörter stattdessen mit „manage.py changepassword &lt;Benutzer&gt;“."
+msgstr ""
+"Der E-Mail-Versand ist nicht eingerichtet. „Passwort vergessen?“ "
+"funktioniert dann nicht; setze Passwörter stattdessen mit „manage.py "
+"changepassword &lt;Benutzer&gt;“."
 
-#: web/templates/web/manage/backup_confirm.html:50
+#: web/templates/web/manage/backup_confirm.html:54
 msgid "Replace everything and import"
 msgstr "Alles ersetzen und importieren"
 
@@ -2792,7 +2915,7 @@ msgstr "Eigene Objekte"
 msgid "Transfer"
 msgstr "Übertragen"
 
-#: web/templates/web/manage/users/detail.html:80
+#: web/templates/web/manage/users/detail.html:81
 msgid ""
 "A user who owns objects cannot be deleted. Deactivate the user or transfer "
 "the objects first (superusers only)."
@@ -2853,10 +2976,12 @@ msgstr "Eigentum übertragen"
 #, python-format
 msgid ""
 "All objects of %(name)s: %(contracts)s contracts, %(providers)s contract "
-"partners, %(categories)s categories, %(consumers)s consumers."
+"partners, %(categories)s categories, %(consumers)s consumers, "
+"%(payment_methods)s payment methods."
 msgstr ""
 "Alle Objekte von %(name)s: %(contracts)s Verträge, %(providers)s "
-"Vertragspartner, %(categories)s Kategorien, %(consumers)s Verbraucher."
+"Vertragspartner, %(categories)s Kategorien, %(consumers)s Verbraucher, "
+"%(payment_methods)s Zahlungsmethoden."
 
 #: web/templates/web/password_reset/complete.html:3
 #: web/templates/web/password_reset/complete.html:8
@@ -2934,6 +3059,61 @@ msgstr ""
 msgid "Send link"
 msgstr "Link senden"
 
+#: web/templates/web/payment_methods/_results.html:11
+#, python-format
+msgid "%(counter)s payment method"
+msgid_plural "%(counter)s payment methods"
+msgstr[0] "%(counter)s Zahlungsmethode"
+msgstr[1] "%(counter)s Zahlungsmethoden"
+
+#: web/templates/web/payment_methods/_results.html:39
+msgid "No payment methods match the search."
+msgstr "Keine Zahlungsmethoden passen zur Suche."
+
+#: web/templates/web/payment_methods/_results.html:39
+msgid "There are no payment methods yet that you are allowed to see."
+msgstr "Es gibt noch keine Zahlungsmethoden, die du sehen darfst."
+
+#: web/templates/web/payment_methods/confirm_delete.html:3
+#: web/templates/web/payment_methods/confirm_delete.html:7
+msgid "Delete payment method"
+msgstr "Zahlungsmethode löschen"
+
+#: web/templates/web/payment_methods/confirm_delete.html:9
+#, python-format
+msgid ""
+"The payment method “%(name)s” is still used in contracts and cannot be "
+"deleted. Assign these contracts to a different payment method first."
+msgstr ""
+"Die Zahlungsmethode „%(name)s“ wird noch in Verträgen verwendet und kann "
+"nicht gelöscht werden. Ordne diese Verträge zuerst einer anderen "
+"Zahlungsmethode zu."
+
+#: web/templates/web/payment_methods/confirm_delete.html:12
+#, python-format
+msgid ""
+"Do you really want to delete the payment method “%(name)s”? This cannot be "
+"undone."
+msgstr ""
+"Möchtest du die Zahlungsmethode „%(name)s“ wirklich löschen? Das lässt sich "
+"nicht rückgängig machen."
+
+#: web/templates/web/payment_methods/detail.html:22
+msgid "No contracts for this payment method that you are allowed to see."
+msgstr "Keine Verträge für diese Zahlungsmethode, die du sehen darfst."
+
+#: web/templates/web/payment_methods/form.html:3
+#: web/templates/web/payment_methods/form.html:12
+msgid "Edit payment method"
+msgstr "Zahlungsmethode bearbeiten"
+
+#: web/templates/web/payment_methods/form.html:3
+#: web/templates/web/payment_methods/form.html:9
+#: web/templates/web/payment_methods/form.html:12
+#: web/templates/web/payment_methods/list.html:8 web/views.py:499
+msgid "New payment method"
+msgstr "Neue Zahlungsmethode"
+
 #: web/templates/web/preferences.html:10
 msgid "Profile"
 msgstr "Profil"
@@ -2950,7 +3130,7 @@ msgstr ""
 msgid "Change the password you use to log in."
 msgstr "Ändere das Passwort, mit dem du dich anmeldest."
 
-#: web/templates/web/preferences.html:28 web/views.py:130
+#: web/templates/web/preferences.html:28 web/views.py:132
 msgid "You sign in via single sign-on and have no local password."
 msgstr "Du meldest dich über Single Sign-on an und hast kein lokales Passwort."
 
@@ -3018,7 +3198,7 @@ msgstr "Vertragspartner bearbeiten"
 #: web/templates/web/providers/form.html:3
 #: web/templates/web/providers/form.html:9
 #: web/templates/web/providers/form.html:12
-#: web/templates/web/providers/list.html:8 web/views.py:482
+#: web/templates/web/providers/list.html:8 web/views.py:493
 msgid "New contract partner"
 msgstr "Neuer Vertragspartner"
 
@@ -3042,44 +3222,44 @@ msgstr ""
 "Eine Rolle für eine Gruppe gilt für alle ihre Mitglieder. Die Gruppe „Alle“ "
 "enthält jeden Benutzer."
 
-#: web/views.py:118
+#: web/views.py:120
 msgid "Your settings have been saved."
 msgstr "Deine Einstellungen wurden gespeichert."
 
-#: web/views.py:136
+#: web/views.py:138
 msgid "Your password has been changed."
 msgstr "Dein Passwort wurde geändert."
 
-#: web/views.py:263
+#: web/views.py:265
 msgid "The sharing settings have been saved."
 msgstr "Die Freigaben wurden gespeichert."
 
-#: web/views.py:466
+#: web/views.py:477
 msgid "The reminder has been saved."
 msgstr "Die Erinnerung wurde gespeichert."
 
-#: web/views.py:505
+#: web/views.py:518
 msgid "The contract has been created. You can now add its costs."
 msgstr "Der Vertrag wurde angelegt. Jetzt kannst du die Kosten hinzufügen."
 
-#: web/views.py:526
+#: web/views.py:539
 msgid "The contract has been saved."
 msgstr "Der Vertrag wurde gespeichert."
 
-#: web/views.py:546
+#: web/views.py:559
 #, python-format
 msgid "The contract “%(name)s” has been deleted."
 msgstr "Der Vertrag „%(name)s“ wurde gelöscht."
 
-#: web/views.py:612
+#: web/views.py:625
 msgid "The cost entry has been saved."
 msgstr "Der Kosteneintrag wurde gespeichert."
 
-#: web/views.py:627
+#: web/views.py:640
 msgid "The cost entry has been deleted."
 msgstr "Der Kosteneintrag wurde gelöscht."
 
-#: web/views.py:640
+#: web/views.py:653
 msgid ""
 "Readers may view the contract and its costs. Editors may also edit the "
 "contract and its costs, but not delete it or change the sharing. The owner "
@@ -3089,27 +3269,27 @@ msgstr ""
 "und Kosten außerdem bearbeiten, aber nicht löschen und keine Freigaben "
 "ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:887
+#: web/views.py:900
 msgid "The contract partner has been created."
 msgstr "Der Vertragspartner wurde angelegt."
 
-#: web/views.py:893
+#: web/views.py:906
 msgid "The contract partner has been saved."
 msgstr "Der Vertragspartner wurde gespeichert."
 
-#: web/views.py:899
+#: web/views.py:912
 msgid ""
 "The contract partner cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Vertragspartner kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:900
+#: web/views.py:913
 #, python-format
 msgid "The contract partner “%(name)s” has been deleted."
 msgstr "Der Vertragspartner „%(name)s“ wurde gelöscht."
 
-#: web/views.py:931
+#: web/views.py:944
 msgid ""
 "Readers may view the contract partner and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -3119,26 +3299,26 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:962
+#: web/views.py:975
 msgid "The consumer has been created."
 msgstr "Der Verbraucher wurde angelegt."
 
-#: web/views.py:968
+#: web/views.py:981
 msgid "The consumer has been saved."
 msgstr "Der Verbraucher wurde gespeichert."
 
-#: web/views.py:974
+#: web/views.py:987
 msgid "The consumer cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Verbraucher kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:975
+#: web/views.py:988
 #, python-format
 msgid "The consumer “%(name)s” has been deleted."
 msgstr "Der Verbraucher „%(name)s“ wurde gelöscht."
 
-#: web/views.py:984
+#: web/views.py:997
 msgid ""
 "Readers may view the consumer and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "
@@ -3148,15 +3328,45 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1058
+#: web/views.py:1023
+msgid "The payment method has been created."
+msgstr "Die Zahlungsmethode wurde angelegt."
+
+#: web/views.py:1029
+msgid "The payment method has been saved."
+msgstr "Die Zahlungsmethode wurde gespeichert."
+
+#: web/views.py:1035
+msgid ""
+"The payment method cannot be deleted because it is still used in contracts."
+msgstr ""
+"Die Zahlungsmethode kann nicht gelöscht werden, weil sie noch in Verträgen "
+"verwendet wird."
+
+#: web/views.py:1036
+#, python-format
+msgid "The payment method “%(name)s” has been deleted."
+msgstr "Die Zahlungsmethode „%(name)s“ wurde gelöscht."
+
+#: web/views.py:1065
+msgid ""
+"Readers may view the payment method and use it in their contracts. Editors "
+"may also edit it, but not delete it or change the sharing. The owner has "
+"full access."
+msgstr ""
+"Leser dürfen die Zahlungsmethode ansehen und in ihren Verträgen verwenden. "
+"Bearbeiter dürfen sie außerdem bearbeiten, aber nicht löschen und keine "
+"Freigaben ändern. Der Eigentümer hat vollen Zugriff."
+
+#: web/views.py:1139
 msgid "The category has been created."
 msgstr "Die Kategorie wurde angelegt."
 
-#: web/views.py:1069
+#: web/views.py:1150
 msgid "The category has been saved."
 msgstr "Die Kategorie wurde gespeichert."
 
-#: web/views.py:1076
+#: web/views.py:1157
 msgid ""
 "The category cannot be deleted because it is still used in contracts or has "
 "subcategories."
@@ -3164,12 +3374,12 @@ msgstr ""
 "Die Kategorie kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird oder Unterkategorien hat."
 
-#: web/views.py:1078
+#: web/views.py:1159
 #, python-format
 msgid "The category “%(name)s” has been deleted."
 msgstr "Die Kategorie „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1090
+#: web/views.py:1171
 msgid ""
 "Readers may view the category and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/BrainX9/contracts-manager/tree/main/docs
+    about: Installation, configuration and operations. Please check here first.
+  - name: Report a security vulnerability
+    url: https://github.com/BrainX9/contracts-manager/security/advisories/new
+    about: Please report security issues privately, not as a public issue.

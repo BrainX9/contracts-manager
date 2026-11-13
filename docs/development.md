@@ -40,6 +40,8 @@ docker compose exec app python manage.py test
 
 The suite covers the core logic (current amount, totals, reference numbers), permissions per role, all pages, reminders, email, single sign-on and the administration area.
 
+`config/tests.py` compares the variables read in `config/settings.py` and `docker-compose.yml` with the table in the README and with `.env.example`. When you add a variable, document it in both places. This test needs the README and is skipped inside the Docker image.
+
 ## Translations
 
 Texts in code and templates are English source strings (`gettext`, `{% translate %}`); the German translation lives in `locale/de/LC_MESSAGES/django.po`. German is the default; each user can switch under **Settings**.
@@ -79,13 +81,13 @@ docker compose restart app
 
 The workflow [`.github/workflows/docker-image.yml`](../.github/workflows/docker-image.yml) builds the image on GitHub:
 
-- **A tag `v…`** (e.g. `v0.1.0`) builds the image, runs the tests inside it and, if they pass, publishes it for `amd64` and `arm64` as `ghcr.io/brainx9/contracts-manager:<version>` and `:latest`.
+- **A tag `v…`** (e.g. `v0.2.0`) builds the image, runs the tests inside it and, if they pass, publishes it for `amd64` and `arm64` as `ghcr.io/brainx9/contracts-manager:<version>` and `:latest`.
 - **Run manually** (Actions › Docker image › Run workflow) builds and tests only; nothing is published.
 
 To release a version: set `APP_VERSION` in `config/settings.py`, merge into `main`, then create and push the tag:
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.2.0 && git push origin v0.2.0
 ```
 
 ### Package visibility and Docker Hub

@@ -585,6 +585,7 @@ class BackupView(ManageMixin, View):
                     "summary": backup_summary(info),
                     "no_users": not info.counts.get("auth.user"),
                     "smtp": bool(settings.EMAIL_HOST),
+                    "installed_version": settings.APP_VERSION,
                 })
         return render(request, self.template_name, {"form": form})
 

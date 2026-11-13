@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from contracts import permissions as perms
-from contracts.models import Category, Consumer, Contract, CostEntry, Document, Provider
+from contracts.models import Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider
 
 from .models import UserPreferences
 
@@ -862,6 +862,237 @@ class ConsumerPagesTest(TestCase):
                 self.assertEqual(self.client.get(url).status_code, status)
 
 
+class PaymentMethodPagesTest(TestCase):
+    """Version 0.2.0: Zahlungsmethoden im Frontend und am Vertrag"""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+
+        media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+
+        users_group = Group.objects.get(name=perms.GROUP_USERS)
+        self.owner = User.objects.create_user("eigentuemer")
+        self.owner.groups.add(users_group)
+        self.editor = User.objects.create_user("bearbeiter")
+        self.reader = User.objects.create_user("leser")
+        self.stranger = User.objects.create_user("fremd")
+        self.stranger.groups.add(users_group)
+
+        self.method = PaymentMethod.objects.create(owner=self.owner, name="Lastschrift")
+        self.unused = PaymentMethod.objects.create(owner=self.owner, name="Kreditkarte")
+        self.hidden = PaymentMethod.objects.create(owner=self.stranger, name="Geheime Karte")
+        self.contract = make_contract(self.owner, "Strom", "80.00")
+        self.contract.payment_method = self.method
+        self.contract.save()
+        self.other_contract = make_contract(self.owner, "Gas", "40.00")
+        self.other_contract.payment_method = self.method
+        self.other_contract.save()
+        for obj in (self.method, self.unused):
+            perms.grant_role(obj, self.editor, perms.EDITOR)
+            perms.grant_role(obj, self.reader, perms.READER)
+        perms.grant_role(self.contract, self.reader, perms.READER)
+
+    def image(self, image_format="PNG", name="icon.png"):
+        from io import BytesIO
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        output = BytesIO()
+        Image.new("RGB", (400, 200), "blue").save(output, format=image_format)
+        return SimpleUploadedFile(name, output.getvalue())
+
+    def post_edit(self, **data):
+        form = {"name": self.method.name}
+        form.update(data)
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(reverse("payment_method_edit", args=[self.method.pk]), form)
+
+    # Seiten
+
+    def test_list_counts_only_visible_contracts(self):
+        self.client.force_login(self.reader)
+        rows = {row["object"].pk: row for row in self.client.get(reverse("payment_method_list")).context["rows"]}
+        self.assertEqual(set(rows), {self.method.pk, self.unused.pk})
+        self.assertEqual(rows[self.method.pk]["contract_count"], 1)
+        self.assertEqual(rows[self.method.pk]["monthly"], Decimal("80.00"))
+
+    def test_search_by_name(self):
+        self.client.force_login(self.owner)
+        rows = self.client.get(reverse("payment_method_list"), {"q": "kredit"}).context["rows"]
+        self.assertEqual([row["object"] for row in rows], [self.unused])
+
+    def test_detail(self):
+        self.client.force_login(self.reader)
+        response = self.client.get(reverse("payment_method_detail", args=[self.method.pk]))
+        self.assertEqual([row["contract"] for row in response.context["rows"]], [self.contract])
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.get(reverse("payment_method_detail", args=[self.hidden.pk])).status_code, 404)
+
+    def test_create_edit_delete(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("payment_method_create"), {"name": "Überweisung"})
+        created = PaymentMethod.objects.get(name="Überweisung")
+        self.assertRedirects(response, reverse("payment_method_detail", args=[created.pk]))
+        self.assertEqual(created.owner, self.owner)
+
+        response = self.client.post(reverse("payment_method_create"), {"name": "Kreditkarte"})
+        self.assertContains(response, "Der Eigentümer hat bereits eine Zahlungsmethode mit diesem Namen.")
+
+        self.client.force_login(self.editor)
+        url = reverse("payment_method_edit", args=[self.unused.pk])
+        self.assertEqual(self.client.post(url, {"name": "Karte"}).status_code, 302)
+        self.assertEqual(self.client.post(reverse("payment_method_delete", args=[self.unused.pk])).status_code, 403)
+        self.client.force_login(self.reader)
+        self.assertEqual(self.client.post(url, {"name": "X"}).status_code, 403)
+        self.assertEqual(self.client.get(reverse("payment_method_create")).status_code, 403)
+        self.client.force_login(self.stranger)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+        self.client.force_login(self.owner)
+        self.assertRedirects(self.client.post(reverse("payment_method_delete", args=[self.unused.pk])),
+                             reverse("payment_method_list"))
+        self.assertFalse(PaymentMethod.objects.filter(pk=self.unused.pk).exists())
+
+    def test_delete_in_use_is_refused(self):
+        self.client.force_login(self.owner)
+        url = reverse("payment_method_delete", args=[self.method.pk])
+        self.assertTrue(self.client.get(url).context["in_use"])
+        self.assertRedirects(self.client.post(url), reverse("payment_method_detail", args=[self.method.pk]))
+        self.assertTrue(PaymentMethod.objects.filter(pk=self.method.pk).exists())
+
+    def test_sharing_per_role(self):
+        url = reverse("payment_method_sharing", args=[self.method.pk])
+        for user, status in ((self.owner, 200), (self.editor, 403), (self.reader, 403), (self.stranger, 404)):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                self.assertEqual(self.client.get(url).status_code, status)
+
+    # Icon
+
+    def test_upload_replace_and_remove_icon(self):
+        import os
+
+        self.client.force_login(self.owner)
+        self.assertEqual(self.post_edit(icon=self.image("JPEG", "karte.jpg")).status_code, 302)
+        self.method.refresh_from_db()
+        self.assertRegex(self.method.icon.name, r"^payment_icons/[0-9a-f]{32}\.png$")
+        path = self.method.icon.path
+
+        self.assertEqual(self.post_edit(remove_icon="on").status_code, 302)
+        self.method.refresh_from_db()
+        self.assertFalse(self.method.icon)
+        self.assertFalse(os.path.exists(path))
+
+    def test_invalid_icon_shows_form_error(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.client.force_login(self.owner)
+        response = self.post_edit(icon=SimpleUploadedFile("icon.svg", b"<svg></svg>"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors["icon"])
+
+    def test_icon_is_served_only_with_view_permission(self):
+        self.client.force_login(self.owner)
+        self.post_edit(icon=self.image())
+        self.method.refresh_from_db()
+        url = self.method.icon.url
+        self.assertEqual(url, reverse("payment_method_icon", args=[self.method.icon.name.split("/")[1]]))
+        for user, status in ((self.owner, 200), (self.reader, 200), (self.stranger, 404)):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status)
+                if status == 200:
+                    self.assertEqual(response["Content-Type"], "image/png")
+        self.client.logout()
+        self.assertEqual(self.client.get(url).status_code, 302)
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.get(reverse("payment_method_icon", args=["gibtesnicht.png"])).status_code, 404)
+
+    # Vertrag
+
+    def test_contract_page_shows_link_only_if_visible(self):
+        detail = reverse("payment_method_detail", args=[self.method.pk])
+        self.client.force_login(self.reader)
+        self.assertContains(self.client.get(reverse("contract_detail", args=[self.contract.pk])), detail)
+
+        perms.revoke_roles(self.method, self.reader)
+        response = self.client.get(reverse("contract_detail", args=[self.contract.pk]))
+        self.assertNotContains(response, detail)
+        self.assertContains(response, "Lastschrift")
+
+    def test_contract_page_without_payment_method(self):
+        contract = make_contract(self.owner, "Wasser", "20.00")
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("contract_detail", args=[contract.pk]))
+        self.assertFalse(response.context["payment_method_visible"])
+        self.assertContains(response, "Zahlungsmethode")
+
+    def test_contract_form_offers_only_visible_plus_current(self):
+        self.client.force_login(self.owner)
+        field = self.client.get(reverse("contract_create")).context["form"].fields["payment_method"]
+        self.assertEqual(set(field.queryset), {self.method, self.unused})
+        self.assertFalse(field.required)
+
+        # Bearbeiter des Vertrags ohne Leserecht an der Zahlungsmethode: aktueller Wert bleibt wählbar
+        helper = User.objects.create_user("helfer")
+        perms.grant_role(self.contract, helper, perms.EDITOR)
+        self.client.force_login(helper)
+        field = self.client.get(reverse("contract_edit", args=[self.contract.pk])).context["form"].fields["payment_method"]
+        self.assertEqual(list(field.queryset), [self.method])
+
+    def test_contract_can_be_saved_with_and_without_payment_method(self):
+        self.client.force_login(self.owner)
+        contract = make_contract(self.owner, "Wasser", "20.00")
+        data = {
+            "name": contract.name, "provider": contract.provider_id, "category": contract.category_id,
+            "payment_method": self.unused.pk,
+        }
+        url = reverse("contract_edit", args=[contract.pk])
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        contract.refresh_from_db()
+        self.assertEqual(contract.payment_method, self.unused)
+
+        data["payment_method"] = ""
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        contract.refresh_from_db()
+        self.assertIsNone(contract.payment_method)
+
+        # Fremde Zahlungsmethode lässt sich nicht einschleusen
+        data["payment_method"] = self.hidden.pk
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors["payment_method"])
+
+    def test_contract_list_filter(self):
+        self.client.force_login(self.owner)
+        make_contract(self.owner, "Wasser", "20.00")
+        response = self.client.get(reverse("contract_list"))
+        self.assertEqual(list(response.context["payment_methods"]), [self.method])
+        self.assertEqual(len(response.context["rows"]), 3)
+        response = self.client.get(reverse("contract_list"), {"payment_method": self.method.pk})
+        self.assertEqual({row["contract"].name for row in response.context["rows"]}, {"Strom", "Gas"})
+
+    def test_contract_list_hides_filter_without_payment_methods(self):
+        user = User.objects.create_user("neu")
+        make_contract(user, "Internet", "30.00")
+        self.client.force_login(user)
+        self.assertNotContains(self.client.get(reverse("contract_list")), 'name="payment_method"')
+
+    def test_user_page_counts_payment_methods(self):
+        admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.client.force_login(admin)
+        response = self.client.get(reverse("manage_user_detail", args=[self.owner.pk]))
+        self.assertEqual(response.context["counts"]["paymentmethod"], 2)
+        self.assertContains(response, "Zahlungsmethoden")
+
+
 class CategoryPagesTest(TestCase):
     """Version 0.3d beta: Kategorien im Frontend"""
 
@@ -974,7 +1205,7 @@ class NavigationTest(TestCase):
         self.client.force_login(staff)
         response = self.client.get(reverse("dashboard"))
         self.assertNotContains(response, reverse("admin:index"))
-        for name in ("provider_list", "category_list", "consumer_list"):
+        for name in ("provider_list", "category_list", "consumer_list", "payment_method_list"):
             self.assertContains(response, reverse(name))
 
         admin = User.objects.create_superuser("admin", "admin@example.com", "test")
@@ -1001,7 +1232,7 @@ class NavigationTest(TestCase):
         user.groups.add(Group.objects.get(name=perms.GROUP_USERS))
         self.client.force_login(user)
         response = self.client.get(reverse("contract_create"))
-        for name in ("provider_create", "category_create", "consumer_create"):
+        for name in ("provider_create", "category_create", "consumer_create", "payment_method_create"):
             self.assertContains(response, reverse(name))
         self.assertNotContains(response, "in der Verwaltung gepflegt")
 
@@ -1658,7 +1889,10 @@ class ManageTransferTest(ManageTestMixin, TestCase):
         self.assertRedirects(response, reverse("manage_user_detail", args=[self.normal.pk]))
         contract.refresh_from_db()
         self.assertEqual(contract.owner, self.admin)
-        self.assertEqual(perms.owned_object_counts(self.normal), {"contract": 0, "provider": 0, "category": 0, "consumer": 0})
+        self.assertEqual(
+            perms.owned_object_counts(self.normal),
+            {"contract": 0, "provider": 0, "category": 0, "consumer": 0, "paymentmethod": 0},
+        )
         self.assertFalse(perms.can_view(self.normal, contract))
 
     def test_keep_access(self):
@@ -1803,6 +2037,38 @@ class LoginLockoutTest(TestCase):
             self.assertEqual(self.attempt("falsch").status_code, 200)
 
 
+class FaviconTest(TestCase):
+    """Version 0.2.0: Favicon aus dem Logo, lokal ausgeliefert"""
+
+    def test_pages_link_to_icons(self):
+        user = User.objects.create_user("anna")
+        login_page = self.client.get(reverse("login"))
+        self.client.force_login(user)
+        for response in (login_page, self.client.get(reverse("dashboard"))):
+            self.assertContains(response, 'rel="icon" href="/static/web/favicon.ico"')
+            self.assertContains(response, 'rel="icon" href="/static/web/favicon.svg" type="image/svg+xml"')
+            self.assertContains(response, 'rel="apple-touch-icon" href="/static/web/apple-touch-icon.png"')
+
+    def test_favicon_ico_redirects_to_static_file(self):
+        # Auch ohne Anmeldung, z. B. für die Anmeldeseite des Django-Admin
+        response = self.client.get("/favicon.ico")
+        self.assertRedirects(response, "/static/web/favicon.ico", fetch_redirect_response=False)
+
+    def test_files_exist_with_expected_sizes(self):
+        from django.contrib.staticfiles import finders
+        from PIL import Image
+
+        with Image.open(finders.find("web/favicon.ico")) as icon:
+            self.assertEqual(icon.format, "ICO")
+            self.assertIn((32, 32), icon.info["sizes"])
+        with Image.open(finders.find("web/apple-touch-icon.png")) as icon:
+            self.assertEqual((icon.format, icon.size), ("PNG", (180, 180)))
+        with open(finders.find("web/favicon.svg"), encoding="utf-8") as handle:
+            svg = handle.read()
+        self.assertIn("#4f46e5", svg)
+        self.assertIn("#7c3aed", svg)
+
+
 class QueryCountTest(TestCase):
     """Anzahl der Datenbankabfragen wächst nicht mit der Zahl der Verträge"""
 
@@ -1820,7 +2086,7 @@ class QueryCountTest(TestCase):
         for i in range(3):
             make_contract(owner, f"Vertrag {i}", "10.00")
         urls = [reverse("dashboard"), reverse("contract_list"), reverse("provider_list"),
-                reverse("category_list"), reverse("consumer_list")]
+                reverse("category_list"), reverse("consumer_list"), reverse("payment_method_list")]
         # Erster Aufruf legt Sitzung und Einstellungen an, daher vorab
         for url in urls:
             self.count_queries(url)
@@ -2094,6 +2360,21 @@ class ManageBackupTest(ManageTestMixin, TestCase):
         self.assertContains(response, "Alles ersetzen und importieren")
         self.assertContains(response, 'name="token"')
         self.assertEqual(Contract.objects.count(), 2)
+
+    def test_upload_of_older_backup_shows_notice(self):
+        from pathlib import Path
+
+        import contracts
+
+        path = Path(contracts.__file__).resolve().parent / "test_data" / "backup-0.1.0.zip"
+        self.client.force_login(self.superuser)
+        response = self.upload(path.read_bytes())
+        self.assertContains(response, "älteren Version 0.1.0")
+        self.assertContains(response, settings.APP_VERSION)
+        self.assertTrue(response.context["info"].is_older)
+        # Ein Backup der installierten Version zeigt den Hinweis nicht
+        response = self.upload(self.download().getvalue())
+        self.assertNotContains(response, "älteren Version")
 
     def test_import_replaces_data_and_signs_out(self):
         from django.core import mail
