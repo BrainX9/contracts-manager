@@ -302,7 +302,7 @@ Keine neuen Abhängigkeiten. Letzte Beta vor der öffentlichen Version.
 
 - `contracts.backup`: ein Backup ist eine ZIP-Datei mit `manifest.json` (Format, Version, Migrationsstand, Anzahl je Modell), `data.json` (alle Modelle aus `BACKUP_MODELS`, Verweise auf Benutzer und Gruppen als Namen) und `media/…` (Logos, Dokumente, Anhänge des Assistenten). Nicht enthalten: Sitzungen, Login-Sperren, Aufgaben des Workers, `.env`.
 - **Passwörter werden nie exportiert**, nur ob ein Benutzer eines hatte (`""` oder `"!"`). Nach dem Import hat kein Benutzer ein Passwort; wer eines hatte, bekommt `PASSWORD_RESET_MARKER` und wählt über „Passwort vergessen?“ ein neues (`WebPasswordResetForm.get_users`). Benutzer nur mit SSO bleiben ohne lokales Passwort.
-- Der Import ersetzt den gesamten Bestand (kein Zusammenführen), nur bei gleicher `APP_VERSION` und gleichem Migrationsstand; Datenbank in einer Transaktion, Dateien erst danach; alle Sitzungen enden.
+- Der Import ersetzt den gesamten Bestand (kein Zusammenführen); Datenbank in einer Transaktion, Dateien erst danach; alle Sitzungen enden. Die ursprüngliche Regel „nur bei gleicher `APP_VERSION` und gleichem Migrationsstand“ ist seit Version 0.2.0 abgelöst (siehe dort).
 - Oberfläche nur für Superuser: `/manage/backup/` (herunterladen, hochladen und prüfen), `/manage/backup/download/`, `/manage/backup/import/` (bestätigen oder abbrechen). Der Upload wird bis zur Bestätigung abgelegt (`store_upload`).
 - Kommandozeile: `manage.py export_backup [--output Datei|-]`, `manage.py import_backup Datei [--yes]`.
 - Neue Modelle müssen in `BACKUP_MODELS` (und Dateifelder in `FILE_FIELDS`) eingetragen werden.
@@ -327,6 +327,29 @@ Keine neuen Abhängigkeiten, keine Migration. Änderung steckt im Image (`docker
 - Fasst die Beta-Versionen 0.2 bis 0.9.1 der privaten Entwicklung zusammen. Das Repository ist öffentlich, mit frischer Historie (ein Anfangs-Commit). Das bisherige private Repository liegt als Archiv (`contracts-manager-archive`).
 - `APP_VERSION` ist `0.1.0`, Tag `v0.1.0`, Image `ghcr.io/brainx9/contracts-manager:0.1.0` und `latest`. Für Compose-Datei und Image ist kein Token mehr nötig (Paket auf `ghcr.io` öffentlich). Backups aus den Beta-Versionen lassen sich wegen der Versionsregel nicht importieren.
 - Die Abschnitte „Version 0.x beta“ oben beschreiben die Entstehung und bleiben als Spezifikation erhalten.
+
+### Version 0.2.0: Zahlungsmethode, Import älterer Backups, Favicon
+Keine neuen Abhängigkeiten. Die Werkzeuge des KI-Assistenten (`assistant/tools.py`) sind unverändert.
+
+**Zahlungsmethode (`contracts.PaymentMethod`, Migration `0015`)**
+- Stammdaten wie Vertragspartner, Kategorie und Verbraucher: `OwnedModel` mit `name` (eindeutig pro Eigentümer) und optionalem `icon`; Rechte-Tabellen `PaymentMethodUserObjectPermission`/`PaymentMethodGroupObjectPermission`; in `perms.owned_models()` und `ownership_conflicts`; Gruppe „Benutzer“ hat `add_paymentmethod`. Deutsche Bezeichnung „Zahlungsmethode“ („Zahlweise“ ist `CostEntry.payment_interval`).
+- `Contract.payment_method`: optional, `PROTECT`.
+- `contracts.logos` gilt für `Provider.logo` und `PaymentMethod.icon` (`validate_image`, `process_image`, `connect_file_cleanup(model, field)`); Icons liegen unter `payment_icons/`.
+- Frontend: `/payment-methods/` mit den `MasterData…`-Ansichten, Menü „Stammdaten“; Icon über `web.views.payment_method_icon` unter `/media/payment_icons/<datei>` nur mit Leserecht, sonst 404; Anzeige über `web/includes/payment_method_icon.html`. Vertrag: Auswahl im Formular (`visible_or_current`, Link „Neue Zahlungsmethode“), Anzeige auf der Vertragsseite, Filter in der Vertragsliste (nur wenn sichtbare Verträge eine Zahlungsmethode haben), keine Spalte.
+- Standardwerte PayPal, American Express, Visa, Lastschrift (`contracts.payment_defaults`): normale Datensätze, Eigentümer ist der erste Superuser, Gruppe „Alle“ als Leser. Einmalig, gemerkt in `web.SiteSettings.default_payment_methods_created` (Migration `web/0003`): nach den Migrationen, beim Speichern eines Superusers und nach einem Import. Ein gelöschter Standardwert kommt nicht wieder. Icons sind selbst gezeichnete Kacheln in `contracts/payment_icons/` (keine Logos der Anbieter, Markenrecht).
+
+**Backup**
+- `PaymentMethod`, die beiden Rechte-Tabellen und `payment_icons/` sind im Backup.
+- Import älterer Versionen (`contracts.backup_upgrades`): `VERSIONS` nennt je unterstützter Version den Migrationsstand der eigenen Apps (`contracts`, `web`, `assistant`) und den Schritt zur nächsten Version; vor dem Laden durchläuft `data.json` die Kette (0.1.0 → 0.2.0 → …). 0.2.0 importiert Backups aus 0.1.0 und 0.2.0; neuere Versionen, Beta-Versionen und ein unpassender Migrationsstand werden mit eigener Meldung abgelehnt. Der Stand von `auth`, `contenttypes` und `guardian` wird nicht mehr verglichen.
+- **Jede neue Version ergänzt einen Eintrag in `VERSIONS`** (und bei der vorherigen den Schritt, notfalls `no_changes`); ein Test prüft, dass `APP_VERSION` und der Migrationsstand dort stehen.
+- Testdatei `contracts/test_data/backup-0.1.0.zip`: echtes Backup aus dem Image 0.1.0, nur erfundene Demodaten.
+- Bestätigungsseite und `import_backup` zeigen die Version des Backups und weisen auf eine ältere hin.
+
+**Weiteres**
+- Favicon aus `docs/logo.svg`: `web/static/web/favicon.svg`, `favicon.ico` (16/32/48 px), `apple-touch-icon.png` (180 px), eingebunden in `base.html`; `/favicon.ico` leitet auf die statische Datei weiter (Django-Admin).
+- GitHub-Issue-Formulare unter `.github/ISSUE_TEMPLATE/` (englisch, feste Feld-IDs), leere Issues aus, Links zur Doku und zur privaten Sicherheitsmeldung.
+- README „Configuration“ nennt alle Variablen; `config/tests.py` vergleicht die in `config/settings.py` gelesenen Variablen mit README und `.env.example` (läuft nur, wenn das README vorhanden ist, also nicht im Image). Neue Variablen an beiden Stellen eintragen.
+- `APP_VERSION` ist `0.2.0`; Tag `v0.2.0` und Push nur auf Anweisung.
 
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)

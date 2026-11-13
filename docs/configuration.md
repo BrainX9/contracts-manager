@@ -43,7 +43,7 @@ Further users and groups are managed in the web interface, see below.
 
 ## Users and sharing
 
-Every object (contract, contract partner, category, consumer) has an **owner** and can be shared with further users or groups:
+Every object (contract, contract partner, category, consumer, payment method) has an **owner** and can be shared with further users or groups:
 
 | Role | May |
 |---|---|
@@ -61,7 +61,7 @@ Default groups, created automatically:
 | **Alle** | contains every user automatically; sharing with “Alle” makes an object visible to everyone |
 | **Administratoren** | may manage users and groups in the web interface |
 
-**Sharing an object:** on the page of a contract, contract partner, category or consumer, open **Sharing** and choose exactly one role per user and group: no access, reader or editor. Readers of master data can select it in their own contracts. Sharing a main category does not share its subcategories. Only the owner and superusers see and change sharing. When ownership is handed over, the previous owner automatically becomes an editor (the role can be removed afterwards).
+**Sharing an object:** on the page of a contract, contract partner, category, consumer or payment method, open **Sharing** and choose exactly one role per user and group: no access, reader or editor. Readers of master data can select it in their own contracts. Sharing a main category does not share its subcategories. Only the owner and superusers see and change sharing. When ownership is handed over, the previous owner automatically becomes an editor (the role can be removed afterwards).
 
 Tip: share categories everybody should use with the group **“Alle”** as readers.
 
@@ -170,6 +170,18 @@ The SSO Server endpoints (`/webman/sso/…`) are derived from `OIDC_OP_BASE_URL`
 - With `OIDC_CREATE_USERS=True` unknown users are created on first sign-in: groups “Benutzer” and “Alle”, no local password, never superuser or staff.
 - Deactivated users cannot sign in via SSO either.
 - **Log out** ends the Contracts Manager session only, not the SSO Server session.
+
+## Payment methods
+
+A contract can have a **payment method** (optional), for example PayPal or direct debit. Payment methods are master data like contract partners, categories and consumers: maintain them under **Master data › Payment methods**. Do not confuse them with the *payment interval* of a cost entry (monthly, yearly, …).
+
+- **Create and edit:** users of the group “Benutzer” may create payment methods; the creator becomes the owner. The name is unique per owner.
+- **Sharing** works as for all master data: readers may select the payment method in their own contracts, editors may also change it. The contract page links the payment method only for users who may view it; others see just the name.
+- **Icon** (optional): PNG, JPEG or WebP up to 2 MB, no SVG. It is reduced to 256 pixels and stored without metadata. Icons are only delivered to users who may view the payment method.
+- **Delete:** only possible while no contract uses the payment method.
+- **Contract list:** the filter “Payment method” appears as soon as a visible contract has one.
+
+**Defaults.** *PayPal*, *American Express*, *Visa* and *Lastschrift* (direct debit) are created once, as soon as there is a superuser: on the first start of a new installation, after the update from 0.1.0, and after importing a backup that has no payment methods yet. They are ordinary records: the first superuser owns them and the group “Alle” may read them, so every user can select them. Superusers can rename them, replace the icon or delete them like any other value; a deleted default is not created again. The icons are simple tiles drawn for this project, not the logos of the companies.
 
 ## Documents
 

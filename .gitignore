@@ -16,3 +16,7 @@ venv/
 
 # macOS
 .DS_Store
+
+# Auslagerungsdateien von Editoren (können Inhalte der .env enthalten)
+*.swp
+*.swo
