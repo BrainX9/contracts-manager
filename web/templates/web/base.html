@@ -77,6 +77,10 @@
              {% if url_name == 'consumer_list' %}aria-current="page"{% endif %}>
             <i class="bi bi-people" aria-hidden="true"></i>{% translate "Consumers" %}
           </a>
+          <a class="app-nav-link{% if 'payment_method_' in url_name %} active{% endif %}" href="{% url 'payment_method_list' %}"
+             {% if url_name == 'payment_method_list' %}aria-current="page"{% endif %}>
+            <i class="bi bi-credit-card" aria-hidden="true"></i>{% translate "Payment methods" %}
+          </a>
 
           {% if user.is_superuser or perms.auth.view_user or perms.auth.view_group %}
           {# Administration (Version 0.6 beta): Administratoren und Superuser #}

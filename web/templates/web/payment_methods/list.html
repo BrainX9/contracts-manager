@@ -1,0 +1,27 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Payment methods" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h3 mb-0">{% translate "Payment methods" %}</h1>
+  {% if perms.contracts.add_paymentmethod %}
+  <a class="btn btn-primary" href="{% url 'payment_method_create' %}"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "New payment method" %}</a>
+  {% endif %}
+</div>
+
+<form id="payment-method-filters" class="card card-body mb-3" method="get" action="{% url 'payment_method_list' %}"
+      hx-get="{% url 'payment_method_list' %}" hx-target="#results" hx-push-url="true"
+      hx-trigger="submit" hx-indicator="#results-indicator">
+  <label class="visually-hidden" for="filter-q">{% translate "Search" %}</label>
+  <input type="search" id="filter-q" name="q" value="{{ q }}" class="form-control"
+         placeholder="{% translate 'Search name' %}"
+         hx-get="{% url 'payment_method_list' %}" hx-target="#results" hx-push-url="true"
+         hx-trigger="input changed delay:300ms, search" hx-include="#payment-method-filters"
+         hx-indicator="#results-indicator" autocomplete="off">
+  <noscript><button type="submit" class="btn btn-primary mt-2">{% translate "Search" %}</button></noscript>
+</form>
+
+<div id="results" class="position-relative">
+  {% include "web/payment_methods/_results.html" %}
+</div>
+{% endblock %}

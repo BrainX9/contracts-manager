@@ -10,7 +10,7 @@
   </ol>
 </nav>
 <h1 class="h3 mb-1">{% translate "Transfer ownership" %}</h1>
-<p class="text-body-secondary mb-4">{% blocktranslate with name=target.get_username contracts=counts.contract providers=counts.provider categories=counts.category consumers=counts.consumer %}All objects of {{ name }}: {{ contracts }} contracts, {{ providers }} contract partners, {{ categories }} categories, {{ consumers }} consumers.{% endblocktranslate %}</p>
+<p class="text-body-secondary mb-4">{% blocktranslate with name=target.get_username contracts=counts.contract providers=counts.provider categories=counts.category consumers=counts.consumer payment_methods=counts.paymentmethod %}All objects of {{ name }}: {{ contracts }} contracts, {{ providers }} contract partners, {{ categories }} categories, {{ consumers }} consumers, {{ payment_methods }} payment methods.{% endblocktranslate %}</p>
 
 <form method="post" novalidate style="max-width: 36rem">
   {% csrf_token %}

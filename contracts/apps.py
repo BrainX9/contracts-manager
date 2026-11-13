@@ -128,6 +128,16 @@ class ContractsConfig(AppConfig):
         logos.connect_file_cleanup(Provider, "logo")
         logos.connect_file_cleanup(PaymentMethod, "icon")
 
+        # Standard-Zahlungsmethoden (Version 0.2.0), siehe contracts.payment_defaults
+        from . import payment_defaults
+
+        post_migrate.connect(payment_defaults.after_migrate, sender=self)
+        post_save.connect(
+            payment_defaults.after_superuser_saved,
+            sender=settings.AUTH_USER_MODEL,
+            dispatch_uid="contracts_default_payment_methods",
+        )
+
         # Dokumente (Version 0.7 beta): Datei mit dem Dokument löschen
         from . import documents
         from .models import Document

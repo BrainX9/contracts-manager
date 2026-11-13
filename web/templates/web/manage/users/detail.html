@@ -74,7 +74,8 @@
           <dt class="col-7">{% translate "Contracts" %}</dt><dd class="col-5 text-end">{{ counts.contract }}</dd>
           <dt class="col-7">{% translate "Contract partners" %}</dt><dd class="col-5 text-end">{{ counts.provider }}</dd>
           <dt class="col-7">{% translate "Categories" %}</dt><dd class="col-5 text-end">{{ counts.category }}</dd>
-          <dt class="col-7">{% translate "Consumers" %}</dt><dd class="col-5 text-end mb-0">{{ counts.consumer }}</dd>
+          <dt class="col-7">{% translate "Consumers" %}</dt><dd class="col-5 text-end">{{ counts.consumer }}</dd>
+          <dt class="col-7">{% translate "Payment methods" %}</dt><dd class="col-5 text-end mb-0">{{ counts.paymentmethod }}</dd>
         </dl>
         {% if owns_objects %}
         <p class="small text-body-secondary mt-3 mb-0">{% translate "A user who owns objects cannot be deleted. Deactivate the user or transfer the objects first (superusers only)." %}</p>

@@ -47,6 +47,11 @@ class SiteSettings(models.Model):
         help_text=_("Shown on the login page. Leave empty for “SSO Login”."),
     )
 
+    # Version 0.2.0: intern, siehe contracts.payment_defaults
+    default_payment_methods_created = models.BooleanField(
+        _("default payment methods created"), default=False, editable=False,
+    )
+
     class Meta:
         verbose_name = _("application settings")
         verbose_name_plural = _("application settings")

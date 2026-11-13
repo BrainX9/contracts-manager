@@ -24,7 +24,7 @@
     {% include "web/includes/field.html" with field=form.short_description %}
     <div class="row g-2">
       {% for field, add_perm, add_url, add_label in new_links %}
-      <div class="col-md-4">{% include "web/includes/field.html" with field=field %}
+      <div class="col-md-6">{% include "web/includes/field.html" with field=field %}
         {% if add_perm %}<div class="form-text mt-n2 mb-3"><a href="{{ add_url }}" target="_blank" rel="noopener">{{ add_label }}</a> ({% translate "opens in a new tab" %})</div>{% endif %}
       </div>
       {% endfor %}

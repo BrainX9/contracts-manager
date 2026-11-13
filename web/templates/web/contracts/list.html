@@ -48,6 +48,17 @@
         {% endfor %}
       </select>
     </div>
+    {% if payment_methods %}
+    <div class="col-6 col-md-3 col-xxl-2">
+      <label class="visually-hidden" for="filter-payment-method">{% translate "Payment method" %}</label>
+      <select id="filter-payment-method" name="payment_method" class="form-select">
+        <option value="">{% translate "All payment methods" %}</option>
+        {% for item in payment_methods %}
+        <option value="{{ item.pk }}"{% if item.pk == filters.payment_method %} selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <div class="col-6 col-md-3 col-xxl-2">
       <label class="visually-hidden" for="filter-provider">{% translate "Contract partner" %}</label>
       <select id="filter-provider" name="provider" class="form-select">

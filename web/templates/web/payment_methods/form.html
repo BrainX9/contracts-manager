@@ -1,0 +1,39 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% if object %}{% translate "Edit payment method" %}{% else %}{% translate "New payment method" %}{% endif %}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'payment_method_list' %}">{% translate "Payment methods" %}</a></li>
+    {% if object %}<li class="breadcrumb-item"><a href="{% url 'payment_method_detail' object.pk %}">{{ object.name }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{% if object %}{% translate "Edit" %}{% else %}{% translate "New payment method" %}{% endif %}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-4">{% if object %}{% translate "Edit payment method" %}{% else %}{% translate "New payment method" %}{% endif %}</h1>
+
+<form method="post" enctype="multipart/form-data" novalidate style="max-width: 48rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+  <div class="card mb-3"><div class="card-body">
+    {% include "web/includes/field.html" with field=form.name %}
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-3">{% translate "Icon" %}</h2>
+    {% if form.initial.icon %}
+    <div class="d-flex align-items-center gap-3 mb-3">
+      {% include "web/includes/payment_method_icon.html" with payment_method=object icon=form.initial.icon size="lg" %}
+      <div class="form-check">
+        {{ form.remove_icon }}
+        <label class="form-check-label" for="{{ form.remove_icon.id_for_label }}">{{ form.remove_icon.label }}</label>
+      </div>
+    </div>
+    {% endif %}
+    {% include "web/includes/field.html" with field=form.icon %}
+  </div></div>
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+  <a class="btn btn-link" href="{% if object %}{% url 'payment_method_detail' object.pk %}{% else %}{% url 'payment_method_list' %}{% endif %}">{% translate "Cancel" %}</a>
+</form>
+{% endblock %}

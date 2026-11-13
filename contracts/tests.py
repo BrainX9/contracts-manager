@@ -1370,6 +1370,118 @@ class PaymentMethodTest(TestCase):
         self.assertContains(response, 'name="payment_method"')
 
 
+class DefaultPaymentMethodsTest(TestCase):
+    """Version 0.2.0: Standard-Zahlungsmethoden, einmalig für den ersten Superuser"""
+
+    NAMES = {"PayPal", "American Express", "Visa", "Lastschrift"}
+
+    def setUp(self):
+        import shutil
+        import tempfile
+
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=self.media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+
+    def ensure(self):
+        from .payment_defaults import ensure_default_payment_methods
+
+        return ensure_default_payment_methods()
+
+    def test_nothing_without_superuser(self):
+        from web.models import SiteSettings
+
+        User.objects.create_user("anna")
+        self.assertEqual(self.ensure(), 0)
+        self.assertFalse(PaymentMethod.objects.exists())
+        self.assertFalse(SiteSettings.load().default_payment_methods_created)
+
+    def test_created_for_first_superuser_and_shared_with_all(self):
+        import os
+
+        from PIL import Image
+
+        admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        User.objects.create_superuser("zweiter", "zweiter@example.com", "test")
+        self.assertEqual(self.ensure(), 4)
+        methods = PaymentMethod.objects.all()
+        self.assertEqual({method.name for method in methods}, self.NAMES)
+        reader = User.objects.create_user("leser")
+        for method in methods:
+            with self.subTest(name=method.name):
+                self.assertEqual(method.owner, admin)
+                self.assertRegex(method.icon.name, r"^payment_icons/[0-9a-f]{32}\.png$")
+                self.assertTrue(os.path.exists(method.icon.path))
+                with Image.open(method.icon.path) as image:
+                    self.assertEqual((image.format, image.size), ("PNG", (256, 256)))
+                self.assertEqual(
+                    perms.get_roles(method)[perms.READER]["groups"], {Group.objects.get(name=perms.GROUP_ALL)},
+                )
+                self.assertTrue(perms.can_view(reader, method))
+                self.assertFalse(perms.can_change(reader, method))
+
+    def test_repeated_call_creates_no_duplicates(self):
+        User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.ensure()
+        self.assertEqual(self.ensure(), 0)
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+
+    def test_deleted_or_renamed_default_does_not_come_back(self):
+        User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.ensure()
+        PaymentMethod.objects.get(name="Visa").delete()
+        paypal = PaymentMethod.objects.get(name="PayPal")
+        paypal.name = "PayPal privat"
+        paypal.save()
+        self.assertEqual(self.ensure(), 0)
+        self.assertEqual(
+            set(PaymentMethod.objects.values_list("name", flat=True)),
+            {"PayPal privat", "American Express", "Lastschrift"},
+        )
+
+    def test_existing_method_with_same_name_is_kept(self):
+        admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        own = PaymentMethod.objects.create(owner=admin, name="Visa")
+        self.assertEqual(self.ensure(), 3)
+        own.refresh_from_db()
+        self.assertFalse(own.icon)
+        self.assertEqual(PaymentMethod.objects.filter(name="Visa").count(), 1)
+
+    def test_new_superuser_triggers_creation(self):
+        # Neuinstallation: ensure_admin oder createsuperuser nach den Migrationen
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+
+    def test_normal_user_does_not_trigger_creation(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_user("anna")
+        self.assertFalse(PaymentMethod.objects.exists())
+
+    def test_after_migrate_creates_for_existing_superuser(self):
+        # Update von 0.1.0: der Superuser existiert schon
+        from django.apps import apps as django_apps
+
+        from .payment_defaults import after_migrate
+
+        User.objects.create_superuser("admin", "admin@example.com", "test")
+        after_migrate(sender=django_apps.get_app_config("contracts"))
+        self.assertEqual(PaymentMethod.objects.count(), 4)
+
+    def test_error_does_not_break_saving_the_superuser(self):
+        from . import payment_defaults
+
+        with patch.object(payment_defaults, "ICON_SOURCE_DIR", payment_defaults.ICON_SOURCE_DIR / "fehlt"):
+            with self.assertLogs("contracts.payment_defaults", level="ERROR"):
+                with self.captureOnCommitCallbacks(execute=True):
+                    User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.assertFalse(PaymentMethod.objects.exists())
+        # Beim nächsten Versuch klappt es
+        self.assertEqual(self.ensure(), 4)
+
+
 @override_settings(APP_BASE_URL="https://vertraege.example.test")
 class ReminderTest(TestCase):
     """Erinnerungen: Zeitraum, täglicher Versand, Empfänger, Abschluss (0.5 beta)"""
