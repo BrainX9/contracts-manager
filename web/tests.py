@@ -2037,6 +2037,38 @@ class LoginLockoutTest(TestCase):
             self.assertEqual(self.attempt("falsch").status_code, 200)
 
 
+class FaviconTest(TestCase):
+    """Version 0.2.0: Favicon aus dem Logo, lokal ausgeliefert"""
+
+    def test_pages_link_to_icons(self):
+        user = User.objects.create_user("anna")
+        login_page = self.client.get(reverse("login"))
+        self.client.force_login(user)
+        for response in (login_page, self.client.get(reverse("dashboard"))):
+            self.assertContains(response, 'rel="icon" href="/static/web/favicon.ico"')
+            self.assertContains(response, 'rel="icon" href="/static/web/favicon.svg" type="image/svg+xml"')
+            self.assertContains(response, 'rel="apple-touch-icon" href="/static/web/apple-touch-icon.png"')
+
+    def test_favicon_ico_redirects_to_static_file(self):
+        # Auch ohne Anmeldung, z. B. für die Anmeldeseite des Django-Admin
+        response = self.client.get("/favicon.ico")
+        self.assertRedirects(response, "/static/web/favicon.ico", fetch_redirect_response=False)
+
+    def test_files_exist_with_expected_sizes(self):
+        from django.contrib.staticfiles import finders
+        from PIL import Image
+
+        with Image.open(finders.find("web/favicon.ico")) as icon:
+            self.assertEqual(icon.format, "ICO")
+            self.assertIn((32, 32), icon.info["sizes"])
+        with Image.open(finders.find("web/apple-touch-icon.png")) as icon:
+            self.assertEqual((icon.format, icon.size), ("PNG", (180, 180)))
+        with open(finders.find("web/favicon.svg"), encoding="utf-8") as handle:
+            svg = handle.read()
+        self.assertIn("#4f46e5", svg)
+        self.assertIn("#7c3aed", svg)
+
+
 class QueryCountTest(TestCase):
     """Anzahl der Datenbankabfragen wächst nicht mit der Zahl der Verträge"""
 
