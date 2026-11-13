@@ -1,5 +1,6 @@
 """
-Backup und Import des gesamten Datenbestands (Version 0.9 beta).
+Backup und Import des gesamten Datenbestands (Version 0.9 beta, Import
+älterer Versionen seit 0.2.0).
 
 Ein Backup ist eine ZIP-Datei:
 
@@ -13,8 +14,10 @@ Regeln:
   eines hatte, wählt über "Passwort vergessen?" ein neues
   (``PASSWORD_RESET_MARKER``, siehe ``web.forms.WebPasswordResetForm``);
   sonst ``manage.py changepassword``.
-- Der Import ersetzt den gesamten Bestand (kein Zusammenführen) und nimmt
-  nur Backups derselben App-Version und desselben Migrationsstands an.
+- Der Import ersetzt den gesamten Bestand (kein Zusammenführen). Er nimmt
+  Backups der installierten und älterer unterstützter Versionen an
+  (contracts.backup_upgrades); ältere werden vor dem Laden umgewandelt.
+  Backups aus neueren Versionen und aus den Beta-Versionen lehnt er ab.
 - Nicht enthalten: Sitzungen, Login-Sperren (axes), Aufgaben des Workers
   (django-q2), das Protokoll des Django-Admin und die .env.
 
@@ -44,6 +47,8 @@ from django.db.migrations.loader import MigrationLoader
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from . import backup_upgrades
+
 FORMAT_VERSION = 1
 
 MANIFEST_NAME = "manifest.json"
@@ -65,6 +70,7 @@ BACKUP_MODELS = (
     "contracts.provider",
     "contracts.category",
     "contracts.consumer",
+    "contracts.paymentmethod",
     "contracts.contract",
     "contracts.document",
     "contracts.costentry",
@@ -75,6 +81,8 @@ BACKUP_MODELS = (
     "contracts.categorygroupobjectpermission",
     "contracts.consumeruserobjectpermission",
     "contracts.consumergroupobjectpermission",
+    "contracts.paymentmethoduserobjectpermission",
+    "contracts.paymentmethodgroupobjectpermission",
     "contracts.contractuserobjectpermission",
     "contracts.contractgroupobjectpermission",
     "assistant.conversation",
@@ -86,15 +94,17 @@ BACKUP_MODELS = (
 # Dateifelder, deren Dateien ins Backup gehören: (Modell, Feld)
 FILE_FIELDS = (
     ("contracts.provider", "logo"),
+    ("contracts.paymentmethod", "icon"),
     ("contracts.document", "file"),
     ("assistant.attachment", "file"),
 )
 
 # Ordner unter MEDIA_ROOT, die der Import ersetzt. Dateien im Backup müssen
 # in einem dieser Ordner liegen.
-MEDIA_DIRS = ("logos", "documents", "assistant")
+MEDIA_DIRS = ("logos", "payment_icons", "documents", "assistant")
 
-# Apps, deren Migrationsstand beim Import übereinstimmen muss
+# Apps, deren Migrationsstand im Manifest steht. Beim Import werden nur die
+# eigenen Apps verglichen (backup_upgrades.OWN_APPS).
 MIGRATION_APPS = ("auth", "contenttypes", "guardian", "contracts", "web", "assistant")
 
 # Obergrenze für data.json (entpackt), als Schutz vor defekten Archiven
@@ -119,6 +129,11 @@ class BackupInfo:
     @property
     def total_objects(self):
         return sum(self.counts.values())
+
+    @property
+    def is_older(self):
+        """Stammt das Backup aus einer älteren Version als der installierten?"""
+        return self.app_version != backup_upgrades.CURRENT.version
 
 
 def backup_models():
@@ -241,6 +256,34 @@ def info_from_manifest(manifest):
     )
 
 
+def check_version(manifest):
+    """
+    Nimmt Backups der installierten und älterer unterstützter Versionen an,
+    wenn der Migrationsstand der eigenen Apps zur Version passt.
+    """
+    version = manifest.get("app_version")
+    names = {"backup": version or "?", "installed": settings.APP_VERSION}
+    entry = backup_upgrades.find(version)
+    if entry is None:
+        if backup_upgrades.is_newer(version):
+            raise BackupError(
+                _("This backup was created with the newer version %(backup)s (installed: %(installed)s). "
+                  "Update Contracts Manager first, then import the backup.") % names
+            )
+        raise BackupError(
+            _("This backup was created with version %(backup)s, which this version cannot import "
+              "(installed: %(installed)s). Backups of the beta versions are not supported.") % names
+        )
+    migrations = manifest.get("migrations")
+    if not isinstance(migrations, dict) or any(
+        migrations.get(app) != entry.migrations[app] for app in backup_upgrades.OWN_APPS
+    ):
+        raise BackupError(
+            _("This backup does not match version %(backup)s (different database state) and cannot be imported.")
+            % names
+        )
+
+
 def read_manifest(archive):
     try:
         manifest = json.loads(archive.read(MANIFEST_NAME))
@@ -250,12 +293,7 @@ def read_manifest(archive):
         raise BackupError(_("This file is not a Contracts Manager backup."))
     if manifest.get("format") != FORMAT_VERSION:
         raise BackupError(_("This backup has a format that this version cannot read."))
-    if manifest.get("app_version") != settings.APP_VERSION or manifest.get("migrations") != migration_state():
-        raise BackupError(
-            _("This backup was created with version %(backup)s. It can only be imported into the same version "
-              "(installed: %(installed)s).")
-            % {"backup": manifest.get("app_version") or "?", "installed": settings.APP_VERSION}
-        )
+    check_version(manifest)
     return manifest
 
 
@@ -288,11 +326,15 @@ def inspect_backup(source):
     with open_archive(source) as archive:
         manifest = read_manifest(archive)
         media_members(archive)
-        load_objects(archive)
+        load_objects(archive, manifest)
     return info_from_manifest(manifest)
 
 
-def load_objects(archive):
+def load_objects(archive, manifest):
+    """
+    Liest data.json und bringt die Datensätze älterer Backups auf den
+    aktuellen Stand (contracts.backup_upgrades).
+    """
     try:
         if archive.getinfo(DATA_NAME).file_size > MAX_DATA_BYTES:
             raise BackupError(_("The backup is damaged."))
@@ -304,7 +346,7 @@ def load_objects(archive):
     for row in objects:
         if not isinstance(row, dict) or row.get("model") not in BACKUP_MODELS:
             raise BackupError(_("The backup is damaged."))
-    return objects
+    return backup_upgrades.upgrade(objects, manifest["app_version"])
 
 
 # --- Import -----------------------------------------------------------------
@@ -397,14 +439,16 @@ def import_backup(source):
     Ablauf: Archiv prüfen und Dateien in einen Zwischenordner unter
     MEDIA_ROOT entpacken; Datenbank in einer Transaktion leeren und füllen;
     erst nach deren Erfolg die Dateien austauschen. Schlägt etwas vor dem
-    Austausch fehl, bleibt alles unverändert. Alle Sitzungen enden.
+    Austausch fehl, bleibt alles unverändert. Alle Sitzungen enden. Zum
+    Schluss entstehen die Standard-Zahlungsmethoden, falls das Backup noch
+    keine kennt.
     """
     media_root = Path(settings.MEDIA_ROOT)
     staging = media_root / f".import-{uuid.uuid4().hex}"
     with open_archive(source) as archive:
         manifest = read_manifest(archive)
         members = media_members(archive)
-        objects = load_objects(archive)
+        objects = load_objects(archive, manifest)
         try:
             staging.mkdir(parents=True)
             try:
@@ -419,6 +463,11 @@ def import_backup(source):
             replace_media(staging)
         finally:
             shutil.rmtree(staging, ignore_errors=True)
+    # Backups ohne Zahlungsmethoden (aus 0.1.0): Standardwerte anlegen. Erst
+    # jetzt, weil der Austausch der Dateien den Ordner der Icons ersetzt.
+    from . import payment_defaults
+
+    payment_defaults.ensure_safely()
     return info_from_manifest(manifest)
 
 

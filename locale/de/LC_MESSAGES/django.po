@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 15:44+0100\n"
+"POT-Creation-Date: 2026-11-13 16:09+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -665,30 +665,43 @@ msgstr "Keine Kosten"
 msgid "Contracts"
 msgstr "Verträge"
 
-#: contracts/backup.py:248 contracts/backup.py:250 contracts/backup.py:279
+#: contracts/backup.py:270
+#, python-format
+msgid ""
+"This backup was created with the newer version %(backup)s (installed: "
+"%(installed)s). Update Contracts Manager first, then import the backup."
+msgstr "Dieses Backup wurde mit der neueren Version %(backup)s erstellt (installiert: %(installed)s). Aktualisiere zuerst Contracts Manager und importiere das Backup danach."
+
+#: contracts/backup.py:274
+#, python-format
+msgid ""
+"This backup was created with version %(backup)s, which this version cannot "
+"import (installed: %(installed)s). Backups of the beta versions are not "
+"supported."
+msgstr "Dieses Backup wurde mit Version %(backup)s erstellt, die diese Version nicht importieren kann (installiert: %(installed)s). Backups der Beta-Versionen werden nicht unterstützt."
+
+#: contracts/backup.py:282
+#, python-format
+msgid ""
+"This backup does not match version %(backup)s (different database state) and "
+"cannot be imported."
+msgstr "Dieses Backup passt nicht zu Version %(backup)s (anderer Stand der Datenbank) und kann nicht importiert werden."
+
+#: contracts/backup.py:291 contracts/backup.py:293 contracts/backup.py:317
 msgid "This file is not a Contracts Manager backup."
 msgstr "Diese Datei ist kein Backup von Contracts Manager."
 
-#: contracts/backup.py:252
+#: contracts/backup.py:295
 msgid "This backup has a format that this version cannot read."
 msgstr "Dieses Backup hat ein Format, das diese Version nicht lesen kann."
 
-#: contracts/backup.py:255
-#, python-format
-msgid ""
-"This backup was created with version %(backup)s. It can only be imported "
-"into the same version (installed: %(installed)s)."
-msgstr ""
-"Dieses Backup wurde mit Version %(backup)s erstellt. Es kann nur in dieselbe "
-"Version importiert werden (installiert: %(installed)s)."
-
-#: contracts/backup.py:270
+#: contracts/backup.py:308
 #, python-format
 msgid "The backup contains a file with an invalid path: %(name)s"
 msgstr "Das Backup enthält eine Datei mit unzulässigem Pfad: %(name)s"
 
-#: contracts/backup.py:298 contracts/backup.py:301 contracts/backup.py:303
-#: contracts/backup.py:306 contracts/backup.py:372 contracts/backup.py:413
+#: contracts/backup.py:340 contracts/backup.py:343 contracts/backup.py:345
+#: contracts/backup.py:348 contracts/backup.py:414 contracts/backup.py:457
 msgid "The backup is damaged."
 msgstr "Das Backup ist beschädigt."
 
@@ -1641,16 +1654,16 @@ msgstr "Die Test-E-Mail konnte nicht verschickt werden: %(error)s"
 msgid "A test email has been sent to %(email)s."
 msgstr "Eine Test-E-Mail wurde an %(email)s geschickt."
 
-#: web/manage_views.py:623
+#: web/manage_views.py:624
 msgid "The uploaded backup is no longer available. Please upload it again."
 msgstr ""
 "Das hochgeladene Backup ist nicht mehr vorhanden. Bitte lade es erneut hoch."
 
-#: web/manage_views.py:627
+#: web/manage_views.py:628
 msgid "The import was cancelled. Nothing has been changed."
 msgstr "Der Import wurde abgebrochen. Es wurde nichts geändert."
 
-#: web/manage_views.py:641
+#: web/manage_views.py:642
 msgid ""
 "The backup has been imported. No user has a password now: choose a new one "
 "via “Forgot password?”."
@@ -1922,7 +1935,7 @@ msgstr "Löschen"
 #: web/templates/web/contracts/confirm_delete.html:12
 #: web/templates/web/contracts/form.html:50
 #: web/templates/web/contracts/reminder_form.html:51
-#: web/templates/web/manage/backup_confirm.html:51
+#: web/templates/web/manage/backup_confirm.html:55
 #: web/templates/web/manage/groups/confirm_delete.html:12
 #: web/templates/web/manage/groups/form.html:32
 #: web/templates/web/manage/users/confirm_delete.html:12
@@ -2522,10 +2535,9 @@ msgstr "Backup importieren"
 #: web/templates/web/manage/backup.html:30
 msgid ""
 "The import replaces all existing data and files with the content of the "
-"backup. The backup must come from the same version."
-msgstr ""
-"Der Import ersetzt alle vorhandenen Daten und Dateien durch den Inhalt des "
-"Backups. Das Backup muss aus derselben Version stammen."
+"backup. Backups from this version and from older versions (0.1.0 and later) "
+"can be imported."
+msgstr "Der Import ersetzt alle vorhandenen Daten und Dateien durch den Inhalt des Backups. Importiert werden können Backups dieser Version und älterer Versionen (ab 0.1.0)."
 
 #: web/templates/web/manage/backup.html:37
 msgid "The file is only checked first. Nothing is changed before you confirm."
@@ -2554,7 +2566,14 @@ msgstr "Version"
 msgid "Files"
 msgstr "Dateien"
 
-#: web/templates/web/manage/backup_confirm.html:26
+#: web/templates/web/manage/backup_confirm.html:25
+#, python-format
+msgid ""
+"This backup comes from the older version %(backup)s. It is converted to "
+"version %(installed)s during the import."
+msgstr "Dieses Backup stammt aus der älteren Version %(backup)s. Es wird beim Import auf Version %(installed)s umgestellt."
+
+#: web/templates/web/manage/backup_confirm.html:30
 msgid ""
 "These files were already missing when the backup was created and are not "
 "included:"
@@ -2562,17 +2581,17 @@ msgstr ""
 "Diese Dateien fehlten schon beim Erstellen des Backups und sind nicht "
 "enthalten:"
 
-#: web/templates/web/manage/backup_confirm.html:32
+#: web/templates/web/manage/backup_confirm.html:36
 msgid "All existing data and files will be replaced. This cannot be undone."
 msgstr ""
 "Alle vorhandenen Daten und Dateien werden ersetzt. Das lässt sich nicht "
 "rückgängig machen."
 
-#: web/templates/web/manage/backup_confirm.html:34
+#: web/templates/web/manage/backup_confirm.html:38
 msgid "All users are signed out, including you."
 msgstr "Alle Benutzer werden abgemeldet, auch du."
 
-#: web/templates/web/manage/backup_confirm.html:35
+#: web/templates/web/manage/backup_confirm.html:39
 msgid ""
 "No user has a password afterwards. Everyone who had one chooses a new one "
 "via “Forgot password?” on the sign-in page (requires an email address in the "
@@ -2582,11 +2601,11 @@ msgstr ""
 "vergessen?“ auf der Anmeldeseite ein neues (dafür muss im Konto eine E-Mail-"
 "Adresse stehen)."
 
-#: web/templates/web/manage/backup_confirm.html:36
+#: web/templates/web/manage/backup_confirm.html:40
 msgid "Users who are not in the backup no longer exist afterwards."
 msgstr "Benutzer, die nicht im Backup stehen, gibt es danach nicht mehr."
 
-#: web/templates/web/manage/backup_confirm.html:41
+#: web/templates/web/manage/backup_confirm.html:45
 msgid ""
 "This backup contains no users. Nobody can sign in after the import; a new "
 "superuser must be created with “manage.py createsuperuser”."
@@ -2595,7 +2614,7 @@ msgstr ""
 "anmelden; ein neuer Superuser muss mit „manage.py createsuperuser“ angelegt "
 "werden."
 
-#: web/templates/web/manage/backup_confirm.html:44
+#: web/templates/web/manage/backup_confirm.html:48
 msgid ""
 "Email delivery is not configured. “Forgot password?” will not work; set "
 "passwords with “manage.py changepassword &lt;user&gt;” instead."
@@ -2604,7 +2623,7 @@ msgstr ""
 "funktioniert dann nicht; setze Passwörter stattdessen mit „manage.py "
 "changepassword &lt;Benutzer&gt;“."
 
-#: web/templates/web/manage/backup_confirm.html:50
+#: web/templates/web/manage/backup_confirm.html:54
 msgid "Replace everything and import"
 msgstr "Alles ersetzen und importieren"
 
@@ -2959,7 +2978,10 @@ msgid ""
 "All objects of %(name)s: %(contracts)s contracts, %(providers)s contract "
 "partners, %(categories)s categories, %(consumers)s consumers, "
 "%(payment_methods)s payment methods."
-msgstr "Alle Objekte von %(name)s: %(contracts)s Verträge, %(providers)s Vertragspartner, %(categories)s Kategorien, %(consumers)s Verbraucher, %(payment_methods)s Zahlungsmethoden."
+msgstr ""
+"Alle Objekte von %(name)s: %(contracts)s Verträge, %(providers)s "
+"Vertragspartner, %(categories)s Kategorien, %(consumers)s Verbraucher, "
+"%(payment_methods)s Zahlungsmethoden."
 
 #: web/templates/web/password_reset/complete.html:3
 #: web/templates/web/password_reset/complete.html:8
@@ -3062,14 +3084,19 @@ msgstr "Zahlungsmethode löschen"
 msgid ""
 "The payment method “%(name)s” is still used in contracts and cannot be "
 "deleted. Assign these contracts to a different payment method first."
-msgstr "Die Zahlungsmethode „%(name)s“ wird noch in Verträgen verwendet und kann nicht gelöscht werden. Ordne diese Verträge zuerst einer anderen Zahlungsmethode zu."
+msgstr ""
+"Die Zahlungsmethode „%(name)s“ wird noch in Verträgen verwendet und kann "
+"nicht gelöscht werden. Ordne diese Verträge zuerst einer anderen "
+"Zahlungsmethode zu."
 
 #: web/templates/web/payment_methods/confirm_delete.html:12
 #, python-format
 msgid ""
 "Do you really want to delete the payment method “%(name)s”? This cannot be "
 "undone."
-msgstr "Möchtest du die Zahlungsmethode „%(name)s“ wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr ""
+"Möchtest du die Zahlungsmethode „%(name)s“ wirklich löschen? Das lässt sich "
+"nicht rückgängig machen."
 
 #: web/templates/web/payment_methods/detail.html:22
 msgid "No contracts for this payment method that you are allowed to see."
@@ -3312,7 +3339,9 @@ msgstr "Die Zahlungsmethode wurde gespeichert."
 #: web/views.py:1035
 msgid ""
 "The payment method cannot be deleted because it is still used in contracts."
-msgstr "Die Zahlungsmethode kann nicht gelöscht werden, weil sie noch in Verträgen verwendet wird."
+msgstr ""
+"Die Zahlungsmethode kann nicht gelöscht werden, weil sie noch in Verträgen "
+"verwendet wird."
 
 #: web/views.py:1036
 #, python-format
@@ -3324,7 +3353,10 @@ msgid ""
 "Readers may view the payment method and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
 "full access."
-msgstr "Leser dürfen die Zahlungsmethode ansehen und in ihren Verträgen verwenden. Bearbeiter dürfen sie außerdem bearbeiten, aber nicht löschen und keine Freigaben ändern. Der Eigentümer hat vollen Zugriff."
+msgstr ""
+"Leser dürfen die Zahlungsmethode ansehen und in ihren Verträgen verwenden. "
+"Bearbeiter dürfen sie außerdem bearbeiten, aber nicht löschen und keine "
+"Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
 #: web/views.py:1139
 msgid "The category has been created."

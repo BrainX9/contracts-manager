@@ -2329,6 +2329,21 @@ class ManageBackupTest(ManageTestMixin, TestCase):
         self.assertContains(response, 'name="token"')
         self.assertEqual(Contract.objects.count(), 2)
 
+    def test_upload_of_older_backup_shows_notice(self):
+        from pathlib import Path
+
+        import contracts
+
+        path = Path(contracts.__file__).resolve().parent / "test_data" / "backup-0.1.0.zip"
+        self.client.force_login(self.superuser)
+        response = self.upload(path.read_bytes())
+        self.assertContains(response, "älteren Version 0.1.0")
+        self.assertContains(response, settings.APP_VERSION)
+        self.assertTrue(response.context["info"].is_older)
+        # Ein Backup der installierten Version zeigt den Hinweis nicht
+        response = self.upload(self.download().getvalue())
+        self.assertNotContains(response, "älteren Version")
+
     def test_import_replaces_data_and_signs_out(self):
         from django.core import mail
 

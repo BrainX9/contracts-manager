@@ -21,6 +21,10 @@
     </dl>
   </div></div>
 
+  {% if info.is_older %}
+  <div class="alert alert-info">{% blocktranslate with backup=info.app_version installed=installed_version %}This backup comes from the older version {{ backup }}. It is converted to version {{ installed }} during the import.{% endblocktranslate %}</div>
+  {% endif %}
+
   {% if info.missing_files %}
   <div class="alert alert-warning">
     {% translate "These files were already missing when the backup was created and are not included:" %}
