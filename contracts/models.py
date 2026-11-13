@@ -98,7 +98,7 @@ class Provider(OwnedModel):
     def save(self, *args, **kwargs):
         # Neu hochgeladene Logos verkleinern und ohne Metadaten speichern
         if self.logo and not self.logo._committed:
-            self.logo.save("logo.png", logos.process_logo(self.logo), save=False)
+            self.logo.save("logo.png", logos.process_image(self.logo), save=False)
         super().save(*args, **kwargs)
 
     @property
@@ -199,6 +199,39 @@ class Consumer(OwnedModel):
         ]
 
 
+class PaymentMethod(OwnedModel):
+    """
+    Stammdaten: Zahlungsmethode (Version 0.2.0), z. B. PayPal oder
+    Lastschrift. Nicht zu verwechseln mit der Zahlweise
+    (CostEntry.payment_interval).
+    """
+    name = models.CharField(_("name"), max_length=200)
+    # Gleiche Regeln wie Provider.logo (siehe contracts.logos)
+    icon = models.ImageField(
+        _("icon"),
+        upload_to=logos.payment_icon_upload_to,
+        blank=True,
+        validators=[logos.validate_image],
+        help_text=_("PNG, JPEG or WebP, at most 2 MB. It is reduced to 256 pixels."),
+    )
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # Neu hochgeladene Icons verkleinern und ohne Metadaten speichern
+        if self.icon and not self.icon._committed:
+            self.icon.save("icon.png", logos.process_image(self.icon), save=False)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = _("payment method")
+        verbose_name_plural = _("payment methods")
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="unique_paymentmethod_owner_name"),
+        ]
+
+
 class Contract(OwnedModel):
     """
     Vertrag
@@ -212,6 +245,10 @@ class Contract(OwnedModel):
     # Optional seit 0.9 beta
     consumer = models.ForeignKey(
         Consumer, on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("consumer"),
+    )
+    # Version 0.2.0, optional
+    payment_method = models.ForeignKey(
+        PaymentMethod, on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("payment method"),
     )
 
     # Neue Felder für Phase 1b
@@ -630,6 +667,22 @@ class ConsumerGroupObjectPermission(GroupObjectPermissionBase):
     class Meta(GroupObjectPermissionBase.Meta):
         verbose_name = _("consumer share (group)")
         verbose_name_plural = _("consumer shares (groups)")
+
+
+class PaymentMethodUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
+
+    class Meta(UserObjectPermissionBase.Meta):
+        verbose_name = _("payment method share (user)")
+        verbose_name_plural = _("payment method shares (users)")
+
+
+class PaymentMethodGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
+
+    class Meta(GroupObjectPermissionBase.Meta):
+        verbose_name = _("payment method share (group)")
+        verbose_name_plural = _("payment method shares (groups)")
 
 
 class ContractUserObjectPermission(UserObjectPermissionBase):

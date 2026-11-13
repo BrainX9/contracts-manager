@@ -12,7 +12,7 @@ from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import ProtectedError
 from . import permissions as perms
 from .models import (
-    Provider, Category, Consumer, Contract, CostEntry, Country, Document, total_current_costs,
+    Provider, Category, Consumer, Contract, CostEntry, Country, Document, PaymentMethod, total_current_costs,
     ProviderGroupObjectPermission, ProviderUserObjectPermission, Reminder,
 )
 
@@ -762,6 +762,7 @@ class DefaultGroupsTest(TestCase):
         codenames = set(group.permissions.values_list("codename", flat=True))
         self.assertEqual(codenames, {
             "add_contract", "add_costentry", "add_provider", "add_category", "add_consumer",
+            "add_paymentmethod",
         })
 
     def test_new_users_join_group_all_and_see_shares(self):
@@ -1144,6 +1145,229 @@ class ProviderLogoTest(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             provider.delete()
         self.assertFalse(os.path.exists(path))
+
+
+class PaymentMethodTest(TestCase):
+    """Version 0.2.0: Zahlungsmethode als Stammdaten mit Rollen und Icon"""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=self.media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+
+        self.owner = User.objects.create_user("eigentuemer")
+        self.editor = User.objects.create_user("bearbeiter")
+        self.reader = User.objects.create_user("leser")
+        self.member = User.objects.create_user("familie")
+        self.stranger = User.objects.create_user("fremd")
+        self.admin = User.objects.create_superuser("admin", "admin@example.com", "test")
+        self.family = Group.objects.create(name="Familie")
+        self.member.groups.add(self.family)
+        self.method = PaymentMethod.objects.create(owner=self.owner, name="Lastschrift")
+
+    def upload(self, content, name="icon.png"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        return SimpleUploadedFile(name, content)
+
+    def make_method(self, content=None, name="Kreditkarte"):
+        method = PaymentMethod(owner=self.owner, name=name)
+        if content is not None:
+            method.icon = self.upload(content)
+        method.full_clean()
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        return method
+
+    def make_contract(self, payment_method=None):
+        return Contract.objects.create(
+            owner=self.owner, name="Strom",
+            provider=Provider.objects.create(owner=self.owner, name="Stadtwerke"),
+            category=Category.objects.create(owner=self.owner, name="Energie"),
+            payment_method=payment_method,
+        )
+
+    def rights(self, user):
+        return (
+            perms.can_view(user, self.method), perms.can_change(user, self.method),
+            perms.can_delete(user, self.method), perms.can_share(user, self.method),
+        )
+
+    # Rollen
+
+    def test_rights_per_role(self):
+        perms.grant_role(self.method, self.editor, perms.EDITOR)
+        perms.grant_role(self.method, self.reader, perms.READER)
+        perms.grant_role(self.method, self.family, perms.READER)
+        expected = {
+            self.owner: (True, True, True, True),
+            self.admin: (True, True, True, True),
+            self.editor: (True, True, False, False),
+            self.reader: (True, False, False, False),
+            self.member: (True, False, False, False),
+            self.stranger: (False, False, False, False),
+        }
+        for user, rights in expected.items():
+            with self.subTest(user=user.username):
+                self.assertEqual(self.rights(user), rights)
+
+    def test_visible_and_editable_querysets(self):
+        perms.grant_role(self.method, self.editor, perms.EDITOR)
+        perms.grant_role(self.method, self.reader, perms.READER)
+        queryset = PaymentMethod.objects.all()
+        self.assertEqual(list(perms.visible_to(self.reader, queryset)), [self.method])
+        self.assertEqual(list(perms.visible_to(self.stranger, queryset)), [])
+        self.assertEqual(list(perms.editable_by(self.editor, queryset)), [self.method])
+        self.assertEqual(list(perms.editable_by(self.reader, queryset)), [])
+
+    def test_shares_are_deleted_with_object(self):
+        from .models import PaymentMethodGroupObjectPermission, PaymentMethodUserObjectPermission
+
+        perms.grant_role(self.method, self.editor, perms.EDITOR)
+        perms.grant_role(self.method, self.family, perms.READER)
+        self.assertTrue(PaymentMethodUserObjectPermission.objects.exists())
+        self.assertTrue(PaymentMethodGroupObjectPermission.objects.exists())
+        self.method.delete()
+        self.assertFalse(PaymentMethodUserObjectPermission.objects.exists())
+        self.assertFalse(PaymentMethodGroupObjectPermission.objects.exists())
+
+    def test_users_group_may_add(self):
+        user = User.objects.create_user("neu")
+        self.assertFalse(user.has_perm("contracts.add_paymentmethod"))
+        user.groups.add(Group.objects.get(name=perms.GROUP_USERS))
+        user = User.objects.get(pk=user.pk)
+        self.assertTrue(user.has_perm("contracts.add_paymentmethod"))
+
+    # Modell
+
+    def test_name_is_unique_per_owner(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            PaymentMethod.objects.create(owner=self.owner, name="Lastschrift")
+        # Ein anderer Eigentümer darf denselben Namen verwenden
+        PaymentMethod.objects.create(owner=self.editor, name="Lastschrift")
+
+    def test_contract_field_is_optional(self):
+        contract = self.make_contract()
+        contract.full_clean()
+        self.assertIsNone(contract.payment_method)
+
+    def test_used_payment_method_is_protected(self):
+        contract = self.make_contract(self.method)
+        with self.assertRaises(ProtectedError):
+            self.method.delete()
+        contract.payment_method = None
+        contract.save()
+        self.method.delete()
+        self.assertFalse(PaymentMethod.objects.filter(pk=self.method.pk).exists())
+
+    def test_owner_with_payment_method_cannot_be_deleted(self):
+        with self.assertRaises(ProtectedError):
+            self.owner.delete()
+
+    # Eigentum übertragen
+
+    def test_transfer_includes_payment_methods(self):
+        self.assertEqual(perms.owned_object_counts(self.owner)["paymentmethod"], 1)
+        counts = perms.transfer_all_ownership(self.owner, self.editor, keep_access=True)
+        self.assertEqual(counts["paymentmethod"], 1)
+        self.method.refresh_from_db()
+        self.assertEqual(self.method.owner, self.editor)
+        self.assertTrue(perms.can_change(self.owner, self.method))
+
+    def test_transfer_conflict_on_same_name(self):
+        other = PaymentMethod.objects.create(owner=self.editor, name="Lastschrift")
+        self.assertEqual(perms.ownership_conflicts(self.owner, self.editor), [self.method])
+        self.assertEqual(perms.ownership_conflicts(self.editor, self.owner), [other])
+
+    # Icon
+
+    def test_icon_is_optional(self):
+        self.assertFalse(self.method.icon)
+
+    def test_icon_is_resized_to_png_with_random_name(self):
+        from PIL import Image
+
+        method = self.make_method(make_image("JPEG", (1000, 500)))
+        self.assertRegex(method.icon.name, r"^payment_icons/[0-9a-f]{32}\.png$")
+        with Image.open(method.icon.path) as image:
+            self.assertEqual(image.format, "PNG")
+            self.assertEqual(image.size, (256, 128))
+            self.assertNotIn("exif", image.info)
+
+    def test_icon_rejects_other_formats_and_non_images(self):
+        for name, content in (
+            ("GIF", make_image("GIF")),
+            ("SVG", b"<svg xmlns='http://www.w3.org/2000/svg'></svg>"),
+        ):
+            with self.subTest(name=name):
+                with self.assertRaises(ValidationError) as error:
+                    self.make_method(content, name=name)
+                self.assertIn("icon", error.exception.message_dict)
+
+    def test_icon_rejects_large_files(self):
+        from . import logos
+
+        with patch.object(logos, "MAX_UPLOAD_SIZE", 100):
+            with self.assertRaises(ValidationError) as error:
+                self.make_method(make_image())
+        self.assertIn("icon", error.exception.message_dict)
+
+    def test_old_icon_is_deleted_when_replaced_or_removed(self):
+        import os
+
+        method = self.make_method(make_image())
+        first = method.icon.path
+        method.icon = self.upload(make_image("PNG", (300, 300)))
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        self.assertFalse(os.path.exists(first))
+        second = method.icon.path
+        self.assertTrue(os.path.exists(second))
+
+        method.icon = None
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        self.assertFalse(os.path.exists(second))
+
+    def test_unchanged_icon_is_kept_on_save(self):
+        import os
+
+        method = self.make_method(make_image())
+        method.name = "Neuer Name"
+        with self.captureOnCommitCallbacks(execute=True):
+            method.save()
+        self.assertTrue(os.path.exists(method.icon.path))
+
+    def test_icon_is_deleted_with_payment_method(self):
+        import os
+
+        method = self.make_method(make_image())
+        path = method.icon.path
+        with self.captureOnCommitCallbacks(execute=True):
+            method.delete()
+        self.assertFalse(os.path.exists(path))
+
+    # Admin
+
+    def test_admin_pages(self):
+        self.client.force_login(self.admin)
+        method = self.make_method(make_image())
+        contract = self.make_contract(method)
+        for url in (
+            reverse("admin:contracts_paymentmethod_changelist"),
+            reverse("admin:contracts_paymentmethod_add"),
+            reverse("admin:contracts_paymentmethod_change", args=[method.pk]),
+            reverse("admin:contracts_contract_change", args=[contract.pk]),
+        ):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 200)
+        response = self.client.get(reverse("admin:contracts_contract_change", args=[contract.pk]))
+        self.assertContains(response, 'name="payment_method"')
 
 
 @override_settings(APP_BASE_URL="https://vertraege.example.test")

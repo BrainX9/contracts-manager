@@ -1658,7 +1658,10 @@ class ManageTransferTest(ManageTestMixin, TestCase):
         self.assertRedirects(response, reverse("manage_user_detail", args=[self.normal.pk]))
         contract.refresh_from_db()
         self.assertEqual(contract.owner, self.admin)
-        self.assertEqual(perms.owned_object_counts(self.normal), {"contract": 0, "provider": 0, "category": 0, "consumer": 0})
+        self.assertEqual(
+            perms.owned_object_counts(self.normal),
+            {"contract": 0, "provider": 0, "category": 0, "consumer": 0, "paymentmethod": 0},
+        )
         self.assertFalse(perms.can_view(self.normal, contract))
 
     def test_keep_access(self):

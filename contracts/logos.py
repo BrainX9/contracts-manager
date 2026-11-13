@@ -1,5 +1,6 @@
 """
-Logos der Vertragspartner (Version 0.4 beta).
+Logos der Vertragspartner (Version 0.4 beta) und Icons der
+Zahlungsmethoden (Version 0.2.0).
 
 - Erlaubt sind PNG, JPEG und WebP bis 2 MB. SVG ist bewusst nicht
   erlaubt, da es Skripte enthalten kann.
@@ -8,6 +9,8 @@ Logos der Vertragspartner (Version 0.4 beta).
 - Dateinamen sind zufällig, damit sich Logos nicht erraten lassen.
 - Ausgeliefert werden Logos nur mit Leserecht am Vertragspartner
   (web.views.provider_logo), nicht als öffentliche Mediendatei.
+- Für Icons der Zahlungsmethoden gelten dieselben Regeln, sie liegen
+  unter payment_icons/.
 """
 
 import uuid
@@ -21,6 +24,7 @@ from django.utils.translation import gettext_lazy as _
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 LOGO_DIR = "logos"
+PAYMENT_ICON_DIR = "payment_icons"
 MAX_UPLOAD_SIZE = 2 * 1024 * 1024
 MAX_DIMENSION = 256
 # Schutz vor sehr großen Bildern ("Dekompressionsbombe")
@@ -36,17 +40,32 @@ def logo_upload_to(instance, filename):
     return f"{LOGO_DIR}/{uuid.uuid4().hex}.png"
 
 
+def payment_icon_upload_to(instance, filename):
+    """
+    Zufälliger Dateiname unter payment_icons/.
+    """
+    return f"{PAYMENT_ICON_DIR}/{uuid.uuid4().hex}.png"
+
+
 def validate_logo(value):
     """
+    Prüfung für Provider.logo. Der Name bleibt, weil die Migration 0009
+    darauf verweist.
+    """
+    validate_image(value)
+
+
+def validate_image(value):
+    """
     Prüft Größe, Format und Abmessungen einer neu hochgeladenen Datei.
-    Bereits gespeicherte Logos werden nicht erneut geprüft.
+    Bereits gespeicherte Bilder werden nicht erneut geprüft.
     """
     if not value or getattr(value, "_committed", True):
         return
     if value.size > MAX_UPLOAD_SIZE:
         raise ValidationError(
-            _("The logo may be at most %(size)s."),
-            code="logo_too_large",
+            _("The image may be at most %(size)s."),
+            code="image_too_large",
             params={"size": filesizeformat(MAX_UPLOAD_SIZE)},
         )
     try:
@@ -55,18 +74,18 @@ def validate_logo(value):
             image_format = image.format
             width, height = image.size
     except (UnidentifiedImageError, OSError):
-        raise ValidationError(_("The file is not a valid image."), code="logo_invalid")
+        raise ValidationError(_("The file is not a valid image."), code="image_invalid")
     finally:
         value.seek(0)
     if image_format not in ALLOWED_FORMATS:
         raise ValidationError(
-            _("Only PNG, JPEG and WebP images are allowed."), code="logo_format"
+            _("Only PNG, JPEG and WebP images are allowed."), code="image_format"
         )
     if width * height > MAX_PIXELS:
-        raise ValidationError(_("The image is too large."), code="logo_pixels")
+        raise ValidationError(_("The image is too large."), code="image_pixels")
 
 
-def process_logo(file):
+def process_image(file):
     """
     Verkleinert das Bild auf höchstens MAX_DIMENSION Pixel und schreibt es
     ohne Metadaten als PNG neu. Gibt eine ContentFile zurück.
@@ -86,7 +105,7 @@ def process_logo(file):
 def delete_file_on_commit(field_file):
     """
     Löscht eine Datei erst nach erfolgreicher Transaktion, damit bei einem
-    Fehler das Logo nicht verloren geht.
+    Fehler das Bild nicht verloren geht.
     """
     if not field_file:
         return
@@ -96,26 +115,37 @@ def delete_file_on_commit(field_file):
 
 # --- Signale (verbunden in ContractsConfig.ready) ------------------------------
 
-def remember_old_logo(sender, instance, raw=False, **kwargs):
+def connect_file_cleanup(model, field_name):
     """
-    Merkt sich vor dem Speichern das bisherige Logo, um es nach dem
-    Ersetzen oder Entfernen zu löschen.
+    Löscht die Datei eines Bildfelds, wenn sie ersetzt oder entfernt wird
+    oder das Objekt gelöscht wird. Gilt für Provider.logo und
+    PaymentMethod.icon.
     """
-    instance._old_logo = None
-    if raw or instance.pk is None:
-        return
-    old = sender.objects.filter(pk=instance.pk).values_list("logo", flat=True).first()
-    if old and old != instance.logo.name:
-        field = sender._meta.get_field("logo")
-        instance._old_logo = field.attr_class(instance, field, old)
+    from django.db.models.signals import post_delete, post_save, pre_save
 
+    attribute = f"_old_{field_name}"
 
-def delete_replaced_logo(sender, instance, raw=False, **kwargs):
-    old = getattr(instance, "_old_logo", None)
-    if old:
-        delete_file_on_commit(old)
-        instance._old_logo = None
+    def remember_old_file(sender, instance, raw=False, **kwargs):
+        # Merkt sich vor dem Speichern die bisherige Datei
+        setattr(instance, attribute, None)
+        if raw or instance.pk is None:
+            return
+        old = sender.objects.filter(pk=instance.pk).values_list(field_name, flat=True).first()
+        if old and old != getattr(instance, field_name).name:
+            field = sender._meta.get_field(field_name)
+            setattr(instance, attribute, field.attr_class(instance, field, old))
 
+    def delete_replaced_file(sender, instance, raw=False, **kwargs):
+        old = getattr(instance, attribute, None)
+        if old:
+            delete_file_on_commit(old)
+            setattr(instance, attribute, None)
 
-def delete_logo_with_provider(sender, instance, **kwargs):
-    delete_file_on_commit(instance.logo)
+    def delete_file_with_object(sender, instance, **kwargs):
+        delete_file_on_commit(getattr(instance, field_name))
+
+    uid = f"contracts_{model._meta.model_name}_{field_name}"
+    # weak=False: die Funktionen leben nur in diesem Aufruf
+    pre_save.connect(remember_old_file, sender=model, weak=False, dispatch_uid=f"{uid}_remember")
+    post_save.connect(delete_replaced_file, sender=model, weak=False, dispatch_uid=f"{uid}_replaced")
+    post_delete.connect(delete_file_with_object, sender=model, weak=False, dispatch_uid=f"{uid}_deleted")

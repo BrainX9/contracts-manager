@@ -13,6 +13,7 @@ USERS_GROUP_PERMISSIONS = [
     "add_provider",
     "add_category",
     "add_consumer",
+    "add_paymentmethod",
 ]
 
 
@@ -119,13 +120,13 @@ class ContractsConfig(AppConfig):
             dispatch_uid="contracts_add_new_user_to_all",
         )
 
-        # Logos der Vertragspartner: ersetzte und verwaiste Dateien löschen
+        # Logos der Vertragspartner und Icons der Zahlungsmethoden:
+        # ersetzte und verwaiste Dateien löschen
         from . import logos
-        from .models import Provider
+        from .models import PaymentMethod, Provider
 
-        pre_save.connect(logos.remember_old_logo, sender=Provider, dispatch_uid="contracts_remember_old_logo")
-        post_save.connect(logos.delete_replaced_logo, sender=Provider, dispatch_uid="contracts_delete_replaced_logo")
-        post_delete.connect(logos.delete_logo_with_provider, sender=Provider, dispatch_uid="contracts_delete_logo")
+        logos.connect_file_cleanup(Provider, "logo")
+        logos.connect_file_cleanup(PaymentMethod, "icon")
 
         # Dokumente (Version 0.7 beta): Datei mit dem Dokument löschen
         from . import documents
