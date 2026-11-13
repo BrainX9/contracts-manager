@@ -1,0 +1,98 @@
+name: Bug report
+description: Something does not work as expected.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. You can answer in English or German.
+        Please describe one problem per issue and keep each answer to its field.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: The actual behaviour, including the exact error message if there is one.
+      placeholder: |
+        Saving a contract with the payment method "Visa" shows "Server Error (500)".
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: The behaviour you expected instead.
+      placeholder: |
+        The contract is saved and its page shows the payment method.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, starting from a page of the app. Mention the role of the user (owner, editor, reader, administrator).
+      placeholder: |
+        1. Sign in as a user of the group "Benutzer"
+        2. Open Contracts > New contract
+        3. Fill in name, contract partner and category, choose the payment method "Visa"
+        4. Click "Save"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Contracts
+        - Costs
+        - Master data
+        - Documents
+        - Reminders and email
+        - Sharing and permissions
+        - Backup and import
+        - AI assistant
+        - Single sign-on
+        - Installation / Docker
+        - Documentation
+        - Other
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Shown under Administration > System, or the tag of the Docker image.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation
+      options:
+        - Synology Container Manager
+        - Docker Compose on Linux
+        - Other
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: "Firefox 133 on Windows 11, Safari on iPhone 15"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Output of `docker compose logs app worker --tail 100`, taken right after the error.
+        Remove passwords, keys and personal data first.
+      render: shell
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Optional. Only screenshots without personal data (names, addresses, contract details).
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have searched the existing issues and found no report of this problem.
+          required: true
