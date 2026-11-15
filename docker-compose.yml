@@ -63,12 +63,20 @@ services:
         bind:
           create_host_path: false
     healthcheck:
-      # Das Image enthält kein curl, daher die Prüfung mit Python
+      # Das Image enthält kein curl. Die Prüfung läuft in der Shell (bash,
+      # /dev/tcp) statt mit Python: Ein Python-Start alle 30 Sekunden kostet
+      # auf einem NAS spürbar Rechenzeit, die Shell praktisch keine.
+      # Erfolgreich nur bei Antwort 200 von /health/. $$ steht für ein $,
+      # das Compose nicht selbst ersetzen soll.
       test:
         - CMD
-        - python
+        - bash
         - -c
-        - "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health/', timeout=5).status == 200 else 1)"
+        - >-
+          exec 3<>/dev/tcp/localhost/8000
+          && printf 'GET /health/ HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3
+          && read -r -t 5 line <&3
+          && case "$$line" in *" 200 "*) exit 0;; *) exit 1;; esac
       interval: 30s
       timeout: 10s
       retries: 3
