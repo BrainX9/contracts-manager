@@ -15,7 +15,7 @@ Mit „Maintainer“ ist die Person gemeint, die das Repository betreut (GitHub:
 - Code, Kommentare und Commit-Messages auf Deutsch, Bezeichner (Variablen, Modelle, Funktionen) auf Englisch.
 - README und Dokumentation in `docs/` auf Englisch (das Repository ist für die Öffentlichkeit gedacht). Screenshots in `docs/screenshots/` nur mit erfundenen Demodaten.
 - Technische Begriffe auf Englisch: Pfade (URLs), URL-Namen, Templates, Dateinamen, CSS-Klassen. Sichtbare Texte im Code als englische Ausgangstexte (`gettext`, `{% translate %}`), deutsche Übersetzung in `locale/de`. Die Oberfläche ist standardmäßig deutsch.
-- Keine Secrets im Code. Zugangsdaten nur über Umgebungsvariablen (`.env`, nicht im Repository).
+- Keine Secrets im Code. Zugangsdaten über Umgebungsvariablen (`.env`, nicht im Repository) oder, seit 0.3.0/0.4.0, in der Verwaltung (`web.SiteSettings.SECRET_FIELDS`: nie anzeigen, nie ins Backup).
 
 ## Tech-Stack
 - Python 3.12, Django 5.x (LTS-Version bevorzugen)
@@ -30,6 +30,7 @@ Mit „Maintainer“ ist die Person gemeint, die das Repository betreut (GitHub:
 - `Pillow` für Logos, `mozilla-django-oidc` für Single Sign-on (ab Version 0.4)
 - `django-q2` (ORM-Broker, kein Redis) für Hintergrund-Aufgaben (ab Version 0.5)
 - `openai` und `anthropic` (offizielle SDKs) für den KI-Assistenten (ab Version 0.8a); OpenAI-kompatible Anbieter (IONOS, Ollama) über `AI_BASE_URL`
+- `markdown-it-py` für Markdown in Notizen (ab Version 0.4.0)
 - `django-axes` (mit `ipware`) gegen zu viele Fehlversuche bei der Anmeldung; Container laufen als Benutzer `APP_UID:APP_GID` (Standard 1000), nicht als root
 
 ## Datenmodell
@@ -379,6 +380,38 @@ Keine neuen Abhängigkeiten, keine Migration, keine Änderung an der Oberfläche
 - `Dockerfile`: `pip` wird vor der Installation aktualisiert (das Basis-Image bringt eine ältere Version mit).
 - Backup: Eintrag `0.3.1` in `backup_upgrades.VERSIONS`, Schritt von 0.3.0 ist `no_changes`.
 - `APP_VERSION` ist `0.3.1`; Tag `v0.3.1`, Push und GitHub-Release nur auf Anweisung.
+
+### Version 0.4.0: E-Mail und SSO in der Verwaltung, Markdown in Notizen, Sicherheitsupdates
+Neue Abhängigkeit (freigegeben): `markdown-it-py` (4.x). Die Werkzeuge des KI-Assistenten (`assistant/tools.py`) sind unverändert.
+
+**Richtung (Entscheidung des Maintainers):** Einstellungen langfristig in der Verwaltung statt in der `.env`. Die `.env` wird weiter unterstützt; dort bleiben muss nur, was vor der Datenbank oder von Docker gebraucht wird (`SECRET_KEY`, `POSTGRES_*`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `USE_HTTPS`, Ports, `APP_IMAGE_TAG`, `APP_UID`/`APP_GID`, `ADMIN_*`). Noch nur in der `.env`: `PAPERLESS_URL`, `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT`, `AXES_*`, `SECURE_HSTS_SECONDS`, `DJANGO_LOG_LEVEL`.
+
+**Gemeinsame Regeln für Einstellungen in der Verwaltung**
+- Felder in `web.SiteSettings` (Migration `web/0005`), ein leeres Feld bedeutet „Wert aus der `.env`“. `web.site_config` ist die einzige Stelle, die beides zusammenführt: `mail()`, `reminder_time()`, `sso()` (wie `assistant.config` für den Assistenten). Kein Code liest `settings.EMAIL_*`, `DEFAULT_FROM_EMAIL`, `APP_BASE_URL`, `REMINDER_SEND_TIME` oder `settings.OIDC_*` direkt.
+- Zugangsdaten stehen in `SiteSettings.SECRET_FIELDS` (`ai_api_key`, `email_password`, `sso_client_secret`): nie anzeigen (leeres Feld = behalten, Kästchen zum Entfernen; `SecretFieldMixin`), nie ins Backup, beim Import bleiben die Werte der Installation (`contracts.backup.installed_secrets`). Neue Zugangsdaten dort eintragen.
+- Seiten nur für Superuser, mit „Testen“ der eingegebenen, nicht gespeicherten Werte (`candidate()` am Formular). Änderungen gelten ohne Neustart, auch im Worker.
+
+**E-Mail (`/manage/email/`)**
+- Felder: `email_host`, `email_port`, `email_security` (`starttls`, `ssl`, `none`), `email_user`, `email_password`, `email_sender` (auch mit Anzeigename), `app_base_url`, `reminder_send_time` (`HH:MM`).
+- `EMAIL_BACKEND` ist immer `web.mail_backend.SiteEmailBackend`: liest bei jedem Versand die gültigen Werte, ohne Server Ausgabe ins Log. `contracts.mail.build_mail` setzt Absender und Adresse der App aus `site_config.mail()`.
+- Der Test schickt eine E-Mail an die eigene Adresse (`smtp_backend(candidate)`). Nach dem Speichern und nach einem Import passt `ensure_reminder_schedule()` den Zeitplan des Workers an.
+
+**Single Sign-on (`/manage/sso/`)**
+- Felder: `sso_enabled`, `sso_create_users` (leer, `on`, `off`), `sso_base_url`, `sso_client_id`, `sso_client_secret`, `sso_username_claim`, `sso_scopes`, `sso_sign_algo`, die vier Endpunkte, dazu `sso_login_label`. Endpunkt: eigener Wert, sonst Synology-Pfad unter der Adresse aus der Verwaltung, sonst `.env`.
+- `web.oidc.SSOBackend` ist immer in `AUTHENTICATION_BACKENDS` und meldet ausgeschaltet niemanden an. mozilla-django-oidc liest über `get_settings`; Backend und Ansichten überschreiben das (`ConfiguredMixin`). **Das Backend darf beim Erzeugen nichts aus der Datenbank lesen** (Django erzeugt alle Backends bei jeder Rechteprüfung; ein Test prüft das).
+- Einschalten nur mit vollständigen Angaben; die lokale Anmeldung bleibt immer möglich. Der Test (`web.sso_check`) prüft Vollständigkeit und die Erreichbarkeit von JWKS-, Token- und Benutzerdaten-Endpunkt; ob Client-ID und Secret stimmen, zeigt erst eine Anmeldung.
+
+**Markdown in Notizen**
+- `web.markdown.render` (Filter `markdown` in `web_format`) für die Notizen von Vertrag, Vertragspartner und Verbraucher; Kosteneinträge und Dokumente bleiben reiner Text. Gespeichert wird weiter der eingegebene Text.
+- Sicherheit: kein HTML aus der Eingabe (`html: False`), keine Bilder, Links nur mit unbedenklichem Schema und mit `rel="noopener noreferrer nofollow"`. Einfache Zeilenumbrüche bleiben erhalten (`breaks`), damit ältere Notizen gleich aussehen.
+
+**Sicherheitsupdates (Docker Scout)**
+- `Dockerfile`: `apt-get upgrade` (Korrekturen von Debian, z. B. zlib) und `pip` nach der Installation entfernen (bringt eine Kopie von Teilen von setuptools mit; im Betrieb unnötig). Im Container gibt es daher kein `pip`.
+- `docker-compose.yml` (nach 0.3.1): Healthcheck der App in der Shell (`bash`, `/dev/tcp`) statt mit Python.
+
+**Weiteres**
+- Backup: Eintrag `0.4.0` in `backup_upgrades.VERSIONS`, Schritt von 0.3.1 ist `no_changes`.
+- `APP_VERSION` ist `0.4.0`; Tag `v0.4.0`, Push und GitHub-Release nur auf Anweisung.
 
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
