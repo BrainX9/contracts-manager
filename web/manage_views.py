@@ -7,6 +7,7 @@ Bereich Administration im Frontend (Version 0.6 beta) unter /manage/.
 - System: Version, Worker, E-Mail, SSO; Test-E-Mail an sich selbst.
 - Backup und Import (0.9 beta): nur Superuser, Logik in contracts.backup.
 - KI-Einstellungen (0.3.0): nur Superuser, mit Test der eingegebenen Werte.
+- E-Mail und Single Sign-on (0.4.0): nur Superuser, jeweils mit Test.
 Ohne Recht gibt es 403. Das Django-Backend (/admin/) bleibt Superusern
 vorbehalten.
 """
@@ -36,10 +37,16 @@ from django.views.generic import TemplateView
 
 from contracts import backup
 from contracts import permissions as perms
+from contracts.apps import ensure_reminder_schedule
 from contracts.mail import build_mail, user_language
 from contracts.models import Contract, Reminder
 
-from .manage_forms import AISettingsForm, BackupUploadForm, GroupForm, SiteSettingsForm, TransferOwnershipForm, UserForm
+from . import site_config
+from .mail_backend import smtp_backend
+from .manage_forms import (
+    AISettingsForm, BackupUploadForm, EmailSettingsForm, GroupForm, SiteSettingsForm, SSOSettingsForm,
+    TransferOwnershipForm, UserForm,
+)
 from .models import SiteSettings
 
 logger = logging.getLogger(__name__)
@@ -477,23 +484,25 @@ class SystemView(ManageMixin, View):
         from assistant.config import current
 
         ai = current()
+        mail = site_config.mail()
+        sso = site_config.sso()
         return {
             "settings_form": settings_form or SiteSettingsForm(instance=SiteSettings.load()),
             "version": settings.APP_VERSION,
             "worker": self.worker_status(),
             "email": {
-                "smtp": bool(settings.EMAIL_HOST),
-                "host": settings.EMAIL_HOST,
-                "port": settings.EMAIL_PORT,
-                "security": "SSL" if settings.EMAIL_USE_SSL else ("STARTTLS" if settings.EMAIL_USE_TLS else "–"),
-                "user": settings.EMAIL_HOST_USER,
-                "sender": settings.DEFAULT_FROM_EMAIL,
+                "smtp": mail.smtp,
+                "host": mail.host,
+                "port": mail.port,
+                "security": mail.security_label,
+                "user": mail.user,
+                "sender": mail.sender,
             },
-            "app_base_url": settings.APP_BASE_URL,
+            "app_base_url": mail.base_url,
             "sso": {
-                "enabled": settings.OIDC_ENABLED,
-                "base_url": settings.OIDC_OP_BASE_URL,
-                "create_users": settings.OIDC_CREATE_USER,
+                "enabled": sso.enabled,
+                "base_url": sso.base_url,
+                "create_users": sso.create_users,
             },
             "ai": {
                 "enabled": ai.enabled,
@@ -502,7 +511,7 @@ class SystemView(ManageMixin, View):
                 "base_url": ai.base_url,
                 "users": User.objects.filter(is_active=True, groups__name=perms.GROUP_AI).count(),
             },
-            "reminder_time": settings.REMINDER_SEND_TIME,
+            "reminder_time": site_config.reminder_time(),
             "counts": {
                 "users": User.objects.filter(is_active=True).count(),
                 "contracts": Contract.objects.count(),
@@ -620,6 +629,106 @@ class AISettingsView(ManageMixin, View):
         return render(request, self.template_name, self.context(form, results))
 
 
+# --- E-Mail und Single Sign-on (nur Superuser, 0.4.0) ---------------------------
+
+class EmailSettingsView(ManageMixin, View):
+    """
+    SMTP-Server, Absender, Adresse der App und Uhrzeit der Erinnerungen.
+    Gespeichert wird in web.SiteSettings; leere Felder gelten als "Wert aus
+    der .env" (web.site_config). "Testen" schickt mit den eingegebenen,
+    nicht gespeicherten Werten eine E-Mail an die eigene Adresse.
+    """
+    superuser_only = True
+    template_name = "web/manage/email.html"
+
+    def form(self, data=None):
+        return EmailSettingsForm(data, instance=SiteSettings.load())
+
+    def context(self, form, test_result=None):
+        return {
+            "form": form,
+            "current": site_config.mail(),
+            "reminder_time": site_config.reminder_time(),
+            "test_result": test_result,
+        }
+
+    def get(self, request):
+        return render(request, self.template_name, self.context(self.form()))
+
+    def post(self, request):
+        form = self.form(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, self.context(form))
+        if request.POST.get("action") == "test":
+            return render(request, self.template_name, self.context(form, self.test(request, form.candidate())))
+        form.save()
+        # Geänderte Uhrzeit in den Zeitplan des Workers übernehmen
+        ensure_reminder_schedule()
+        messages.success(request, _("The settings have been saved."))
+        return redirect("manage_email")
+
+    def test(self, request, candidate):
+        """Ergebnis als (Erfolg, Text); nichts wird gespeichert."""
+        if not candidate.smtp:
+            return False, _("No SMTP server is set, neither here nor in the .env file.")
+        if not request.user.email:
+            return False, _("Please enter your email address under Settings first.")
+        try:
+            build_mail(
+                "test", {"user": request.user}, [request.user.email], user_language(request.user),
+                config=candidate, connection=smtp_backend(candidate),
+            ).send()
+        except Exception as error:
+            logger.warning("Test der E-Mail-Einstellungen fehlgeschlagen: %s", error)
+            return False, _("The test email could not be sent: %(error)s") % {"error": error}
+        return True, _("A test email has been sent to %(email)s. Nothing was saved.") % {"email": request.user.email}
+
+
+class SSOSettingsView(ManageMixin, View):
+    """
+    Single Sign-on (OpenID Connect): ein/aus, Server, Client und Endpunkte.
+    Gespeichert wird in web.SiteSettings; leere Felder gelten als "Wert aus
+    der .env" (web.site_config). "Testen" prüft die eingegebenen Werte, ohne
+    sie zu speichern (web.sso_check).
+    """
+    superuser_only = True
+    template_name = "web/manage/sso.html"
+
+    def form(self, data=None):
+        return SSOSettingsForm(data, instance=SiteSettings.load())
+
+    def context(self, request, form, results=None):
+        return {
+            "form": form,
+            "current": site_config.sso(),
+            "results": results,
+            # Diese Adresse muss beim SSO-Anbieter als Redirect URI eingetragen sein
+            "redirect_uri": request.build_absolute_uri(reverse("oidc_authentication_callback")),
+            "endpoint_fields": [form[f"sso_{name}"] for name in SSOSettingsForm.ENDPOINTS],
+        }
+
+    def get(self, request):
+        return render(request, self.template_name, self.context(request, self.form()))
+
+    def post(self, request):
+        from . import sso_check
+
+        form = self.form(request.POST)
+        if request.POST.get("action") == "test":
+            # Der Test braucht keine vollständigen Angaben: Er nennt, was fehlt
+            form.full_clean()
+            field_errors = [name for name in form.errors if name != "__all__"]
+            if field_errors:
+                return render(request, self.template_name, self.context(request, form))
+            results = sso_check.run(form.candidate(form.cleaned_data))
+            return render(request, self.template_name, self.context(request, form, results))
+        if not form.is_valid():
+            return render(request, self.template_name, self.context(request, form))
+        form.save()
+        messages.success(request, _("The settings have been saved."))
+        return redirect("manage_sso")
+
+
 # --- Backup und Import (nur Superuser, 0.9 beta) ------------------------------
 
 # Modelle, deren Anzahl die Bestätigungsseite nennt
@@ -673,7 +782,7 @@ class BackupView(ManageMixin, View):
                     "info": info,
                     "summary": backup_summary(info),
                     "no_users": not info.counts.get("auth.user"),
-                    "smtp": bool(settings.EMAIL_HOST),
+                    "smtp": site_config.mail().smtp,
                     "installed_version": settings.APP_VERSION,
                 })
         return render(request, self.template_name, {"form": form})

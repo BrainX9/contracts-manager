@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -38,10 +39,21 @@ class SiteSettings(models.Model):
     """
     Einstellungen der Anwendung, die Administratoren unter Verwaltung ›
     System ändern (Version 0.7 beta). Es gibt genau einen Datensatz
-    (SiteSettings.load). Zugangsdaten stehen in der .env; einzige Ausnahme
-    ist der API-Schlüssel des KI-Assistenten (Version 0.3.0), der nie
-    angezeigt und nie ins Backup geschrieben wird.
+    (SiteSettings.load). Zugangsdaten stehen in der .env oder hier
+    (``SECRET_FIELDS``: API-Schlüssel des KI-Assistenten seit 0.3.0,
+    SMTP-Passwort und Client-Secret des SSO seit 0.4.0); sie werden nie
+    angezeigt und nie ins Backup geschrieben.
     """
+    # Zugangsdaten: nie anzeigen, nie exportieren, bei einem Import behalten
+    SECRET_FIELDS = ("ai_api_key", "email_password", "sso_client_secret")
+    ON = "on"
+    OFF = "off"
+    SWITCH_CHOICES = [(ON, _("On")), (OFF, _("Off"))]
+    EMAIL_SECURITY_CHOICES = [
+        ("starttls", _("STARTTLS (usually port 587)")),
+        ("ssl", _("SSL/TLS (usually port 465)")),
+        ("none", _("None (unencrypted)")),
+    ]
     AI_ON = "on"
     AI_OFF = "off"
     AI_ENABLED_CHOICES = [(AI_ON, _("On")), (AI_OFF, _("Off"))]
@@ -67,6 +79,33 @@ class SiteSettings(models.Model):
     ai_base_url = models.CharField(_("address of the API (base URL)"), max_length=500, blank=True)
     ai_api_key = models.CharField(_("API key"), max_length=500, blank=True)
     ai_system_prompt = models.TextField(_("system prompt"), blank=True)
+
+    # Version 0.4.0: E-Mail, Erinnerungsversand und Single Sign-on. Auch hier
+    # bedeutet ein leeres Feld "Wert aus der .env"; ausgewertet wird das nur
+    # in web.site_config.
+    email_host = models.CharField(_("SMTP server"), max_length=255, blank=True)
+    email_port = models.PositiveIntegerField(
+        _("port"), null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(65535)],
+    )
+    email_security = models.CharField(_("encryption"), max_length=10, blank=True, choices=EMAIL_SECURITY_CHOICES)
+    email_user = models.CharField(_("SMTP user"), max_length=255, blank=True)
+    email_password = models.CharField(_("SMTP password"), max_length=500, blank=True)
+    email_sender = models.CharField(_("sender address"), max_length=255, blank=True)
+    app_base_url = models.CharField(_("address of the app"), max_length=500, blank=True)
+    reminder_send_time = models.CharField(_("send reminders daily at"), max_length=5, blank=True)
+
+    sso_enabled = models.CharField(_("single sign-on"), max_length=3, blank=True, choices=SWITCH_CHOICES)
+    sso_base_url = models.CharField(_("address of the SSO server"), max_length=500, blank=True)
+    sso_client_id = models.CharField(_("client ID"), max_length=255, blank=True)
+    sso_client_secret = models.CharField(_("client secret"), max_length=500, blank=True)
+    sso_create_users = models.CharField(_("create unknown users"), max_length=3, blank=True, choices=SWITCH_CHOICES)
+    sso_username_claim = models.CharField(_("claim with the user name"), max_length=100, blank=True)
+    sso_scopes = models.CharField(_("scopes"), max_length=255, blank=True)
+    sso_sign_algo = models.CharField(_("signing algorithm"), max_length=10, blank=True)
+    sso_authorization_endpoint = models.CharField(_("authorization endpoint"), max_length=500, blank=True)
+    sso_token_endpoint = models.CharField(_("token endpoint"), max_length=500, blank=True)
+    sso_user_endpoint = models.CharField(_("user info endpoint"), max_length=500, blank=True)
+    sso_jwks_endpoint = models.CharField(_("JWKS endpoint"), max_length=500, blank=True)
 
     class Meta:
         verbose_name = _("application settings")

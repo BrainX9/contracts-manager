@@ -267,6 +267,275 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
         return super().save(commit)
 
 
+class SecretFieldMixin:
+    """
+    Zugangsdaten in den Einstellungen (Version 0.4.0): gespeichert, aber nie
+    wieder angezeigt. Das Formularfeld ``secret_field`` bleibt leer = Wert
+    unverändert; ``clear_field`` (nur wenn etwas gespeichert ist) entfernt
+    ihn. ``secret_model_field`` ist das Feld in SiteSettings.
+    """
+    secret_field = ""
+    clear_field = ""
+    secret_model_field = ""
+
+    def setup_secret(self, env_value, stored_text, env_text, missing_text):
+        if getattr(self.instance, self.secret_model_field):
+            self.fields[self.secret_field].help_text = stored_text
+        else:
+            del self.fields[self.clear_field]
+            self.fields[self.secret_field].help_text = env_text if env_value else missing_text
+
+    def chosen_secret(self):
+        """Wert nach dem Speichern: neu eingegeben, entfernt oder wie bisher."""
+        if self.cleaned_data.get(self.secret_field):
+            return self.cleaned_data[self.secret_field]
+        if self.cleaned_data.get(self.clear_field):
+            return ""
+        return getattr(self.instance, self.secret_model_field)
+
+    def save(self, commit=True):
+        setattr(self.instance, self.secret_model_field, self.chosen_secret())
+        return super().save(commit)
+
+
+def clean_http_url(value):
+    """Adresse mit http oder https, ohne Schrägstrich am Ende; leer bleibt leer."""
+    value = (value or "").strip().rstrip("/")
+    if value:
+        URLValidator(schemes=["http", "https"])(value)
+    return value
+
+
+class EmailSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
+    """
+    SMTP, Absender, Adresse der App und Uhrzeit der Erinnerungen unter
+    Verwaltung › E-Mail (Version 0.4.0, nur Superuser). Ein leeres Feld
+    bedeutet "Wert aus der .env" (web.site_config).
+    """
+    secret_field = "password"
+    clear_field = "clear_password"
+    secret_model_field = "email_password"
+
+    password = forms.CharField(
+        label=_("SMTP password"), required=False, max_length=500,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+    clear_password = forms.BooleanField(label=_("Remove the stored password"), required=False)
+
+    class Meta:
+        model = SiteSettings
+        fields = [
+            "email_host", "email_port", "email_security", "email_user", "email_sender",
+            "app_base_url", "reminder_send_time",
+        ]
+        widgets = {"reminder_send_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M")}
+
+    def __init__(self, *args, **kwargs):
+        from django.conf import settings
+
+        from . import site_config
+
+        super().__init__(*args, **kwargs)
+        self.env = env = site_config.mail_from_env()
+        empty = _("Empty: value from the .env file.")
+        placeholders = {
+            "email_host": env.host or "smtp.example.com",
+            "email_port": env.port,
+            "email_user": env.user,
+            "email_sender": env.sender,
+            "app_base_url": env.base_url or "https://contracts.example.com",
+        }
+        for name, placeholder in placeholders.items():
+            self.fields[name].widget.attrs["placeholder"] = placeholder
+            self.fields[name].help_text = empty
+        self.fields["email_security"].choices = [
+            ("", _("As in the .env file (%(value)s)") % {"value": env.security_label}),
+            *SiteSettings.EMAIL_SECURITY_CHOICES,
+        ]
+        self.fields["email_sender"].help_text = _(
+            "Address the emails come from, often the same as the SMTP user. Empty: value from the .env file."
+        )
+        self.fields["app_base_url"].help_text = _(
+            "Public address of the app, used for links in emails. Empty: value from the .env file."
+        )
+        self.fields["reminder_send_time"].help_text = _(
+            "Empty: value from the .env file (%(value)s)."
+        ) % {"value": settings.REMINDER_SEND_TIME}
+        self.setup_secret(
+            env.password,
+            _("A password is stored. Leave empty to keep it."),
+            _("No password is stored here; the password from the .env file is used."),
+            _("No password is set yet."),
+        )
+
+    def clean_email_host(self):
+        value = self.cleaned_data["email_host"].strip()
+        if value and (" " in value or "/" in value):
+            raise forms.ValidationError(_("Enter the host name only, e.g. smtp.example.com."))
+        return value
+
+    def clean_email_sender(self):
+        # Auch mit Anzeigename: Contracts Manager <contracts@example.com>
+        from email.utils import parseaddr
+
+        value = self.cleaned_data["email_sender"].strip()
+        if value:
+            forms.EmailField().clean(parseaddr(value)[1])
+        return value
+
+    def clean_app_base_url(self):
+        return clean_http_url(self.cleaned_data["app_base_url"])
+
+    def clean_reminder_send_time(self):
+        value = (self.cleaned_data["reminder_send_time"] or "").strip()
+        if not value:
+            return ""
+        try:
+            hour, minute = (int(part) for part in value.split(":")[:2])
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                raise ValueError
+        except ValueError:
+            raise forms.ValidationError(_("Enter a time such as 07:00."))
+        return f"{hour:02d}:{minute:02d}"
+
+    def candidate(self):
+        """Konfiguration aus den eingegebenen Werten (für den Test, ungespeichert)."""
+        from types import SimpleNamespace
+
+        from . import site_config
+
+        data = self.cleaned_data
+        return site_config.merge_mail(SimpleNamespace(
+            email_host=data["email_host"], email_port=data["email_port"],
+            email_security=data["email_security"], email_user=data["email_user"],
+            email_password=self.chosen_secret(), email_sender=data["email_sender"],
+            app_base_url=data["app_base_url"],
+        ), self.env)
+
+
+class SSOSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
+    """
+    Single Sign-on unter Verwaltung › Single Sign-on (Version 0.4.0, nur
+    Superuser). Ein leeres Feld bedeutet "Wert aus der .env"
+    (web.site_config).
+    """
+    secret_field = "client_secret"
+    clear_field = "clear_client_secret"
+    secret_model_field = "sso_client_secret"
+    SIGN_ALGOS = ("RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "HS256")
+    ENDPOINTS = ("authorization_endpoint", "token_endpoint", "user_endpoint", "jwks_endpoint")
+
+    client_secret = forms.CharField(
+        label=_("Client secret"), required=False, max_length=500,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+    clear_client_secret = forms.BooleanField(label=_("Remove the stored client secret"), required=False)
+
+    class Meta:
+        model = SiteSettings
+        fields = [
+            "sso_enabled", "sso_base_url", "sso_client_id", "sso_create_users", "sso_login_label",
+            "sso_username_claim", "sso_scopes", "sso_sign_algo",
+            "sso_authorization_endpoint", "sso_token_endpoint", "sso_user_endpoint", "sso_jwks_endpoint",
+        ]
+        widgets = {"sso_login_label": forms.TextInput(attrs={"placeholder": _("SSO Login")})}
+
+    def __init__(self, *args, **kwargs):
+        from . import site_config
+
+        super().__init__(*args, **kwargs)
+        self.env = env = site_config.sso_from_env()
+        as_env = _("As in the .env file (%(value)s)")
+        empty = _("Empty: value from the .env file.")
+        for name, value in (("sso_enabled", env.enabled), ("sso_create_users", env.create_users)):
+            self.fields[name].choices = [
+                ("", as_env % {"value": _("on") if value else _("off")}), *SiteSettings.SWITCH_CHOICES,
+            ]
+        self.fields["sso_create_users"].help_text = _(
+            "On: a user who signs in for the first time is created automatically, "
+            "without a local password and never as an administrator."
+        )
+        placeholders = {
+            "sso_base_url": env.base_url or "https://nas.example.com",
+            "sso_client_id": env.client_id,
+            "sso_username_claim": env.username_claim,
+            "sso_scopes": env.scopes,
+            "sso_sign_algo": env.sign_algo,
+        }
+        for name, placeholder in placeholders.items():
+            self.fields[name].widget.attrs["placeholder"] = placeholder
+            self.fields[name].help_text = empty
+        self.fields["sso_base_url"].help_text = _(
+            "For the Synology SSO Server the address of the NAS, e.g. https://nas.example.com; "
+            "the endpoints are derived from it. Empty: value from the .env file."
+        )
+        self.fields["sso_username_claim"].help_text = _(
+            "Synology: “username”, other providers often “preferred_username”. Empty: value from the .env file."
+        )
+        for name in self.ENDPOINTS:
+            field = self.fields[f"sso_{name}"]
+            field.widget.attrs["placeholder"] = getattr(env, name)
+            field.help_text = ""
+        self.setup_secret(
+            env.client_secret,
+            _("A client secret is stored. Leave empty to keep it."),
+            _("No client secret is stored here; the one from the .env file is used."),
+            _("No client secret is set yet."),
+        )
+
+    def clean_sso_base_url(self):
+        return clean_http_url(self.cleaned_data["sso_base_url"])
+
+    def clean_sso_sign_algo(self):
+        value = self.cleaned_data["sso_sign_algo"].strip().upper()
+        if value and value not in self.SIGN_ALGOS:
+            raise forms.ValidationError(
+                _("Supported: %(values)s.") % {"values": ", ".join(self.SIGN_ALGOS)}
+            )
+        return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for name in self.ENDPOINTS:
+            key = f"sso_{name}"
+            if cleaned_data.get(key):
+                try:
+                    cleaned_data[key] = clean_http_url(cleaned_data[key])
+                except forms.ValidationError as error:
+                    self.add_error(key, error)
+        if self.errors:
+            return cleaned_data
+        # Eingeschaltet nur mit vollständigen Angaben, sonst führt die
+        # Schaltfläche auf der Anmeldeseite ins Leere
+        candidate = self.candidate(cleaned_data)
+        if candidate.enabled:
+            missing = [
+                label for label, value in (
+                    (_("address of the SSO server or the endpoints"), candidate.authorization_endpoint.startswith("http")
+                     and candidate.token_endpoint.startswith("http") and candidate.user_endpoint.startswith("http")
+                     and candidate.jwks_endpoint.startswith("http")),
+                    (_("client ID"), candidate.client_id),
+                    (_("client secret"), candidate.client_secret),
+                ) if not value
+            ]
+            if missing:
+                raise forms.ValidationError(
+                    _("Single sign-on can only be switched on with complete settings. Missing: %(missing)s.")
+                    % {"missing": ", ".join(str(item) for item in missing)}
+                )
+        return cleaned_data
+
+    def candidate(self, data=None):
+        """Konfiguration aus den eingegebenen Werten (für den Test, ungespeichert)."""
+        from types import SimpleNamespace
+
+        from . import site_config
+
+        data = data if data is not None else self.cleaned_data
+        values = {name: data.get(name) or "" for name in self.Meta.fields if name != "sso_login_label"}
+        return site_config.merge_sso(SimpleNamespace(**values, sso_client_secret=self.chosen_secret()), self.env)
+
+
 class BackupUploadForm(BootstrapFormMixin, forms.Form):
     """Backup zum Import hochladen (0.9 beta); geprüft wird in contracts.backup."""
 

@@ -1,0 +1,82 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Single sign-on" %}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">{% translate "Single sign-on" %}</h1>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart. The local login always stays available." %}</p>
+</div>
+
+<form method="post" action="{% url 'manage_sso' %}" novalidate style="max-width: 56rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-shield-check me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Connection" %}</h2>
+    <dl class="row small mb-3">
+      <dt class="col-sm-4">{% translate "Currently in use" %}</dt>
+      <dd class="col-sm-8">{% if current.enabled %}<span class="badge text-bg-success">{% translate "On" %}</span>{% else %}<span class="badge text-bg-secondary">{% translate "Off" %}</span>{% endif %}
+        {% if current.base_url %}<span class="text-break">{{ current.base_url }}</span> · {% endif %}{% if current.client_id %}{{ current.client_id }}{% else %}{% translate "no client ID" %}{% endif %}
+        · {% if current.client_secret %}{% translate "client secret set" %}{% else %}{% translate "no client secret" %}{% endif %}</dd>
+      <dt class="col-sm-4">{% translate "Redirect URI" %}</dt>
+      <dd class="col-sm-8 mb-0"><code class="text-break">{{ redirect_uri }}</code><div class="text-body-secondary">{% translate "Enter this address as redirect URI at the SSO provider." %}</div></dd>
+    </dl>
+    <div class="row">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_enabled %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_base_url %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_client_id %}</div>
+      <div class="col-md-6">{% include "web/manage/_secret_field.html" with field=form.client_secret clear=form.clear_client_secret %}</div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% translate "The client secret is stored in the database, is never shown again and is not part of a backup." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-people me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Users and login page" %}</h2>
+    <div class="row">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_create_users %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_username_claim %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_login_label %}</div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% translate "A user is matched by the user name from the SSO, ignoring upper and lower case, never by the email address." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <details{% if form.sso_scopes.errors or form.sso_sign_algo.errors or form.sso_authorization_endpoint.errors or form.sso_token_endpoint.errors or form.sso_user_endpoint.errors or form.sso_jwks_endpoint.errors or form.sso_scopes.value or form.sso_sign_algo.value or form.sso_authorization_endpoint.value or form.sso_token_endpoint.value or form.sso_user_endpoint.value or form.sso_jwks_endpoint.value %} open{% endif %}>
+      <summary class="h5 mb-0"><i class="bi bi-gear me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Advanced: other providers" %}</summary>
+      <p class="small text-body-secondary mt-3">{% translate "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above, otherwise taken from the .env file; the grey text shows the value from the .env file." %}</p>
+      <div class="row">
+        <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_scopes %}</div>
+        <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_sign_algo %}</div>
+        {% for field in endpoint_fields %}
+        <div class="col-12">{% include "web/includes/field.html" with field=field %}</div>
+        {% endfor %}
+      </div>
+    </details>
+  </div></div>
+
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <button type="submit" name="action" value="save" class="btn btn-primary">{% translate "Save" %}</button>
+    <button type="submit" name="action" value="test" class="btn btn-outline-primary"><i class="bi bi-play-circle me-1" aria-hidden="true"></i>{% translate "Test" %}</button>
+    <span class="small text-body-secondary">{% translate "“Test” checks the values entered above without saving them." %}</span>
+  </div>
+</form>
+
+{% if results %}
+<div class="card mb-3" style="max-width: 56rem"><div class="card-body">
+  <h2 class="h5 card-title mb-1"><i class="bi bi-clipboard-check me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Test" %}</h2>
+  {% for result in results %}
+  <div class="d-flex gap-2 py-2 border-bottom" data-status="{{ result.status }}">
+    {% if result.status == "ok" %}<i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>{% else %}<i class="bi bi-x-circle-fill text-danger" aria-hidden="true"></i>{% endif %}
+    <div>
+      <div class="fw-semibold">{{ result.label }}
+        <span class="badge {% if result.status == 'ok' %}text-bg-success{% else %}text-bg-danger{% endif %} ms-1">{% if result.status == "ok" %}{% translate "OK" %}{% else %}{% translate "Failed" %}{% endif %}</span></div>
+      <div class="small text-body-secondary text-break">{{ result.detail }}</div>
+    </div>
+  </div>
+  {% endfor %}
+  <p class="small text-body-secondary mt-2 mb-0">{% translate "Test finished. Nothing was saved. Whether client ID and client secret are correct only shows when a user signs in: after saving, try the SSO button in a private browser window and stay logged in here." %}</p>
+</div></div>
+{% endif %}
+{% endblock %}

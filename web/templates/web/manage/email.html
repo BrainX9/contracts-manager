@@ -1,0 +1,57 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Email settings" %}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">{% translate "Email settings" %}</h1>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "SMTP server for reminders, invitations and password reset. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart." %}</p>
+</div>
+
+<form method="post" action="{% url 'manage_email' %}" novalidate style="max-width: 56rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-envelope me-2 text-body-secondary" aria-hidden="true"></i>{% translate "SMTP server" %}</h2>
+    <dl class="row small mb-3">
+      <dt class="col-sm-4">{% translate "Currently in use" %}</dt>
+      <dd class="col-sm-8 mb-0">{% if current.smtp %}<span class="text-break">{{ current.host }}:{{ current.port }}</span> ({{ current.security_label }})
+        · {% if current.user %}{{ current.user }}{% else %}{% translate "no user" %}{% endif %}
+        · {% if current.password %}{% translate "password set" %}{% else %}{% translate "no password" %}{% endif %}
+        · {% translate "sender" %} {{ current.sender }}{% else %}{% translate "No SMTP server configured: emails are only written to the log." %}{% endif %}</dd>
+    </dl>
+    <div class="row">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.email_host %}</div>
+      <div class="col-md-3">{% include "web/includes/field.html" with field=form.email_port %}</div>
+      <div class="col-md-3">{% include "web/includes/field.html" with field=form.email_security %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.email_user %}</div>
+      <div class="col-md-6">{% include "web/manage/_secret_field.html" with field=form.password clear=form.clear_password %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.email_sender %}</div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% translate "The password is stored in the database, is never shown again and is not part of a backup." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-bell me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Links and reminders" %}</h2>
+    <div class="row">
+      <div class="col-md-8">{% include "web/includes/field.html" with field=form.app_base_url %}</div>
+      <div class="col-md-4">{% include "web/includes/field.html" with field=form.reminder_send_time %}</div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% blocktranslate trimmed %}Reminders are currently sent daily at {{ reminder_time }}.{% endblocktranslate %}{% if not current.base_url %} <span class="text-warning">{% translate "Address of the app not set: links in reminders are incomplete." %}</span>{% endif %}</p>
+  </div></div>
+
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <button type="submit" name="action" value="save" class="btn btn-primary">{% translate "Save" %}</button>
+    <button type="submit" name="action" value="test" class="btn btn-outline-primary"><i class="bi bi-send me-1" aria-hidden="true"></i>{% translate "Test" %}</button>
+    <span class="small text-body-secondary">{% blocktranslate trimmed with email=user.email|default:"–" %}“Test” sends an email to {{ email }} with the values entered above, without saving them.{% endblocktranslate %}</span>
+  </div>
+</form>
+
+{% if test_result %}
+<div class="alert {% if test_result.0 %}alert-success{% else %}alert-danger{% endif %} text-break" role="alert" style="max-width: 56rem">
+  <i class="bi {% if test_result.0 %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %} me-1" aria-hidden="true"></i>{{ test_result.1 }}
+</div>
+{% endif %}
+{% endblock %}

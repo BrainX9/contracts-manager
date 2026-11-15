@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 
@@ -1428,7 +1428,10 @@ class SSOTest(TestCase):
         from django.conf import settings
 
         self.assertFalse(settings.OIDC_ENABLED)
-        self.assertNotIn("web.oidc.SSOBackend", settings.AUTHENTICATION_BACKENDS)
+        # Seit 0.4.0 immer eingetragen; ausgeschaltet meldet es niemanden an
+        self.assertIn("web.oidc.SSOBackend", settings.AUTHENTICATION_BACKENDS)
+        request = RequestFactory().get("/oidc/callback/", {"code": "c", "state": "s"})
+        self.assertIsNone(self.backend().authenticate(request))
         for url in ("/oidc/authenticate/", "/oidc/callback/"):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 404)

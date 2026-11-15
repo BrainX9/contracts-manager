@@ -30,6 +30,7 @@ from .forms import (
     ProviderForm, ReminderForm,
     SharingForm, WebPasswordChangeForm, WebPasswordResetForm, WebSetPasswordForm,
 )
+from . import site_config
 from .models import SiteSettings, UserPreferences
 
 # Anzahl der teuersten Verträge auf der Übersicht
@@ -96,7 +97,7 @@ class WebLoginView(auth_views.LoginView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["sso_enabled"] = settings.OIDC_ENABLED
+        context["sso_enabled"] = site_config.sso().enabled
         context["sso_label"] = SiteSettings.load().sso_button_label
         return context
 

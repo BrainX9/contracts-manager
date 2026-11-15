@@ -53,7 +53,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <h2 class="h5 card-title">{% translate "Notes" %}</h2>
-        <p class="mb-0" style="white-space: pre-line">{{ provider.notes }}</p>
+        <div class="markdown-text">{{ provider.notes|markdown }}</div>
       </div>
     </div>
     {% endif %}

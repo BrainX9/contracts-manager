@@ -10,33 +10,87 @@ Regeln:
   gesetzt ist. Sie kommen in die Gruppen "Benutzer" und "Alle", bekommen
   kein lokales Passwort und nie Superuser- oder Mitarbeiter-Status.
 - Deaktivierte Benutzer können sich auch über SSO nicht anmelden.
-- Ist SSO ausgeschaltet (``OIDC_ENABLED``), liefern die Adressen 404.
+- Ist SSO ausgeschaltet, liefern die Adressen 404 und das Backend meldet
+  niemanden an.
+
+Seit 0.4.0 kommen die Werte aus ``web.site_config.sso()`` (Verwaltung vor
+.env) und gelten ohne Neustart. mozilla-django-oidc liest seine
+Einstellungen über ``get_settings``; Backend und Ansichten überschreiben
+das (``ConfiguredMixin``).
 """
 
 import logging
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.utils.functional import cached_property
 from django.http import Http404
 from django.shortcuts import resolve_url
 from django.utils.translation import gettext_lazy as _
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.views import OIDCAuthenticationCallbackView, OIDCAuthenticationRequestView
 
+from mozilla_django_oidc.utils import import_from_settings
+
 from contracts import permissions as perms
+
+from . import site_config
 
 logger = logging.getLogger(__name__)
 
 
 def sso_enabled():
-    return getattr(settings, "OIDC_ENABLED", False)
+    return site_config.sso().enabled
 
 
-class SSOBackend(OIDCAuthenticationBackend):
+class ConfiguredMixin:
+    """
+    Einstellungen von mozilla-django-oidc aus ``web.site_config``. Die
+    Konfiguration wird erst beim ersten Zugriff gelesen und gilt für dieses
+    Objekt (eine Anfrage bzw. eine Anmeldung).
+    """
+
+    @cached_property
+    def sso_config(self):
+        return site_config.sso()
+
+    def get_settings(self, attr, *args):
+        values = self.sso_config.oidc_settings()
+        if attr in values:
+            return values[attr]
+        return import_from_settings(attr, *args)
+
+
+class SSOBackend(ConfiguredMixin, OIDCAuthenticationBackend):
     """
     Benutzer über den Benutzernamen aus dem SSO zuordnen bzw. anlegen.
     """
+
+    def __init__(self, *args, **kwargs):
+        # Nicht die Basisklasse aufrufen: Sie liest sofort alle Einstellungen.
+        # Django erzeugt die Backends aber bei jeder Rechteprüfung, das wäre
+        # jedes Mal eine Datenbankabfrage. Die Werte kommen bei Bedarf aus
+        # den Eigenschaften unten.
+        self.UserModel = get_user_model()
+
+    OIDC_OP_TOKEN_ENDPOINT = property(lambda self: self.sso_config.token_endpoint)
+    OIDC_OP_USER_ENDPOINT = property(lambda self: self.sso_config.user_endpoint)
+    OIDC_OP_JWKS_ENDPOINT = property(lambda self: self.sso_config.jwks_endpoint)
+    OIDC_RP_CLIENT_ID = property(lambda self: self.sso_config.client_id)
+    OIDC_RP_CLIENT_SECRET = property(lambda self: self.sso_config.client_secret)
+    OIDC_RP_SIGN_ALGO = property(lambda self: self.sso_config.sign_algo)
+    # Schlüssel kommen immer vom JWKS-Endpunkt
+    OIDC_RP_IDP_SIGN_KEY = None
+
+    def authenticate(self, request, **kwargs):
+        # Nur die Rückkehr vom SSO (code und state); sonst nicht zuständig
+        if request is None or not request.GET.get("code") or not request.GET.get("state"):
+            return None
+        if not self.sso_config.enabled:
+            return None
+        return super().authenticate(request, **kwargs)
 
     def get_userinfo(self, access_token, id_token, payload):
         # Claims aus ID-Token und Userinfo zusammenführen; Userinfo hat Vorrang
@@ -44,7 +98,7 @@ class SSOBackend(OIDCAuthenticationBackend):
         return {**payload, **userinfo}
 
     def get_username(self, claims):
-        value = claims.get(settings.OIDC_USERNAME_CLAIM)
+        value = claims.get(self.sso_config.username_claim)
         return value.strip() if isinstance(value, str) else ""
 
     def describe_user_by_claims(self, claims):
@@ -79,24 +133,24 @@ class SSOBackend(OIDCAuthenticationBackend):
         return user
 
 
-class SSORequestView(OIDCAuthenticationRequestView):
+class SSORequestView(ConfiguredMixin, OIDCAuthenticationRequestView):
     """
     Startet die Anmeldung beim SSO (Weiterleitung zum Anbieter).
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not sso_enabled():
+        if not self.sso_config.enabled:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 
 
-class SSOCallbackView(OIDCAuthenticationCallbackView):
+class SSOCallbackView(ConfiguredMixin, OIDCAuthenticationCallbackView):
     """
     Rückkehr vom SSO. Bei einem Fehler zurück zur Anmeldeseite mit Meldung.
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not sso_enabled():
+        if not self.sso_config.enabled:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 

@@ -79,16 +79,19 @@ def next_send_time(send_time, now=None):
     return run if run > now else run + timedelta(days=1)
 
 
-def ensure_reminder_schedule(sender, **kwargs):
+def ensure_reminder_schedule(sender=None, **kwargs):
     """
     Legt den täglichen Versand der Erinnerungen im Worker an (django-q2)
-    bzw. passt die Uhrzeit an REMINDER_SEND_TIME an. Läuft nach jeder
-    Migration und ist wiederholbar.
+    bzw. passt die Uhrzeit an (Verwaltung › E-Mail, sonst
+    REMINDER_SEND_TIME). Läuft nach jeder Migration und nach dem Speichern
+    der Einstellungen und ist wiederholbar.
     """
     from django.utils import timezone
     from django_q.models import Schedule
 
-    send_time = settings.REMINDER_SEND_TIME
+    from web import site_config
+
+    send_time = site_config.reminder_time()
     schedule, created = Schedule.objects.get_or_create(
         name=REMINDER_SCHEDULE_NAME,
         defaults={

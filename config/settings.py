@@ -244,18 +244,18 @@ OIDC_CREATE_USER = env.bool("OIDC_CREATE_USERS", default=False)
 OIDC_TIMEOUT = 10
 OIDC_AUTHENTICATE_CLASS = "web.oidc.SSORequestView"
 OIDC_CALLBACK_CLASS = "web.oidc.SSOCallbackView"
-if OIDC_ENABLED:
-    # Nach Axes und ModelBackend
-    AUTHENTICATION_BACKENDS.insert(2, "web.oidc.SSOBackend")
+# Seit 0.4.0 immer eingetragen (nach Axes und ModelBackend), weil SSO auch in
+# der Verwaltung eingeschaltet werden kann (web.site_config). Ausgeschaltet
+# meldet das Backend niemanden an.
+AUTHENTICATION_BACKENDS.insert(2, "web.oidc.SSOBackend")
 
 # --- E-Mail (Version 0.5 beta) -----------------------------------------------
 # Versand über SMTP, z. B. IONOS (smtp.ionos.de, Port 587, STARTTLS).
 # Ohne EMAIL_HOST werden E-Mails nur ins Log geschrieben (Entwicklung).
+# Seit 0.4.0 auch unter Verwaltung › E-Mail einstellbar; das Backend liest
+# die gültigen Werte bei jedem Versand (web.site_config, web.mail_backend).
 EMAIL_HOST = env("EMAIL_HOST", default="")
-if EMAIL_HOST:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "web.mail_backend.SiteEmailBackend"
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
@@ -303,7 +303,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.3.1"
+APP_VERSION = "0.4.0"
 
 # --- Fehlversuche bei der Anmeldung (django-axes) ----------------------------
 # Nach 5 falschen Passwörtern für denselben Benutzernamen von derselben
