@@ -77,6 +77,17 @@ VERSIONS = (
             "web": ["0003_default_payment_methods_created"],
             "assistant": ["0003_repair_columns_from_0_8a"],
         },
+        # 0.2.0 -> 0.3.0: nur neue Felder mit Standardwert in web.SiteSettings
+        # (KI-Einstellungen), die beim Laden leer bleiben
+        no_changes,
+    ),
+    BackupVersion(
+        "0.3.0",
+        {
+            "contracts": ["0015_payment_method"],
+            "web": ["0004_ai_settings"],
+            "assistant": ["0003_repair_columns_from_0_8a"],
+        },
     ),
 )
 

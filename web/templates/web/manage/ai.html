@@ -1,0 +1,76 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "AI settings" %}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">{% translate "AI settings" %}</h1>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Connection and system prompt of the AI assistant. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart." %}</p>
+</div>
+
+<form method="post" action="{% url 'manage_ai' %}" id="ai-form" novalidate style="max-width: 56rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-plug me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Connection" %}</h2>
+    <dl class="row small mb-3">
+      <dt class="col-sm-4">{% translate "Currently in use" %}</dt>
+      <dd class="col-sm-8 mb-0">{% if current.enabled %}<span class="badge text-bg-success">{% translate "On" %}</span>{% else %}<span class="badge text-bg-secondary">{% translate "Off" %}</span>{% endif %}
+        {{ current.provider }}{% if current.model %} · {{ current.model }}{% endif %}{% if current.base_url %} · <span class="text-break">{{ current.base_url }}</span>{% endif %}
+        · {% if current.api_key %}{% translate "API key set" %}{% else %}{% translate "no API key" %}{% endif %}</dd>
+    </dl>
+    <div class="row">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.ai_enabled %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.ai_provider %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.ai_model %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.ai_base_url %}</div>
+      <div class="col-md-6">
+        {% include "web/includes/field.html" with field=form.api_key %}
+        {% if form.clear_api_key %}
+        <div class="form-check mt-n2 mb-3">{{ form.clear_api_key }}<label class="form-check-label" for="{{ form.clear_api_key.id_for_label }}">{{ form.clear_api_key.label }}</label></div>
+        {% endif %}
+      </div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% translate "The API key is stored in the database, is never shown again and is not part of a backup." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-1"><i class="bi bi-chat-square-text me-2 text-body-secondary" aria-hidden="true"></i>{% translate "System prompt" %}
+      {% if custom_prompt %}<span class="badge text-bg-primary ms-1">{% translate "Customised" %}</span>{% else %}<span class="badge text-bg-light border ms-1">{% translate "Default" %}</span>{% endif %}</h2>
+    <p class="small text-body-secondary">{% translate "Tells the assistant who it is and how it should answer. A changed prompt applies to new conversations; existing conversations keep theirs." %}</p>
+    {{ form.ai_system_prompt }}
+    {% for error in form.ai_system_prompt.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    <details class="mt-3">
+      <summary class="small">{% translate "Fixed rules that are always added (not editable)" %}</summary>
+      <p class="small text-body-secondary mt-2 mb-1">{% translate "They set the language of the answer (the language of the user) and make sure the assistant never deletes anything and changes data only as a proposal that the user approves." %}</p>
+      <pre class="small border rounded p-2 mb-0" style="white-space: pre-wrap">{{ fixed_rules }}</pre>
+    </details>
+  </div></div>
+
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <button type="submit" name="action" value="save" class="btn btn-primary">{% translate "Save" %}</button>
+    <button type="submit" name="action" value="test" class="btn btn-outline-primary"
+            hx-post="{% url 'manage_ai' %}" hx-target="#ai-test" hx-swap="innerHTML" hx-disabled-elt="this"
+            hx-vals='{"action": "test", "step": "connection"}' hx-indicator="#ai-test-running">
+      <i class="bi bi-play-circle me-1" aria-hidden="true"></i>{% translate "Test" %}</button>
+    {% if custom_prompt %}
+    <button type="submit" name="action" value="reset_prompt" class="btn btn-outline-secondary" formnovalidate>{% translate "Reset system prompt to default" %}</button>
+    {% endif %}
+  </div>
+</form>
+
+<div class="card mb-3" style="max-width: 56rem"><div class="card-body">
+  <h2 class="h5 card-title mb-1"><i class="bi bi-clipboard-check me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Test" %}</h2>
+  <p class="small text-body-secondary">{% translate "“Test” checks the values entered above without saving them: connection and answer, tool call, local text recognition and the file upload to the model. It sends a few short requests to the provider." %}</p>
+  <div id="ai-test-running" class="htmx-indicator small text-body-secondary"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{% translate "Test is running …" %}</div>
+  <div id="ai-test">{% if results %}{% include "web/manage/_ai_test.html" with done=True %}{% endif %}</div>
+</div></div>
+
+<div class="card" style="max-width: 56rem"><div class="card-body">
+  <h2 class="h5 card-title mb-1"><i class="bi bi-people me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Who may use the assistant" %}</h2>
+  <p class="small text-body-secondary mb-2">{% translate "Only members of the group “KI” and superusers can use the assistant." %}</p>
+  <p class="mb-0">{% blocktranslate count counter=ai_users %}{{ counter }} active member{% plural %}{{ counter }} active members{% endblocktranslate %}{% if ai_group %} · <a href="{% url 'manage_group_edit' ai_group.pk %}">{% translate "Edit group “KI”" %}</a>{% endif %}</p>
+</div></div>
+{% endblock %}

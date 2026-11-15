@@ -71,6 +71,7 @@ urlpatterns = [
     path("manage/groups/<int:pk>/delete/", manage_views.GroupDeleteView.as_view(), name="manage_group_delete"),
     path("manage/reminders/", manage_views.ReminderOverviewView.as_view(), name="manage_reminders"),
     path("manage/system/", manage_views.SystemView.as_view(), name="manage_system"),
+    path("manage/ai/", manage_views.AISettingsView.as_view(), name="manage_ai"),
     path("manage/backup/", manage_views.BackupView.as_view(), name="manage_backup"),
     path("manage/backup/download/", manage_views.BackupDownloadView.as_view(), name="manage_backup_download"),
     path("manage/backup/import/", manage_views.BackupImportView.as_view(), name="manage_backup_import"),

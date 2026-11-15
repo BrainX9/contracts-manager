@@ -113,6 +113,10 @@
           </a>
           {% endif %}
           {% if user.is_superuser %}
+          <a class="app-nav-link{% if url_name == 'manage_ai' %} active{% endif %}" href="{% url 'manage_ai' %}"
+             {% if url_name == 'manage_ai' %}aria-current="page"{% endif %}>
+            <i class="bi bi-stars" aria-hidden="true"></i>{% translate "AI settings" %}
+          </a>
           <a class="app-nav-link{% if 'manage_backup' in url_name %} active{% endif %}" href="{% url 'manage_backup' %}"
              {% if url_name == 'manage_backup' %}aria-current="page"{% endif %}>
             <i class="bi bi-archive" aria-hidden="true"></i>{% translate "Backup" %}

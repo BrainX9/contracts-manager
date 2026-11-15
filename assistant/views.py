@@ -1,7 +1,7 @@
 """
 Chat mit dem KI-Assistenten (Version 0.8a).
 
-- Nur mit AI_ENABLED und Recht assistant.use_assistant (Gruppe "KI") oder
+- Nur eingeschaltet (assistant.config) und mit Recht assistant.use_assistant (Gruppe "KI") oder
   als Superuser; ist der Assistent aus, liefern die Seiten 404.
 - Jeder sieht nur seine eigenen Unterhaltungen (fremde: 404).
 - Die Antwort entsteht im Worker; die Seite fragt per HTMX alle zwei
@@ -11,7 +11,6 @@ Chat mit dem KI-Assistenten (Version 0.8a).
 """
 
 from django import forms
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -22,7 +21,7 @@ from django.views import View
 
 from contracts import permissions as perms
 
-from . import extraction, proposals
+from . import config, extraction, proposals
 from .agent import add_event, add_user_message
 from .models import Conversation, Proposal
 from .tasks import queue_answer
@@ -75,7 +74,7 @@ class AssistantMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
-        if not settings.AI_ENABLED:
+        if not config.enabled():
             raise Http404
         if not perms.can_use_assistant(request.user):
             raise PermissionDenied
@@ -93,14 +92,15 @@ class AssistantMixin(LoginRequiredMixin):
         return MessageForm(data, files, allow_files=self.allow_files(conversation))
 
     def page_context(self, conversation=None, form=None):
+        ai = config.current()
         return {
             "conversation": conversation,
             "conversations": self.request.user.assistant_conversations.all()[:MAX_CONVERSATIONS],
             "chat_messages": visible_messages(conversation) if conversation else [],
             "form": form or self.message_form(conversation),
             "allow_files": self.allow_files(conversation),
-            "provider": settings.AI_PROVIDER,
-            "model": settings.AI_MODEL,
+            "provider": ai.provider,
+            "model": ai.model,
         }
 
 

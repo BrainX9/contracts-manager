@@ -60,6 +60,7 @@ Default groups, created automatically:
 | **Benutzer** | may create own contracts and master data; without it, a user only sees what was shared with them |
 | **Alle** | contains every user automatically; sharing with “Alle” makes an object visible to everyone |
 | **Administratoren** | may manage users and groups in the web interface |
+| **KI** | may use the [AI assistant](#ai-assistant): ask questions about the contracts they can see, upload documents and have new contracts proposed. The assistant always acts with the rights of the user. The group only controls access to the assistant, so it is not offered when sharing objects. |
 
 **Sharing an object:** on the page of a contract, contract partner, category, consumer or payment method, open **Sharing** and choose exactly one role per user and group: no access, reader or editor. Readers of master data can select it in their own contracts. Sharing a main category does not share its subcategories. Only the owner and superusers see and change sharing. When ownership is handed over, the previous owner automatically becomes an editor (the role can be removed afterwards).
 
@@ -76,6 +77,7 @@ In the sidebar under **Administration** (`/manage/`), visible to superusers and 
 | Groups | create, rename, edit members, delete | Administrators, superusers |
 | Reminders | reminders of all contracts | superusers only |
 | System | version, worker status, email settings, test email, single sign-on | Administrators, superusers |
+| AI settings | provider, model, API key and system prompt of the AI assistant, with a test | superusers only |
 
 **Safeguards for administrators**, so they cannot grant themselves more rights: they cannot edit superusers; only superusers grant the group “Administratoren” and the superuser flag; nobody changes their own groups or active status; default groups cannot be renamed or deleted. Note that whoever manages users and groups can still grant indirect access to shared objects via group membership – give the role to trusted people only.
 
@@ -244,6 +246,24 @@ AI_EFFORT=medium
 **Claude specifics:** current Claude models always think before answering. Contracts Manager stores these thinking blocks with the conversation and sends them back unchanged, keeps the system prompt of a conversation fixed, and never changes the tool list within a conversation – Claude rejects changed histories otherwise. When calling Anthropic directly (no `AI_BASE_URL`), a request the model declines for safety reasons is automatically retried on Anthropic's recommended fallback model where possible; otherwise the chat shows that the request was declined.
 
 Restart with `sudo docker compose up -d`. Then add the users who may use the assistant to the group **“KI”** (Administration › Groups); superusers can always use it. The assistant appears in the sidebar, and **Administration › System** shows its status.
+
+### Settings in the app
+
+Instead of, or in addition to, `.env`, a superuser can configure the assistant under **Administration › AI settings** – without a restart:
+
+- **Connection:** on/off, provider, model, address of the API and API key. A value entered here takes precedence over `.env`; an empty field means “value from `.env`”. To use only `.env` again, clear the fields.
+- **API key:** it is stored in the database, never shown again and never written to a backup file. Leave the field empty to keep the stored key. An import keeps the key of the installation.
+- **System prompt:** the window shows the text that tells the assistant who it is and how it should answer. Change it as you like; *Reset system prompt to default* brings back the built-in text. A few fixed rules are always added and cannot be edited (answer in the language of the user, never delete anything, changes only as proposals the user approves); the page shows them. A changed prompt applies to new conversations, existing ones keep theirs.
+- **Test:** checks the values you entered *before* saving them. It sends a few short requests to the provider.
+
+| Test step | What it checks |
+|---|---|
+| Connection and answer | address, API key and model: the model answers |
+| Tool call | the model can call tools (function calling); the assistant does not work without it |
+| Local text recognition | reading a PDF and an image inside the container (pypdf, Tesseract) |
+| File upload to the model | a PDF is sent to the model and read – only with Claude; other providers always work with the locally recognised text |
+
+`AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS` and `AI_TIMEOUT` stay in `.env`.
 
 **What it can do:** search contracts, read details, cost history, documents and reminders, calculate totals, and look up contract partners, categories and consumers – always only what the user is allowed to see.
 

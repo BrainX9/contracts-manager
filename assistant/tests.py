@@ -763,3 +763,159 @@ class DocumentPagesTest(MediaRootMixin, TestCase):
             self.client.post(reverse("assistant_delete", args=[conversation.pk]))
         self.assertFalse(os.path.exists(path))
         self.assertFalse(os.path.exists(os.path.dirname(path)))
+
+
+class ConfigTest(TestCase):
+    """Verwaltung vor .env (Version 0.3.0)"""
+
+    def site(self, **values):
+        from web.models import SiteSettings
+
+        site = SiteSettings.load()
+        for name, value in values.items():
+            setattr(site, name, value)
+        site.save()
+
+    @override_settings(**AI_SETTINGS)
+    def test_env_values_without_settings(self):
+        from .config import current
+
+        current_config = current()
+        self.assertTrue(current_config.enabled)
+        self.assertEqual(
+            (current_config.provider, current_config.model, current_config.api_key, current_config.base_url),
+            ("openai", "test-model", "sk-test", "http://127.0.0.1:9"),
+        )
+
+    @override_settings(**AI_SETTINGS)
+    def test_settings_take_precedence_field_by_field(self):
+        from .config import current
+
+        self.site(ai_provider="anthropic", ai_model="claude-sonnet-5-5", ai_api_key="sk-db")
+        current_config = current()
+        self.assertEqual(
+            (current_config.provider, current_config.model, current_config.api_key, current_config.base_url),
+            ("anthropic", "claude-sonnet-5-5", "sk-db", "http://127.0.0.1:9"),
+        )
+        self.assertEqual(AnthropicProvider().model, "claude-sonnet-5-5")
+
+    def test_switch_on_and_off(self):
+        from .config import enabled
+
+        user = User.objects.create_user("anna")
+        user.groups.add(Group.objects.get(name=perms.GROUP_AI))
+        user = User.objects.get(pk=user.pk)
+        with self.settings(AI_ENABLED=False):
+            self.assertFalse(enabled())
+            self.site(ai_enabled="on")
+            self.assertTrue(enabled())
+            self.assertTrue(perms.can_use_assistant(user))
+        with self.settings(AI_ENABLED=True):
+            self.site(ai_enabled="off")
+            self.assertFalse(perms.can_use_assistant(user))
+            self.client.force_login(user)
+            self.assertEqual(self.client.get(reverse("assistant_home")).status_code, 404)
+
+    def test_error_text_hides_stored_key(self):
+        from .providers import _error_text
+
+        self.assertEqual(_error_text(Exception("Invalid key sk-db given"), "sk-db"), "Invalid key *** given")
+
+    def test_custom_prompt_keeps_fixed_rules(self):
+        user = User.objects.create_user("anna")
+        default = agent.system_prompt(user, "documents")
+        self.assertTrue(default.startswith(agent.DEFAULT_PROMPT))
+        self.assertIn("Answer in German.", default)
+        self.site(ai_system_prompt="Du bist Karl. {kein Platzhalter}")
+        custom = agent.system_prompt(user, "documents")
+        self.assertTrue(custom.startswith("Du bist Karl. {kein Platzhalter}\n\nFixed rules"))
+        self.assertNotIn(agent.DEFAULT_PROMPT, custom)
+        self.assertIn("you can never delete anything", custom)
+        self.assertIn("You can only read data", agent.system_prompt(user, "read"))
+
+
+class SelfTestTest(TestCase):
+    """Test der KI-Einstellungen (Version 0.3.0), ohne echte Anfragen"""
+
+    def config(self, provider="openai"):
+        from .config import AIConfig
+
+        return AIConfig(enabled=True, provider=provider, model="test-model",
+                        base_url="http://127.0.0.1:9", api_key="sk-test")
+
+    def run_step(self, step, replies, provider="openai"):
+        from . import selftest
+
+        fake = FakeProvider(replies)
+        with patch("assistant.selftest.get_provider", return_value=fake) as get_provider:
+            result = selftest.run_step(step, self.config(provider))
+        if get_provider.called:
+            used = get_provider.call_args.args[0]
+            self.assertEqual((used.timeout, used.max_retries), (selftest.TEST_TIMEOUT, 0))
+        return result, fake
+
+    def test_connection(self):
+        result, _fake = self.run_step("connection", [Reply(text="OK")])
+        self.assertEqual(result.status, "ok")
+        self.assertIn("test-model", result.detail)
+        result, _fake = self.run_step("connection", [ProviderError("401: wrong key")])
+        self.assertEqual((result.status, result.detail), ("failed", "401: wrong key"))
+        result, _fake = self.run_step("connection", [Reply(text="")])
+        self.assertEqual(result.status, "failed")
+
+    def test_tool_call(self):
+        call = {"id": "c1", "name": "get_test_value", "arguments": {}}
+        result, fake = self.run_step("tools", [Reply(tool_calls=[call])])
+        self.assertEqual(result.status, "ok")
+        self.assertEqual(fake.calls[0]["tools"][0]["name"], "get_test_value")
+        result, _fake = self.run_step("tools", [Reply(text="Das kann ich nicht.")])
+        self.assertEqual(result.status, "failed")
+
+    def test_generated_pdf_has_text_layer(self):
+        from . import extraction, selftest
+
+        text, method = extraction.pdf_text(selftest.pdf_bytes("Contracts Manager test document. Test code 123456"))
+        self.assertIn("Test code 123456", text)
+        # Textebene, keine Texterkennung über Bilder
+        self.assertEqual(method, "pdf_text")
+
+    def test_local_recognition(self):
+        from . import extraction, selftest
+
+        def fake_extract(path, name):
+            if not name.endswith(".pdf"):
+                return "", "none"
+            with open(path, "rb") as handle:
+                return extraction.pdf_text(handle.read())
+
+        with patch("assistant.selftest.extraction.extract", side_effect=fake_extract):
+            result = selftest.run_step("local", self.config())
+        # PDF erkannt, Bild nicht: insgesamt fehlgeschlagen, beides genannt
+        self.assertEqual(result.status, "failed")
+        self.assertIn("PDF: erkannt", result.detail)
+        self.assertIn("nicht erkannt", result.detail)
+
+    def test_file_upload_only_with_claude(self):
+        result, fake = self.run_step("file", [])
+        self.assertEqual(result.status, "skipped")
+        self.assertEqual(fake.calls, [])
+
+    def test_file_upload_with_claude(self):
+        from . import selftest
+
+        call = {"id": "t1", "name": "read_attachment", "arguments": {"attachment_id": 1}}
+        with patch("assistant.selftest.new_code", return_value="424242"):
+            result, fake = self.run_step(
+                "file", [Reply(tool_calls=[call], provider="anthropic", raw=[{"type": "tool_use"}]),
+                         Reply(text="424242")], provider="anthropic",
+            )
+        self.assertEqual(result.status, "ok")
+        tool_message = fake.calls[1]["messages"][-1]
+        self.assertEqual(tool_message["file"]["media_type"], "application/pdf")
+        self.assertEqual(fake.calls[1]["messages"][1]["raw"], [{"type": "tool_use"}])
+        with patch("assistant.selftest.new_code", return_value="424242"):
+            result, _fake = self.run_step(
+                "file", [Reply(tool_calls=[call]), Reply(text="Keine Zahl gefunden")], provider="anthropic",
+            )
+        self.assertEqual(result.status, "failed")
+        self.assertEqual(selftest.STEPS, ("connection", "tools", "local", "file"))

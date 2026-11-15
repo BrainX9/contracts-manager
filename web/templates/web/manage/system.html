@@ -115,7 +115,8 @@
         <dd class="col-sm-7 mb-0">{{ ai.users }}</dd>
         {% endif %}
       </dl>
-      <p class="small text-body-secondary mt-3 mb-0">{% translate "Only members of the group “KI” and superusers can use the assistant." %}</p>
+      <p class="small text-body-secondary mt-3{% if not user.is_superuser %} mb-0{% endif %}">{% translate "Only members of the group “KI” and superusers can use the assistant." %}</p>
+      {% if user.is_superuser %}<a class="btn btn-sm btn-outline-primary" href="{% url 'manage_ai' %}"><i class="bi bi-stars me-1" aria-hidden="true"></i>{% translate "AI settings" %}</a>{% endif %}
     </div></div>
   </div>
 </div>

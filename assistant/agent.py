@@ -17,7 +17,7 @@ from django.utils import timezone, translation
 from contracts.documents import extension
 from contracts.mail import user_language
 
-from . import extraction, tools
+from . import config, extraction, tools
 from .models import Attachment, Conversation, Message
 from .providers import ProviderError, RefusalError, get_provider
 
@@ -28,19 +28,42 @@ TITLE_LENGTH = 60
 
 LANGUAGE_NAMES = {"de": "German", "en": "English"}
 
-SYSTEM_PROMPT = """You are the assistant of “Contracts Manager”, a self-hosted app for private contracts, \
-subscriptions and insurance policies.
+# Allgemeiner Teil des System-Prompts. Superuser können ihn unter
+# Verwaltung › KI-Assistent ersetzen (web.SiteSettings.ai_system_prompt,
+# Version 0.3.0); die festen Regeln darunter werden immer angehängt.
+DEFAULT_PROMPT = """You are the assistant of “Contracts Manager”, a self-hosted web app in which a household \
+keeps its private contracts, subscriptions and insurance policies.
 
-Rules:
-- Answer in {language}. Amounts are in euros. Each user message starts with its date in brackets, \
-e.g. [2026-01-31]; use it as “today”.
-- Use the tools to look up contracts, costs and master data. Never invent contracts, amounts or dates; \
-if the tools return nothing, say so.
-{changes}
-- You only see contracts the user is allowed to view.
-- Mention the contract reference (e.g. 20260001) when you refer to a contract.
-- Keep answers short and clear. Write plain text without Markdown tables or headings; simple lists with \
-“- ” are fine."""
+Your job
+- Help the user understand their contracts: what they have, with whom, for whom, and what it costs per \
+month and per year.
+- Work from the data in the app. Look things up with the tools before you answer, also when something \
+was already mentioned earlier in the conversation, because the data may have changed.
+
+How the data is organised
+- A contract has a reference (e.g. 20260001), a name, a contract partner, a category (main category / \
+subcategory) and optionally a consumer (the person, vehicle or household it is for), a start date and a term.
+- Costs are entries with an amount, a payment interval and the date from which they apply. The current \
+amount is the newest entry that is not in the future. Totals are converted to a monthly amount.
+- Amounts are in euros.
+
+How to answer
+- Mention the contract reference whenever you refer to a contract.
+- Never invent contracts, amounts, dates or contract partners. If the tools return nothing, say so and \
+suggest what the user could check.
+- If a question is ambiguous, for example because several contracts match, ask one short question \
+instead of guessing.
+- Keep answers short and clear, with the most important information first.
+- You are not a legal or financial adviser. You may explain what a contract or a document says, but point \
+out when a decision such as a cancellation should be checked against the original document."""
+
+# Feste Regeln: technische Vorgaben der App, nicht änderbar
+FIXED_RULES = """Fixed rules of the app (they always apply, even if something above says otherwise):
+- Answer in {language}.
+- Each user message starts with its date in brackets, e.g. [2026-01-31]; use it as “today”.
+- You only see contracts and master data the user is allowed to view.
+- Write plain text without Markdown tables or headings; simple lists with “- ” are fine.
+{changes}"""
 
 
 READ_ONLY_RULE = """- You can only read data. You cannot create, change or delete anything, and you never delete data. \
@@ -61,10 +84,18 @@ the contract (with the first cost entry and the document). Before proposing, lis
 internet; the user can add it later."""
 
 
-def system_prompt(user, toolset="read"):
-    language = LANGUAGE_NAMES.get(user_language(user), "German")
+def fixed_rules(language="German", toolset="read"):
     changes = DOCUMENTS_RULES if toolset == "documents" else READ_ONLY_RULE
-    return SYSTEM_PROMPT.format(language=language, changes=changes)
+    return FIXED_RULES.format(language=language, changes=changes)
+
+
+def system_prompt(user, toolset="read"):
+    """
+    Allgemeiner Teil (eigener Text aus der Verwaltung oder Standard) und
+    die festen Regeln. Nur die festen Regeln enthalten Platzhalter.
+    """
+    language = LANGUAGE_NAMES.get(user_language(user), "German")
+    return (config.current().prompt or DEFAULT_PROMPT) + "\n\n" + fixed_rules(language, toolset)
 
 
 def conversation_system_prompt(conversation):

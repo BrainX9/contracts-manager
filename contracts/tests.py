@@ -2019,6 +2019,30 @@ class BackupTest(TestCase):
         buffer.seek(0)
         self.assertNotIn(self.anna.password.encode(), buffer.read())
 
+    def test_ai_api_key_not_exported_and_kept_on_import(self):
+        from web.models import SiteSettings
+
+        from . import backup
+
+        site = SiteSettings.load()
+        site.ai_api_key, site.ai_model, site.ai_system_prompt = "sk-geheim-123", "modell-a", "Du bist Karl."
+        site.save()
+        buffer, _info = self.export()
+        row = next(row for row in self.read_json(buffer, "data.json") if row["model"] == "web.sitesettings")
+        self.assertEqual(row["fields"]["ai_api_key"], "")
+        self.assertEqual(row["fields"]["ai_model"], "modell-a")
+        buffer.seek(0)
+        self.assertNotIn(b"sk-geheim-123", buffer.read())
+        # Beim Import bleibt der Schlüssel der Installation, der Rest kommt aus dem Backup
+        site.ai_api_key, site.ai_model = "sk-installation", "modell-b"
+        site.save()
+        buffer.seek(0)
+        with self.captureOnCommitCallbacks(execute=True):
+            backup.import_backup(buffer)
+        site = SiteSettings.load()
+        self.assertEqual((site.ai_api_key, site.ai_model, site.ai_system_prompt),
+                         ("sk-installation", "modell-a", "Du bist Karl."))
+
     def test_export_reports_missing_file(self):
         import os
 

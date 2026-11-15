@@ -1,0 +1,27 @@
+{% load i18n %}
+{# Ergebnis des Tests der KI-Einstellungen (0.3.0); per HTMX Schritt für Schritt #}
+{% if invalid %}
+<div class="alert alert-danger py-2 mb-0" role="alert">{% translate "The test was not started: please correct the marked fields first (save shows the details)." %}</div>
+{% endif %}
+{% for result in results %}
+<div class="d-flex gap-2 py-2 border-bottom ai-test-row" data-status="{{ result.status }}">
+  {% if result.status == "ok" %}<i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
+  {% elif result.status == "skipped" %}<i class="bi bi-dash-circle text-body-secondary" aria-hidden="true"></i>
+  {% else %}<i class="bi bi-x-circle-fill text-danger" aria-hidden="true"></i>{% endif %}
+  <div>
+    <div class="fw-semibold">{{ result.label }}
+      <span class="badge {% if result.status == 'ok' %}text-bg-success{% elif result.status == 'skipped' %}text-bg-secondary{% else %}text-bg-danger{% endif %} ms-1">{% if result.status == "ok" %}{% translate "OK" %}{% elif result.status == "skipped" %}{% translate "Not available" %}{% else %}{% translate "Failed" %}{% endif %}</span>
+    </div>
+    <div class="small text-body-secondary text-break">{{ result.detail }}</div>
+  </div>
+</div>
+{% endfor %}
+{% if next_step %}
+<div class="d-flex align-items-center gap-2 py-2 text-body-secondary"
+     hx-post="{% url 'manage_ai' %}" hx-trigger="load" hx-include="#ai-form"
+     hx-vals='{"action": "test", "step": "{{ next_step }}"}' hx-target="this" hx-swap="outerHTML">
+  <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>{{ next_label }} …
+</div>
+{% elif done %}
+<p class="small text-body-secondary mt-2 mb-0">{% translate "Test finished. Nothing was saved." %}</p>
+{% endif %}
