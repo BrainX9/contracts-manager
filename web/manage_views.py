@@ -6,6 +6,7 @@ Bereich Administration im Frontend (Version 0.6 beta) unter /manage/.
 - Eigentum übertragen und Erinnerungs-Übersicht: nur Superuser.
 - System: Version, Worker, E-Mail, SSO; Test-E-Mail an sich selbst.
 - Backup und Import (0.9 beta): nur Superuser, Logik in contracts.backup.
+- KI-Einstellungen (0.3.0): nur Superuser, mit Test der eingegebenen Werte.
 Ohne Recht gibt es 403. Das Django-Backend (/admin/) bleibt Superusern
 vorbehalten.
 """
@@ -38,7 +39,7 @@ from contracts import permissions as perms
 from contracts.mail import build_mail, user_language
 from contracts.models import Contract, Reminder
 
-from .manage_forms import BackupUploadForm, GroupForm, SiteSettingsForm, TransferOwnershipForm, UserForm
+from .manage_forms import AISettingsForm, BackupUploadForm, GroupForm, SiteSettingsForm, TransferOwnershipForm, UserForm
 from .models import SiteSettings
 
 logger = logging.getLogger(__name__)
@@ -473,6 +474,9 @@ class SystemView(ManageMixin, View):
         }
 
     def context(self, settings_form=None):
+        from assistant.config import current
+
+        ai = current()
         return {
             "settings_form": settings_form or SiteSettingsForm(instance=SiteSettings.load()),
             "version": settings.APP_VERSION,
@@ -492,10 +496,10 @@ class SystemView(ManageMixin, View):
                 "create_users": settings.OIDC_CREATE_USER,
             },
             "ai": {
-                "enabled": settings.AI_ENABLED,
-                "provider": settings.AI_PROVIDER,
-                "model": settings.AI_MODEL,
-                "base_url": settings.AI_BASE_URL,
+                "enabled": ai.enabled,
+                "provider": ai.provider,
+                "model": ai.model,
+                "base_url": ai.base_url,
                 "users": User.objects.filter(is_active=True, groups__name=perms.GROUP_AI).count(),
             },
             "reminder_time": settings.REMINDER_SEND_TIME,
@@ -529,6 +533,91 @@ class SystemView(ManageMixin, View):
             else:
                 messages.success(request, _("A test email has been sent to %(email)s.") % {"email": request.user.email})
         return redirect("manage_system")
+
+
+# --- KI-Einstellungen (nur Superuser, 0.3.0) -----------------------------------
+
+class AISettingsView(ManageMixin, View):
+    """
+    Anbieter, Modell, Adresse, API-Schlüssel und System-Prompt des
+    KI-Assistenten. Gespeichert wird in web.SiteSettings; leere Felder
+    gelten als "Wert aus der .env" (assistant.config).
+
+    "Testen" prüft die eingegebenen Werte, ohne sie zu speichern
+    (assistant.selftest). Mit HTMX läuft jeder Schritt als eigene Anfrage,
+    damit keine länger dauert als die Zeitgrenze des Webservers; ohne
+    JavaScript laufen alle Schritte nacheinander mit kürzerer Zeitgrenze.
+    """
+    superuser_only = True
+    template_name = "web/manage/ai.html"
+    # Zeitgrenze je Schritt ohne JavaScript (alle in einer Anfrage)
+    PLAIN_TEST_TIMEOUT = 8
+
+    def form(self, data=None):
+        return AISettingsForm(data, instance=SiteSettings.load())
+
+    def context(self, form, results=None):
+        from assistant import config as ai_config
+        from assistant.agent import fixed_rules
+
+        return {
+            "form": form,
+            "results": results,
+            "current": ai_config.current(),
+            "fixed_rules": fixed_rules("German", "documents"),
+            "custom_prompt": bool(form.instance.ai_system_prompt),
+            "ai_group": Group.objects.filter(name=perms.GROUP_AI).first(),
+            "ai_users": User.objects.filter(is_active=True, groups__name=perms.GROUP_AI).count(),
+        }
+
+    def get(self, request):
+        return render(request, self.template_name, self.context(self.form()))
+
+    def post(self, request):
+        action = request.POST.get("action")
+        if action == "reset_prompt":
+            site_settings = SiteSettings.load()
+            site_settings.ai_system_prompt = ""
+            site_settings.save(update_fields=["ai_system_prompt"])
+            messages.success(request, _("The system prompt has been reset to the default."))
+            return redirect("manage_ai")
+        form = self.form(request.POST)
+        if action == "test":
+            return self.test(request, form)
+        if not form.is_valid():
+            return render(request, self.template_name, self.context(form))
+        form.save()
+        messages.success(request, _("The settings have been saved."))
+        return redirect("manage_ai")
+
+    def test(self, request, form):
+        from assistant import selftest
+
+        if not form.is_valid():
+            if request.htmx:
+                return render(request, "web/manage/_ai_test.html", {"invalid": True})
+            return render(request, self.template_name, self.context(form))
+        candidate = form.candidate()
+        if request.htmx:
+            step = request.POST.get("step")
+            if step not in selftest.STEPS:
+                step = selftest.STEPS[0]
+            result = selftest.run_step(step, candidate)
+            following = selftest.STEPS[selftest.STEPS.index(step) + 1:]
+            # Ohne Verbindung sind die weiteren Schritte sinnlos
+            stop = step == "connection" and result.status == selftest.FAILED
+            next_step = None if stop or not following else following[0]
+            return render(request, "web/manage/_ai_test.html", {
+                "results": [result], "next_step": next_step,
+                "next_label": selftest.step_label(next_step) if next_step else "",
+                "done": next_step is None,
+            })
+        results = []
+        for step in selftest.STEPS:
+            results.append(selftest.run_step(step, candidate, timeout=self.PLAIN_TEST_TIMEOUT))
+            if step == "connection" and results[-1].status == selftest.FAILED:
+                break
+        return render(request, self.template_name, self.context(form, results))
 
 
 # --- Backup und Import (nur Superuser, 0.9 beta) ------------------------------

@@ -461,7 +461,8 @@ class SharingForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
         self.obj = obj
         users = get_user_model().objects.filter(is_active=True).order_by("username")
-        groups = Group.objects.order_by("name")
+        # Ohne die Gruppe "KI" (nur Zugang zum Assistenten, seit 0.3.0)
+        groups = perms.shareable_groups(obj)
         self.fields["owner"].queryset = users
         self.fields["owner"].initial = obj.owner_id
 

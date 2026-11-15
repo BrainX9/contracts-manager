@@ -1,15 +1,16 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 
 from contracts import permissions as perms
 from contracts.models import Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider
 
-from .models import UserPreferences
+from .models import SiteSettings, UserPreferences
 
 
 def make_contract(owner, name, amount, interval="monthly", category=None):
@@ -2426,3 +2427,156 @@ class ManageBackupTest(ManageTestMixin, TestCase):
         self.assertNotContains(response, 'name="token"')
         response = self.client.post(reverse("manage_backup_import"), {"token": "../etc", "confirm": "1"})
         self.assertRedirects(response, reverse("manage_backup"))
+
+
+class ManageAISettingsTest(ManageTestMixin, TestCase):
+    """KI-Einstellungen in der Verwaltung (Version 0.3.0), nur Superuser"""
+
+    url = reverse_lazy("manage_ai")
+
+    def data(self, **values):
+        from assistant.agent import DEFAULT_PROMPT
+
+        data = {"ai_enabled": "", "ai_provider": "", "ai_model": "", "ai_base_url": "", "api_key": "",
+                "ai_system_prompt": DEFAULT_PROMPT, "action": "save"}
+        data.update(values)
+        return data
+
+    def test_only_superuser(self):
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertNotContains(self.client.get(reverse("manage_system")), 'href="/manage/ai/"')
+        self.client.force_login(self.superuser)
+        page = self.client.get(self.url)
+        self.assertContains(page, "KI-Einstellungen")
+        # Das Fenster zeigt den Standard-Prompt und die festen Regeln
+        self.assertContains(page, "You are the assistant of “Contracts Manager”")
+        self.assertContains(page, "Fixed rules of the app")
+        self.assertContains(self.client.get(reverse("manage_system")), 'href="/manage/ai/"')
+
+    def test_save_and_key_is_never_shown(self):
+        self.client.force_login(self.superuser)
+        response = self.client.post(self.url, self.data(
+            ai_enabled="on", ai_provider="anthropic", ai_model="claude-sonnet-5-5", api_key="sk-geheim-123",
+        ))
+        self.assertRedirects(response, self.url)
+        site = SiteSettings.load()
+        self.assertEqual((site.ai_enabled, site.ai_provider, site.ai_model, site.ai_api_key),
+                         ("on", "anthropic", "claude-sonnet-5-5", "sk-geheim-123"))
+        # Unveränderter Standard-Prompt wird nicht gespeichert
+        self.assertEqual(site.ai_system_prompt, "")
+        page = self.client.get(self.url)
+        self.assertNotContains(page, "sk-geheim-123")
+        self.assertContains(page, "Ein Schlüssel ist gespeichert.")
+        # Leer lassen behält den Schlüssel, das Kästchen entfernt ihn
+        self.client.post(self.url, self.data(ai_model="anderes-modell"))
+        self.assertEqual(SiteSettings.load().ai_api_key, "sk-geheim-123")
+        self.client.post(self.url, self.data(clear_api_key="on"))
+        self.assertEqual(SiteSettings.load().ai_api_key, "")
+
+    def test_invalid_address(self):
+        self.client.force_login(self.superuser)
+        response = self.client.post(self.url, self.data(ai_base_url="ftp://example.com"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(SiteSettings.load().ai_base_url, "")
+
+    def test_custom_prompt_and_reset(self):
+        self.client.force_login(self.superuser)
+        self.client.post(self.url, self.data(ai_system_prompt="Du bist Karl.\r\nAntworte knapp."))
+        self.assertEqual(SiteSettings.load().ai_system_prompt, "Du bist Karl.\nAntworte knapp.")
+        self.assertContains(self.client.get(self.url), "Du bist Karl.")
+        response = self.client.post(self.url, {"action": "reset_prompt"}, follow=True)
+        self.assertContains(response, "Der System-Prompt wurde auf den Standard zurückgesetzt.")
+        self.assertEqual(SiteSettings.load().ai_system_prompt, "")
+
+    def test_test_uses_entered_values_and_saves_nothing(self):
+        from assistant import selftest
+
+        self.client.force_login(self.superuser)
+        seen = []
+
+        def fake_step(step, config, timeout=selftest.TEST_TIMEOUT):
+            seen.append((step, config.provider, config.model, config.api_key))
+            return selftest.StepResult(step, selftest.OK, "gut")
+
+        data = self.data(action="test", step="connection", ai_provider="anthropic", ai_model="claude-test",
+                         api_key="sk-eingegeben")
+        with patch("assistant.selftest.run_step", side_effect=fake_step):
+            response = self.client.post(self.url, data, headers={"HX-Request": "true"})
+        self.assertEqual(seen, [("connection", "anthropic", "claude-test", "sk-eingegeben")])
+        self.assertContains(response, "Verbindung und Antwort")
+        # Der nächste Schritt wird per HTMX angestoßen
+        self.assertContains(response, '"step": "tools"')
+        self.assertNotContains(response, "<html")
+        site = SiteSettings.load()
+        self.assertEqual((site.ai_provider, site.ai_api_key), ("", ""))
+        # Letzter Schritt: kein weiterer Aufruf
+        with patch("assistant.selftest.run_step", side_effect=fake_step):
+            response = self.client.post(self.url, {**data, "step": "file"}, headers={"HX-Request": "true"})
+        self.assertNotContains(response, "hx-post")
+        self.assertContains(response, "Test abgeschlossen")
+
+    def test_test_stops_without_connection_and_works_without_javascript(self):
+        from assistant import selftest
+
+        self.client.force_login(self.superuser)
+        failed = selftest.StepResult("connection", selftest.FAILED, "401: falscher Schlüssel")
+        with patch("assistant.selftest.run_step", return_value=failed):
+            response = self.client.post(self.url, self.data(action="test", step="connection"),
+                                        headers={"HX-Request": "true"})
+        self.assertContains(response, "401: falscher Schlüssel")
+        self.assertNotContains(response, "hx-post")
+        # Ohne JavaScript: ganze Seite, alle Schritte bis zum ersten Abbruch
+        with patch("assistant.selftest.run_step", return_value=failed) as run_step:
+            response = self.client.post(self.url, self.data(action="test"))
+        self.assertEqual(run_step.call_count, 1)
+        self.assertContains(response, "<html")
+        self.assertContains(response, "401: falscher Schlüssel")
+
+    def test_test_with_invalid_form(self):
+        self.client.force_login(self.superuser)
+        with patch("assistant.selftest.run_step") as run_step:
+            response = self.client.post(self.url, self.data(action="test", ai_base_url="kein-url"),
+                                        headers={"HX-Request": "true"})
+        run_step.assert_not_called()
+        self.assertContains(response, "Der Test wurde nicht gestartet")
+
+
+class AIGroupTest(ManageTestMixin, TestCase):
+    """Beschreibung der Gruppe "KI" und Freigaben ohne sie (Version 0.3.0)"""
+
+    def setUp(self):
+        super().setUp()
+        self.ai_group = Group.objects.get(name=perms.GROUP_AI)
+        self.family = Group.objects.create(name="Familie")
+        self.contract = make_contract(self.normal, "Strom", "10.00")
+
+    def test_description_in_group_list_and_user_form(self):
+        self.client.force_login(self.superuser)
+        description = "Darf den KI-Assistenten nutzen"
+        self.assertContains(self.client.get(reverse("manage_group_list")), description)
+        self.assertContains(self.client.get(reverse("manage_group_edit", args=[self.ai_group.pk])), description)
+        self.assertContains(self.client.get(reverse("manage_user_edit", args=[self.normal.pk])), description)
+
+    def test_not_offered_for_sharing(self):
+        self.client.force_login(self.normal)
+        page = self.client.get(reverse("contract_sharing", args=[self.contract.pk]))
+        self.assertContains(page, f'name="group_{self.family.pk}"')
+        self.assertNotContains(page, f'name="group_{self.ai_group.pk}"')
+        self.assertNotIn(self.ai_group, perms.shareable_groups())
+
+    def test_existing_share_stays_visible_and_removable(self):
+        perms.grant_role(self.contract, self.ai_group, perms.READER)
+        self.assertIn(self.ai_group, perms.shareable_groups(self.contract))
+        self.client.force_login(self.normal)
+        url = reverse("contract_sharing", args=[self.contract.pk])
+        self.assertContains(self.client.get(url), f'name="group_{self.ai_group.pk}"')
+        self.client.post(url, {"owner": self.normal.pk, f"group_{self.ai_group.pk}": ""})
+        self.assertFalse(perms.get_roles(self.contract)[perms.READER]["groups"])
+        self.assertNotContains(self.client.get(url), f'name="group_{self.ai_group.pk}"')
+
+    def test_not_offered_in_django_admin(self):
+        self.client.force_login(self.superuser)
+        page = self.client.get(reverse("admin:contracts_contract_change", args=[self.contract.pk]))
+        self.assertContains(page, f'<option value="{self.family.pk}">Familie</option>')
+        self.assertNotContains(page, f'<option value="{self.ai_group.pk}">KI</option>')

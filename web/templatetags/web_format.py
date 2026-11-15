@@ -13,3 +13,11 @@ def euro(amount):
     if amount is None or amount == "":
         return "–"
     return f"{number_format(amount, decimal_pos=2, force_grouping=True)} €"
+
+
+@register.filter
+def group_description(name):
+    """Beschreibung einer Standardgruppe (contracts.permissions), sonst leer."""
+    from contracts.permissions import group_description as describe
+
+    return describe(name)

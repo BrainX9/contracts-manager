@@ -1,5 +1,5 @@
 {% extends "web/base.html" %}
-{% load i18n %}
+{% load i18n web_format %}
 {% block title %}{% translate "Groups" %}{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -26,9 +26,7 @@
             <a href="{% url 'manage_group_edit' row.group.pk %}">{{ row.group.name }}</a>
             {% else %}{{ row.group.name }}{% endif %}
             {% if row.protected %}<span class="badge text-bg-light border ms-1">{% translate "Default group" %}</span>{% endif %}
-            {% if row.group.name == "Alle" %}<div class="small text-body-secondary">{% translate "Contains every user automatically." %}</div>
-            {% elif row.group.name == "Benutzer" %}<div class="small text-body-secondary">{% translate "May create own contracts and master data." %}</div>
-            {% elif row.group.name == "Administratoren" %}<div class="small text-body-secondary">{% translate "May manage users and groups." %}</div>{% endif %}
+            {% with description=row.group.name|group_description %}{% if description %}<div class="small text-body-secondary" style="max-width: 44rem">{{ description }}</div>{% endif %}{% endwith %}
           </td>
           <td class="text-end">{{ row.members }}</td>
           <td class="text-end">{{ row.shares }}</td>

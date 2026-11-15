@@ -1,5 +1,5 @@
 {% extends "web/base.html" %}
-{% load i18n %}
+{% load i18n web_format %}
 {% block title %}{% if target %}{% translate "Edit user" %}{% else %}{% translate "New user" %}{% endif %}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb">
@@ -40,9 +40,10 @@
   {% if form.groups %}
   <div class="card mb-3"><div class="card-body">
     <h2 class="h6 card-title mb-1">{% translate "Groups" %}</h2>
-    <p class="small text-body-secondary">{% translate "“Benutzer” may create own contracts and master data, “Administratoren” may manage users and groups. Every user is automatically in “Alle”." %}</p>
+    <p class="small text-body-secondary">{% translate "Every user is automatically in “Alle”." %}</p>
     {% for checkbox in form.groups %}
-    <div class="form-check">{{ checkbox.tag }}<label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label></div>
+    <div class="form-check mb-1">{{ checkbox.tag }}<label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+      {% with description=checkbox.choice_label|group_description %}{% if description %}<div class="small text-body-secondary">{{ description }}</div>{% endif %}{% endwith %}</div>
     {% endfor %}
     {% for error in form.groups.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
   </div></div>

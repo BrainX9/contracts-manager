@@ -14,6 +14,9 @@ Regeln:
   eines hatte, wählt über "Passwort vergessen?" ein neues
   (``PASSWORD_RESET_MARKER``, siehe ``web.forms.WebPasswordResetForm``);
   sonst ``manage.py changepassword``.
+- Der API-Schlüssel des KI-Assistenten (web.SiteSettings, seit 0.3.0) wird
+  ebenfalls nie exportiert; beim Import bleibt der Schlüssel der
+  Installation erhalten.
 - Der Import ersetzt den gesamten Bestand (kein Zusammenführen). Er nimmt
   Backups der installierten und älterer unterstützter Versionen an
   (contracts.backup_upgrades); ältere werden vor dem Laden umgewandelt.
@@ -170,6 +173,10 @@ def serialize_objects():
         if model._meta.label_lower == "auth.user":
             for row in rows:
                 row["fields"]["password"] = "" if is_password_usable(row["fields"]["password"]) else "!"
+        elif model._meta.label_lower == "web.sitesettings":
+            # API-Schlüssel des KI-Assistenten nie exportieren (0.3.0)
+            for row in rows:
+                row["fields"]["ai_api_key"] = ""
         counts[model._meta.label_lower] = len(rows)
         objects.extend(rows)
     return objects, counts
@@ -388,7 +395,17 @@ def reset_sequences():
             cursor.execute(statement)
 
 
-def load_into_database(objects):
+def installed_ai_api_key():
+    """
+    In der Verwaltung hinterlegter API-Schlüssel des KI-Assistenten. Er
+    steht in keinem Backup und bleibt bei einem Import erhalten.
+    """
+    from web.models import SiteSettings
+
+    return SiteSettings.objects.filter(pk=1).values_list("ai_api_key", flat=True).first() or ""
+
+
+def load_into_database(objects, ai_api_key=""):
     try:
         deferred = []
         # Einzeln laden und sofort speichern: Verweise über natürliche
@@ -400,6 +417,10 @@ def load_into_database(objects):
                     item.object.set_unusable_password()
                 else:
                     item.object.password = PASSWORD_RESET_MARKER
+            elif item.object._meta.label_lower == "web.sitesettings":
+                # Nie aus dem Backup, auch nicht von Hand eingetragen; es
+                # bleibt der Schlüssel dieser Installation
+                item.object.ai_api_key = ai_api_key
             item.save()
             if item.deferred_fields:
                 deferred.append(item)
@@ -456,8 +477,9 @@ def import_backup(source):
             except (OSError, zipfile.BadZipFile) as error:
                 raise BackupError(_("The backup is damaged.")) from error
             with transaction.atomic():
+                ai_api_key = installed_ai_api_key()
                 flush_tables()
-                load_into_database(objects)
+                load_into_database(objects, ai_api_key)
                 reset_sequences()
                 Session.objects.all().delete()
             replace_media(staging)

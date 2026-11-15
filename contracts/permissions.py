@@ -18,6 +18,7 @@ damit Admin, Frontend und spätere Schnittstellen dieselbe Logik nutzen.
 
 from django.contrib.auth.models import Group
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import (
     assign_perm,
     get_groups_with_perms,
@@ -33,6 +34,19 @@ GROUP_ADMINS = "Administratoren"  # pflegt Benutzer und Gruppen im Frontend (0.6
 GROUP_AI = "KI"  # darf den KI-Assistenten nutzen (0.8a)
 # Standardgruppen lassen sich nicht umbenennen oder löschen
 PROTECTED_GROUPS = (GROUP_USERS, GROUP_ALL, GROUP_ADMINS, GROUP_AI)
+
+
+# Beschreibung der Standardgruppen für die Verwaltung (Version 0.3.0)
+GROUP_DESCRIPTIONS = {
+    GROUP_ALL: _("Contains every user automatically."),
+    GROUP_USERS: _("May create own contracts and master data."),
+    GROUP_ADMINS: _("May manage users and groups."),
+    GROUP_AI: _(
+        "May use the AI assistant: ask questions about contracts they can see, upload documents and have "
+        "new contracts proposed. The assistant acts with the rights of the user. This group is only "
+        "about access to the assistant and is therefore not offered when sharing objects."
+    ),
+}
 
 READER = "reader"
 EDITOR = "editor"
@@ -275,16 +289,15 @@ def transfer_ownership(obj, new_owner):
 
 def can_use_assistant(user):
     """
-    KI-Assistent (Version 0.8a): eingeschaltet (AI_ENABLED) und Mitglied der
-    Gruppe "KI" (Recht assistant.use_assistant) oder Superuser.
+    KI-Assistent (Version 0.8a): eingeschaltet und Mitglied der Gruppe "KI"
+    (Recht assistant.use_assistant) oder Superuser. Ob er eingeschaltet
+    ist, steht in der .env oder in der Verwaltung (assistant.config, 0.3.0).
     """
-    from django.conf import settings
+    if not (user.is_authenticated and user.is_active and user.has_perm("assistant.use_assistant")):
+        return False
+    from assistant.config import enabled
 
-    return bool(
-        getattr(settings, "AI_ENABLED", False)
-        and user.is_authenticated and user.is_active
-        and user.has_perm("assistant.use_assistant")
-    )
+    return enabled()
 
 
 def can_manage(user, action, model_name):
@@ -333,6 +346,24 @@ def assignable_groups(actor):
     if not actor.is_superuser:
         groups = groups.exclude(name=GROUP_ADMINS)
     return groups
+
+
+def group_description(name):
+    """Beschreibung einer Standardgruppe, sonst leer."""
+    return GROUP_DESCRIPTIONS.get(str(name), "")
+
+
+def shareable_groups(obj=None):
+    """
+    Gruppen, die bei Freigaben zur Auswahl stehen (Version 0.3.0): alle
+    außer "KI", die nur den Zugang zum Assistenten regelt. Hat "KI" an
+    ``obj`` bereits eine Rolle (ältere Freigabe), bleibt sie sichtbar, damit
+    man die Freigabe entfernen kann.
+    """
+    hidden = Group.objects.filter(name=GROUP_AI)
+    if obj is not None and obj.pk:
+        hidden = hidden.exclude(pk__in=[group.pk for group in get_groups_with_perms(obj)])
+    return Group.objects.exclude(pk__in=hidden.values("pk")).order_by("name")
 
 
 def owned_models():

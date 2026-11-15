@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 16:09+0100\n"
+"POT-Creation-Date: 2026-11-15 16:34+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -15,7 +15,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: assistant/apps.py:24 web/templates/web/manage/system.html:105
+#: assistant/apps.py:24 web/models.py:64
+#: web/templates/web/manage/system.html:105
 msgid "AI assistant"
 msgstr "KI-Assistent"
 
@@ -55,7 +56,7 @@ msgstr "Titel"
 msgid "status"
 msgstr "Status"
 
-#: assistant/models.py:35
+#: assistant/models.py:35 web/models.py:69
 msgid "system prompt"
 msgstr "System-Prompt"
 
@@ -117,7 +118,7 @@ msgstr "Werkzeugaufrufe"
 msgid "tool call ID"
 msgstr "ID des Werkzeugaufrufs"
 
-#: assistant/models.py:85
+#: assistant/models.py:85 web/models.py:65
 msgid "provider"
 msgstr "Anbieter"
 
@@ -336,7 +337,7 @@ msgstr "Vertragsnummer"
 msgid "Short description"
 msgstr "Kurzbeschreibung"
 
-#: assistant/proposals.py:185 contracts/admin.py:526
+#: assistant/proposals.py:185 contracts/admin.py:530
 #: web/templates/web/contracts/detail.html:49
 #: web/templates/web/contracts/form.html:35
 msgid "Term"
@@ -362,6 +363,82 @@ msgstr "Dokument"
 #: web/templates/web/manage/reminders.html:19
 msgid "Contract"
 msgstr "Vertrag"
+
+#: assistant/selftest.py:68
+msgid "Connection and answer"
+msgstr "Verbindung und Antwort"
+
+#: assistant/selftest.py:69
+msgid "Tool call"
+msgstr "Werkzeugaufruf"
+
+#: assistant/selftest.py:70
+msgid "Local text recognition"
+msgstr "Lokale Texterkennung"
+
+#: assistant/selftest.py:71
+msgid "File upload to the model"
+msgstr "Datei-Upload an das Modell"
+
+#: assistant/selftest.py:131
+msgid "The model returned an empty answer."
+msgstr "Das Modell hat eine leere Antwort geliefert."
+
+#: assistant/selftest.py:132
+#, python-format
+msgid "The model “%(model)s” answered: %(answer)s"
+msgstr "Das Modell „%(model)s“ hat geantwortet: %(answer)s"
+
+#: assistant/selftest.py:142
+msgid "The model called the test tool."
+msgstr "Das Modell hat das Test-Werkzeug aufgerufen."
+
+#: assistant/selftest.py:144
+msgid ""
+"The model answered without calling the tool. The assistant needs a model "
+"that supports tools (function calling)."
+msgstr "Das Modell hat geantwortet, ohne das Werkzeug aufzurufen. Der Assistent braucht ein Modell, das Werkzeuge unterstützt (Function Calling)."
+
+#: assistant/selftest.py:156
+msgid "PDF"
+msgstr "PDF"
+
+#: assistant/selftest.py:157
+msgid "image (OCR)"
+msgstr "Bild (OCR)"
+
+#: assistant/selftest.py:168
+#, python-format
+msgid "%(label)s: recognised"
+msgstr "%(label)s: erkannt"
+
+#: assistant/selftest.py:169
+#, python-format
+msgid "%(label)s: not recognised"
+msgstr "%(label)s: nicht erkannt"
+
+#: assistant/selftest.py:176
+msgid ""
+"Files are only sent to the model with Claude (provider Anthropic). With this "
+"provider the assistant works with the locally recognised text."
+msgstr "Dateien gehen nur bei Claude (Anbieter Anthropic) an das Modell. Bei diesem Anbieter arbeitet der Assistent mit dem lokal erkannten Text."
+
+#: assistant/selftest.py:187
+msgid "The model did not ask for the file."
+msgstr "Das Modell hat die Datei nicht angefordert."
+
+#: assistant/selftest.py:201
+msgid "The model read the uploaded PDF file."
+msgstr "Das Modell hat die hochgeladene PDF-Datei gelesen."
+
+#: assistant/selftest.py:202
+#, python-format
+msgid "The model did not read the file correctly. Answer: %(answer)s"
+msgstr "Das Modell hat die Datei nicht richtig gelesen. Antwort: %(answer)s"
+
+#: assistant/selftest.py:217
+msgid "The model refused the test request."
+msgstr "Das Modell hat die Testanfrage abgelehnt."
 
 #: assistant/templates/assistant/_messages.html:19
 msgid "The assistant is answering …"
@@ -391,7 +468,7 @@ msgid "Reject"
 msgstr "Ablehnen"
 
 #: assistant/templates/assistant/chat.html:3
-#: assistant/templates/assistant/chat.html:7 web/templates/web/base.html:63
+#: assistant/templates/assistant/chat.html:7 web/templates/web/base.html:66
 msgid "Assistant"
 msgstr "Assistent"
 
@@ -436,7 +513,7 @@ msgstr ""
 "prüft ihn und schlägt einen neuen Vertrag vor."
 
 #: assistant/templates/assistant/chat.html:40
-#: assistant/templates/assistant/chat.html:41 assistant/views.py:45
+#: assistant/templates/assistant/chat.html:41 assistant/views.py:44
 msgid "Attach document"
 msgstr "Dokument anhängen"
 
@@ -479,19 +556,19 @@ msgstr "Diese Unterhaltung löschen?"
 msgid "Delete conversation"
 msgstr "Unterhaltung löschen"
 
-#: assistant/views.py:39
+#: assistant/views.py:38
 msgid "Message"
 msgstr "Nachricht"
 
-#: assistant/views.py:41
+#: assistant/views.py:40
 msgid "Ask about your contracts …"
 msgstr "Frage zu deinen Verträgen …"
 
-#: assistant/views.py:67
+#: assistant/views.py:66
 msgid "Please enter a message or attach a document."
 msgstr "Bitte gib eine Nachricht ein oder hänge ein Dokument an."
 
-#: assistant/views.py:71
+#: assistant/views.py:70
 msgid "Please check this document."
 msgstr "Bitte prüfe dieses Dokument."
 
@@ -580,73 +657,73 @@ msgstr "Dürfen das Objekt anzeigen und bearbeiten, aber nicht löschen."
 msgid "Editors (groups)"
 msgstr "Bearbeiter (Gruppen)"
 
-#: contracts/admin.py:178
+#: contracts/admin.py:182
 msgid "Owner and sharing"
 msgstr "Eigentümer und Freigaben"
 
-#: contracts/admin.py:250 contracts/models.py:128
+#: contracts/admin.py:254 contracts/models.py:128
 msgid "main category"
 msgstr "Hauptkategorie"
 
-#: contracts/admin.py:336 contracts/admin.py:439 contracts/admin.py:447
+#: contracts/admin.py:340 contracts/admin.py:443 contracts/admin.py:451
 #: contracts/models.py:375 web/templates/web/providers/detail.html:41
 msgid "Paperless"
 msgstr "Paperless"
 
-#: contracts/admin.py:338
+#: contracts/admin.py:342
 msgid "Open document"
 msgstr "Dokument öffnen"
 
-#: contracts/admin.py:430 contracts/admin.py:523 web/templates/web/base.html:67
+#: contracts/admin.py:434 contracts/admin.py:527 web/templates/web/base.html:70
 #: web/templates/web/contracts/form.html:22
 #: web/templates/web/providers/form.html:21
 msgid "Master data"
 msgstr "Stammdaten"
 
-#: contracts/admin.py:433 contracts/admin.py:451
+#: contracts/admin.py:437 contracts/admin.py:455
 #: web/templates/web/providers/form.html:44
 msgid "Logo"
 msgstr "Logo"
 
-#: contracts/admin.py:436
+#: contracts/admin.py:440
 msgid "Contact details"
 msgstr "Kontaktdaten"
 
-#: contracts/admin.py:442 contracts/models.py:42 contracts/models.py:543
+#: contracts/admin.py:446 contracts/models.py:42 contracts/models.py:543
 msgid "Other"
 msgstr "Sonstiges"
 
-#: contracts/admin.py:449
+#: contracts/admin.py:453
 msgid "Open documents"
 msgstr "Dokumente öffnen"
 
-#: contracts/admin.py:494 web/templates/web/payment_methods/form.html:24
+#: contracts/admin.py:498 web/templates/web/payment_methods/form.html:24
 msgid "Icon"
 msgstr "Icon"
 
-#: contracts/admin.py:529 web/templates/web/contracts/form.html:44
+#: contracts/admin.py:533 web/templates/web/contracts/form.html:44
 #: web/templates/web/providers/form.html:58
 msgid "Information"
 msgstr "Informationen"
 
-#: contracts/admin.py:534
+#: contracts/admin.py:538
 msgid "Paperless (partner)"
 msgstr "Paperless (Partner)"
 
-#: contracts/admin.py:541 web/templates/web/contracts/detail.html:34
+#: contracts/admin.py:545 web/templates/web/contracts/detail.html:34
 #: web/templates/web/providers/detail.html:44
 msgid "Open partner documents"
 msgstr "Dokumente des Partners öffnen"
 
-#: contracts/admin.py:543 web/templates/web/contracts/_results.html:31
+#: contracts/admin.py:547 web/templates/web/contracts/_results.html:31
 msgid "Current amount"
 msgstr "Aktueller Betrag"
 
-#: contracts/admin.py:550 web/templates/web/contracts/_results.html:44
+#: contracts/admin.py:554 web/templates/web/contracts/_results.html:44
 msgid "No costs"
 msgstr "Keine Kosten"
 
-#: contracts/apps.py:112 web/templates/web/base.html:58
+#: contracts/apps.py:112 web/templates/web/base.html:61
 #: web/templates/web/categories/_results.html:19
 #: web/templates/web/consumers/_results.html:22
 #: web/templates/web/contracts/cost_form.html:7
@@ -665,43 +742,51 @@ msgstr "Keine Kosten"
 msgid "Contracts"
 msgstr "Verträge"
 
-#: contracts/backup.py:270
+#: contracts/backup.py:277
 #, python-format
 msgid ""
 "This backup was created with the newer version %(backup)s (installed: "
 "%(installed)s). Update Contracts Manager first, then import the backup."
-msgstr "Dieses Backup wurde mit der neueren Version %(backup)s erstellt (installiert: %(installed)s). Aktualisiere zuerst Contracts Manager und importiere das Backup danach."
+msgstr ""
+"Dieses Backup wurde mit der neueren Version %(backup)s erstellt "
+"(installiert: %(installed)s). Aktualisiere zuerst Contracts Manager und "
+"importiere das Backup danach."
 
-#: contracts/backup.py:274
+#: contracts/backup.py:281
 #, python-format
 msgid ""
 "This backup was created with version %(backup)s, which this version cannot "
 "import (installed: %(installed)s). Backups of the beta versions are not "
 "supported."
-msgstr "Dieses Backup wurde mit Version %(backup)s erstellt, die diese Version nicht importieren kann (installiert: %(installed)s). Backups der Beta-Versionen werden nicht unterstützt."
+msgstr ""
+"Dieses Backup wurde mit Version %(backup)s erstellt, die diese Version nicht "
+"importieren kann (installiert: %(installed)s). Backups der Beta-Versionen "
+"werden nicht unterstützt."
 
-#: contracts/backup.py:282
+#: contracts/backup.py:289
 #, python-format
 msgid ""
 "This backup does not match version %(backup)s (different database state) and "
 "cannot be imported."
-msgstr "Dieses Backup passt nicht zu Version %(backup)s (anderer Stand der Datenbank) und kann nicht importiert werden."
+msgstr ""
+"Dieses Backup passt nicht zu Version %(backup)s (anderer Stand der "
+"Datenbank) und kann nicht importiert werden."
 
-#: contracts/backup.py:291 contracts/backup.py:293 contracts/backup.py:317
+#: contracts/backup.py:298 contracts/backup.py:300 contracts/backup.py:324
 msgid "This file is not a Contracts Manager backup."
 msgstr "Diese Datei ist kein Backup von Contracts Manager."
 
-#: contracts/backup.py:295
+#: contracts/backup.py:302
 msgid "This backup has a format that this version cannot read."
 msgstr "Dieses Backup hat ein Format, das diese Version nicht lesen kann."
 
-#: contracts/backup.py:308
+#: contracts/backup.py:315
 #, python-format
 msgid "The backup contains a file with an invalid path: %(name)s"
 msgstr "Das Backup enthält eine Datei mit unzulässigem Pfad: %(name)s"
 
-#: contracts/backup.py:340 contracts/backup.py:343 contracts/backup.py:345
-#: contracts/backup.py:348 contracts/backup.py:414 contracts/backup.py:457
+#: contracts/backup.py:347 contracts/backup.py:350 contracts/backup.py:352
+#: contracts/backup.py:355 contracts/backup.py:435 contracts/backup.py:478
 msgid "The backup is damaged."
 msgstr "Das Backup ist beschädigt."
 
@@ -1197,6 +1282,26 @@ msgstr "Freigabe Vertrag (Gruppe)"
 msgid "contract shares (groups)"
 msgstr "Freigaben Vertrag (Gruppen)"
 
+#: contracts/permissions.py:41
+msgid "Contains every user automatically."
+msgstr "Enthält automatisch alle Benutzer."
+
+#: contracts/permissions.py:42
+msgid "May create own contracts and master data."
+msgstr "Darf eigene Verträge und Stammdaten anlegen."
+
+#: contracts/permissions.py:43
+msgid "May manage users and groups."
+msgstr "Darf Benutzer und Gruppen verwalten."
+
+#: contracts/permissions.py:45
+msgid ""
+"May use the AI assistant: ask questions about contracts they can see, upload "
+"documents and have new contracts proposed. The assistant acts with the "
+"rights of the user. This group is only about access to the assistant and is "
+"therefore not offered when sharing objects."
+msgstr "Darf den KI-Assistenten nutzen: Fragen zu den Verträgen stellen, die man sehen darf, Dokumente hochladen und neue Verträge vorschlagen lassen. Der Assistent arbeitet mit den Rechten des Benutzers. Die Gruppe regelt nur den Zugang zum Assistenten und wird deshalb bei Freigaben nicht angeboten."
+
 #: contracts/templates/admin/contracts/contract/change_list.html:42
 #: web/templates/web/contracts/_results.html:11
 #: web/templates/web/dashboard.html:20
@@ -1414,7 +1519,7 @@ msgstr "E-Mail-Adresse"
 msgid "Used for reminders and to reset your password."
 msgstr "Für Erinnerungen und zum Zurücksetzen des Passworts."
 
-#: web/forms.py:117 web/manage_forms.py:66
+#: web/forms.py:117 web/manage_forms.py:67
 msgid "This email address is already used by another account."
 msgstr "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet."
 
@@ -1506,7 +1611,7 @@ msgstr "Bearbeiter"
 msgid "Owner"
 msgstr "Eigentümer"
 
-#: web/manage_forms.py:33 web/templates/web/base.html:97
+#: web/manage_forms.py:34 web/templates/web/base.html:100
 #: web/templates/web/manage/groups/form.html:7
 #: web/templates/web/manage/groups/list.html:3
 #: web/templates/web/manage/groups/list.html:6
@@ -1517,11 +1622,11 @@ msgstr "Eigentümer"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: web/manage_forms.py:36
+#: web/manage_forms.py:37
 msgid "Send invitation by email"
 msgstr "Einladung per E-Mail senden"
 
-#: web/manage_forms.py:37
+#: web/manage_forms.py:38
 msgid ""
 "The user receives a link to choose a password (valid for 7 days). Without an "
 "invitation the user can only sign in via single sign-on."
@@ -1529,35 +1634,35 @@ msgstr ""
 "Der Benutzer bekommt einen Link, um ein Passwort zu wählen (7 Tage gültig). "
 "Ohne Einladung ist nur die Anmeldung über Single Sign-on möglich."
 
-#: web/manage_forms.py:44
+#: web/manage_forms.py:45
 msgid "Superuser (all rights, also in the Django backend)"
 msgstr "Superuser (alle Rechte, auch in der Django-Verwaltung)"
 
-#: web/manage_forms.py:72
+#: web/manage_forms.py:73
 msgid "An email address is required for the invitation."
 msgstr "Für die Einladung ist eine E-Mail-Adresse nötig."
 
-#: web/manage_forms.py:98 web/templates/web/manage/groups/list.html:17
+#: web/manage_forms.py:99 web/templates/web/manage/groups/list.html:17
 msgid "Members"
 msgstr "Mitglieder"
 
-#: web/manage_forms.py:111
+#: web/manage_forms.py:112
 msgid "Default groups cannot be renamed."
 msgstr "Standardgruppen lassen sich nicht umbenennen."
 
-#: web/manage_forms.py:137
+#: web/manage_forms.py:138
 msgid "New owner"
 msgstr "Neuer Eigentümer"
 
-#: web/manage_forms.py:139
+#: web/manage_forms.py:140
 msgid "Previous owner becomes editor"
 msgstr "Bisheriger Eigentümer wird Bearbeiter"
 
-#: web/manage_forms.py:140
+#: web/manage_forms.py:141
 msgid "Leave empty if the user is to be deleted afterwards."
 msgstr "Nicht ankreuzen, wenn der Benutzer danach gelöscht werden soll."
 
-#: web/manage_forms.py:158
+#: web/manage_forms.py:159
 #, python-format
 msgid ""
 "The new owner already has objects with these names: %(names)s. Rename them "
@@ -1566,104 +1671,159 @@ msgstr ""
 "Der neue Eigentümer hat bereits Objekte mit diesen Namen: %(names)s. Bitte "
 "zuerst umbenennen."
 
-#: web/manage_forms.py:172 web/models.py:73
+#: web/manage_forms.py:173 web/models.py:89
 msgid "SSO Login"
 msgstr "SSO Login"
 
-#: web/manage_forms.py:178
+#: web/manage_forms.py:186 web/models.py:68
+msgid "API key"
+msgstr "API-Schlüssel"
+
+#: web/manage_forms.py:189
+msgid "Remove the stored API key"
+msgstr "Gespeicherten API-Schlüssel entfernen"
+
+#: web/manage_forms.py:203
+#, python-format
+msgid "As in the .env file (%(value)s)"
+msgstr "Wie in der Datei .env (%(value)s)"
+
+#: web/manage_forms.py:205
+msgid "on"
+msgstr "ein"
+
+#: web/manage_forms.py:205
+msgid "off"
+msgstr "aus"
+
+#: web/manage_forms.py:212
+msgid "Default address of the provider"
+msgstr "Standardadresse des Anbieters"
+
+#: web/manage_forms.py:213
+msgid "Empty: value from the .env file."
+msgstr "Leer: Wert aus der Datei .env."
+
+#: web/manage_forms.py:215
+msgid ""
+"Only for OpenAI-compatible providers or a proxy, e.g. https://example.com/"
+"v1. Empty: value from the .env file."
+msgstr "Nur für OpenAI-kompatible Anbieter oder einen Proxy, z. B. https://example.com/v1. Leer: Wert aus der Datei .env."
+
+#: web/manage_forms.py:219
+msgid "A key is stored. Leave empty to keep it."
+msgstr "Ein Schlüssel ist gespeichert. Leer lassen, um ihn zu behalten."
+
+#: web/manage_forms.py:223
+msgid "No key is stored here; the key from the .env file is used."
+msgstr "Hier ist kein Schlüssel gespeichert; es gilt der Schlüssel aus der Datei .env."
+
+#: web/manage_forms.py:224
+msgid "No key is set yet."
+msgstr "Noch kein Schlüssel hinterlegt."
+
+#: web/manage_forms.py:239
+msgid "The system prompt may have at most 20,000 characters."
+msgstr "Der System-Prompt darf höchstens 20.000 Zeichen haben."
+
+#: web/manage_forms.py:273
 msgid "Backup file (ZIP)"
 msgstr "Backup-Datei (ZIP)"
 
-#: web/manage_views.py:147
+#: web/manage_views.py:148
 #, python-format
 msgid "The user “%(name)s” has been created."
 msgstr "Der Benutzer „%(name)s“ wurde angelegt."
 
-#: web/manage_views.py:161
+#: web/manage_views.py:162
 msgid ""
 "The email could not be sent. Please check the email settings under System."
 msgstr ""
 "Die E-Mail konnte nicht verschickt werden. Bitte die E-Mail-Einstellungen "
 "unter System prüfen."
 
-#: web/manage_views.py:164
+#: web/manage_views.py:165
 #, python-format
 msgid "An invitation has been sent to %(email)s."
 msgstr "Eine Einladung wurde an %(email)s geschickt."
 
-#: web/manage_views.py:166
+#: web/manage_views.py:167
 #, python-format
 msgid "A link to reset the password has been sent to %(email)s."
 msgstr "Ein Link zum Zurücksetzen des Passworts wurde an %(email)s geschickt."
 
-#: web/manage_views.py:214
+#: web/manage_views.py:215
 msgid "The user has been saved."
 msgstr "Der Benutzer wurde gespeichert."
 
-#: web/manage_views.py:229
+#: web/manage_views.py:230
 msgid "The user has no email address."
 msgstr "Der Benutzer hat keine E-Mail-Adresse."
 
-#: web/manage_views.py:231
+#: web/manage_views.py:232
 msgid "The user is deactivated."
 msgstr "Der Benutzer ist deaktiviert."
 
-#: web/manage_views.py:250
+#: web/manage_views.py:251
 msgid "The user has been activated."
 msgstr "Der Benutzer wurde aktiviert."
 
-#: web/manage_views.py:252
+#: web/manage_views.py:253
 msgid "The user has been deactivated and can no longer sign in."
 msgstr "Der Benutzer wurde deaktiviert und kann sich nicht mehr anmelden."
 
-#: web/manage_views.py:273
+#: web/manage_views.py:274
 #, python-format
 msgid "The user “%(name)s” has been deleted."
 msgstr "Der Benutzer „%(name)s“ wurde gelöscht."
 
-#: web/manage_views.py:300
+#: web/manage_views.py:301
 #, python-format
 msgid "%(count)s objects have been transferred to %(name)s."
 msgstr "%(count)s Objekte wurden an %(name)s übertragen."
 
-#: web/manage_views.py:401
+#: web/manage_views.py:402
 #, python-format
 msgid "The group “%(name)s” has been saved."
 msgstr "Die Gruppe „%(name)s“ wurde gespeichert."
 
-#: web/manage_views.py:423
+#: web/manage_views.py:424
 #, python-format
 msgid "The group “%(name)s” has been deleted."
 msgstr "Die Gruppe „%(name)s“ wurde gelöscht."
 
-#: web/manage_views.py:518
+#: web/manage_views.py:522 web/manage_views.py:590
 msgid "The settings have been saved."
 msgstr "Die Einstellungen wurden gespeichert."
 
-#: web/manage_views.py:522
+#: web/manage_views.py:526
 msgid "Please enter your email address under Settings first."
 msgstr "Bitte trage zuerst unter Einstellungen deine E-Mail-Adresse ein."
 
-#: web/manage_views.py:528
+#: web/manage_views.py:532
 #, python-format
 msgid "The test email could not be sent: %(error)s"
 msgstr "Die Test-E-Mail konnte nicht verschickt werden: %(error)s"
 
-#: web/manage_views.py:530
+#: web/manage_views.py:534
 #, python-format
 msgid "A test email has been sent to %(email)s."
 msgstr "Eine Test-E-Mail wurde an %(email)s geschickt."
 
-#: web/manage_views.py:624
+#: web/manage_views.py:582
+msgid "The system prompt has been reset to the default."
+msgstr "Der System-Prompt wurde auf den Standard zurückgesetzt."
+
+#: web/manage_views.py:713
 msgid "The uploaded backup is no longer available. Please upload it again."
 msgstr ""
 "Das hochgeladene Backup ist nicht mehr vorhanden. Bitte lade es erneut hoch."
 
-#: web/manage_views.py:628
+#: web/manage_views.py:717
 msgid "The import was cancelled. Nothing has been changed."
 msgstr "Der Import wurde abgebrochen. Es wurde nichts geändert."
 
-#: web/manage_views.py:642
+#: web/manage_views.py:731
 msgid ""
 "The backup has been imported. No user has a password now: choose a new one "
 "via “Forgot password?”."
@@ -1679,23 +1839,49 @@ msgstr "Sprache"
 msgid "user preferences"
 msgstr "Benutzereinstellungen"
 
-#: web/models.py:44
+#: web/models.py:47 web/templates/web/manage/ai.html:20
+#: web/templates/web/manage/system.html:79
+#: web/templates/web/manage/system.html:108
+msgid "On"
+msgstr "An"
+
+#: web/models.py:47 web/templates/web/contracts/_reminder.html:19
+#: web/templates/web/manage/ai.html:20
+#: web/templates/web/manage/reminders.html:40
+#: web/templates/web/manage/system.html:79
+#: web/templates/web/manage/system.html:108
+msgid "Off"
+msgstr "Aus"
+
+#: web/models.py:48
+msgid "OpenAI or OpenAI-compatible"
+msgstr "OpenAI oder OpenAI-kompatibel"
+
+#: web/models.py:51
 msgid "label of the SSO button"
 msgstr "Beschriftung der SSO-Schaltfläche"
 
-#: web/models.py:47
+#: web/models.py:54
 msgid "Shown on the login page. Leave empty for “SSO Login”."
 msgstr "Erscheint auf der Anmeldeseite. Leer lassen für „SSO Login“."
 
-#: web/models.py:52
+#: web/models.py:59
 msgid "default payment methods created"
 msgstr "Standard-Zahlungsmethoden angelegt"
 
-#: web/models.py:56 web/models.py:57
+#: web/models.py:66
+msgid "model"
+msgstr "Modell"
+
+#: web/models.py:67
+msgid "address of the API (base URL)"
+msgstr "Adresse der API (Basis-URL)"
+
+#: web/models.py:72 web/models.py:73
 msgid "application settings"
 msgstr "Anwendungseinstellungen"
 
-#: web/models.py:60
+#: web/models.py:76
 msgid "Application settings"
 msgstr "Anwendungseinstellungen"
 
@@ -1726,24 +1912,24 @@ msgstr "oder mit lokalem Konto"
 msgid "Forgot password?"
 msgstr "Passwort vergessen?"
 
-#: web/templates/web/base.html:31
+#: web/templates/web/base.html:34
 msgid "Toggle navigation"
 msgstr "Navigation ein- oder ausblenden"
 
-#: web/templates/web/base.html:41
+#: web/templates/web/base.html:44
 msgid "Main navigation"
 msgstr "Hauptnavigation"
 
-#: web/templates/web/base.html:48 web/templates/web/includes/messages.html:5
+#: web/templates/web/base.html:51 web/templates/web/includes/messages.html:5
 msgid "Close"
 msgstr "Schließen"
 
-#: web/templates/web/base.html:54 web/templates/web/dashboard.html:3
+#: web/templates/web/base.html:57 web/templates/web/dashboard.html:3
 #: web/templates/web/dashboard.html:7
 msgid "Overview"
 msgstr "Übersicht"
 
-#: web/templates/web/base.html:70 web/templates/web/manage/users/detail.html:75
+#: web/templates/web/base.html:73 web/templates/web/manage/users/detail.html:75
 #: web/templates/web/providers/detail.html:7
 #: web/templates/web/providers/form.html:7
 #: web/templates/web/providers/list.html:3
@@ -1751,7 +1937,7 @@ msgstr "Übersicht"
 msgid "Contract partners"
 msgstr "Vertragspartner"
 
-#: web/templates/web/base.html:74 web/templates/web/categories/detail.html:7
+#: web/templates/web/base.html:77 web/templates/web/categories/detail.html:7
 #: web/templates/web/categories/form.html:7
 #: web/templates/web/categories/list.html:3
 #: web/templates/web/categories/list.html:6
@@ -1759,7 +1945,7 @@ msgstr "Vertragspartner"
 msgid "Categories"
 msgstr "Kategorien"
 
-#: web/templates/web/base.html:78 web/templates/web/consumers/detail.html:7
+#: web/templates/web/base.html:81 web/templates/web/consumers/detail.html:7
 #: web/templates/web/consumers/form.html:7
 #: web/templates/web/consumers/list.html:3
 #: web/templates/web/consumers/list.html:6
@@ -1767,7 +1953,7 @@ msgstr "Kategorien"
 msgid "Consumers"
 msgstr "Verbraucher"
 
-#: web/templates/web/base.html:82 web/templates/web/manage/users/detail.html:78
+#: web/templates/web/base.html:85 web/templates/web/manage/users/detail.html:78
 #: web/templates/web/payment_methods/detail.html:7
 #: web/templates/web/payment_methods/form.html:7
 #: web/templates/web/payment_methods/list.html:3
@@ -1775,11 +1961,11 @@ msgstr "Verbraucher"
 msgid "Payment methods"
 msgstr "Zahlungsmethoden"
 
-#: web/templates/web/base.html:87
+#: web/templates/web/base.html:90
 msgid "Administration"
 msgstr "Verwaltung"
 
-#: web/templates/web/base.html:91 web/templates/web/manage/users/detail.html:7
+#: web/templates/web/base.html:94 web/templates/web/manage/users/detail.html:7
 #: web/templates/web/manage/users/form.html:7
 #: web/templates/web/manage/users/list.html:3
 #: web/templates/web/manage/users/list.html:6
@@ -1788,38 +1974,43 @@ msgstr "Verwaltung"
 msgid "Users"
 msgstr "Benutzer"
 
-#: web/templates/web/base.html:103 web/templates/web/manage/reminders.html:3
+#: web/templates/web/base.html:106 web/templates/web/manage/reminders.html:3
 #: web/templates/web/manage/reminders.html:6
 msgid "Reminders"
 msgstr "Erinnerungen"
 
-#: web/templates/web/base.html:109 web/templates/web/manage/system.html:3
+#: web/templates/web/base.html:112 web/templates/web/manage/system.html:3
 #: web/templates/web/manage/system.html:7
 msgid "System"
 msgstr "System"
 
-#: web/templates/web/base.html:115 web/templates/web/manage/backup.html:3
+#: web/templates/web/base.html:118 web/templates/web/manage/ai.html:3
+#: web/templates/web/manage/ai.html:6 web/templates/web/manage/system.html:119
+msgid "AI settings"
+msgstr "KI-Einstellungen"
+
+#: web/templates/web/base.html:122 web/templates/web/manage/backup.html:3
 #: web/templates/web/manage/backup.html:6
 msgid "Backup"
 msgstr "Backup"
 
-#: web/templates/web/base.html:128 web/templates/web/preferences.html:3
+#: web/templates/web/base.html:135 web/templates/web/preferences.html:3
 #: web/templates/web/preferences.html:5
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: web/templates/web/base.html:130 web/templates/web/password_change.html:3
+#: web/templates/web/base.html:137 web/templates/web/password_change.html:3
 #: web/templates/web/password_change.html:5
 #: web/templates/web/password_change.html:11
 #: web/templates/web/preferences.html:26
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: web/templates/web/base.html:133 web/templates/web/manage/system.html:11
+#: web/templates/web/base.html:140 web/templates/web/manage/system.html:11
 msgid "Django administration"
 msgstr "Django-Verwaltung"
 
-#: web/templates/web/base.html:139
+#: web/templates/web/base.html:146
 msgid "Log out"
 msgstr "Abmelden"
 
@@ -1937,9 +2128,9 @@ msgstr "Löschen"
 #: web/templates/web/contracts/reminder_form.html:51
 #: web/templates/web/manage/backup_confirm.html:55
 #: web/templates/web/manage/groups/confirm_delete.html:12
-#: web/templates/web/manage/groups/form.html:32
+#: web/templates/web/manage/groups/form.html:33
 #: web/templates/web/manage/users/confirm_delete.html:12
-#: web/templates/web/manage/users/form.html:52
+#: web/templates/web/manage/users/form.html:53
 #: web/templates/web/manage/users/transfer.html:26
 #: web/templates/web/password_change.html:12
 #: web/templates/web/payment_methods/confirm_delete.html:16
@@ -1998,9 +2189,10 @@ msgstr "Bearbeiten"
 #: web/templates/web/contracts/_document_form.html:36
 #: web/templates/web/contracts/form.html:49
 #: web/templates/web/contracts/reminder_form.html:50
-#: web/templates/web/manage/groups/form.html:31
+#: web/templates/web/manage/ai.html:53
+#: web/templates/web/manage/groups/form.html:32
 #: web/templates/web/manage/system.html:95
-#: web/templates/web/manage/users/form.html:51
+#: web/templates/web/manage/users/form.html:52
 #: web/templates/web/payment_methods/form.html:36
 #: web/templates/web/preferences.html:15
 #: web/templates/web/providers/form.html:62 web/templates/web/sharing.html:38
@@ -2211,13 +2403,6 @@ msgstr "Aktiv"
 #: web/templates/web/manage/reminders.html:39
 msgid "Done"
 msgstr "Erledigt"
-
-#: web/templates/web/contracts/_reminder.html:19
-#: web/templates/web/manage/reminders.html:40
-#: web/templates/web/manage/system.html:79
-#: web/templates/web/manage/system.html:108
-msgid "Off"
-msgstr "Aus"
 
 #: web/templates/web/contracts/_reminder.html:25
 #, python-format
@@ -2467,6 +2652,28 @@ msgstr ""
 msgid "Please try again later."
 msgstr "Bitte versuche es später noch einmal."
 
+#: web/templates/web/manage/_ai_test.html:4
+msgid ""
+"The test was not started: please correct the marked fields first (save shows "
+"the details)."
+msgstr "Der Test wurde nicht gestartet: Bitte korrigiere zuerst die Eingaben (Speichern zeigt die Einzelheiten)."
+
+#: web/templates/web/manage/_ai_test.html:13
+msgid "OK"
+msgstr "OK"
+
+#: web/templates/web/manage/_ai_test.html:13
+msgid "Not available"
+msgstr "Nicht verfügbar"
+
+#: web/templates/web/manage/_ai_test.html:13
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: web/templates/web/manage/_ai_test.html:26
+msgid "Test finished. Nothing was saved."
+msgstr "Test abgeschlossen. Es wurde nichts gespeichert."
+
 #: web/templates/web/manage/_badges.html:2
 msgid "Superuser"
 msgstr "Superuser"
@@ -2486,6 +2693,103 @@ msgstr "Noch nie angemeldet"
 #: web/templates/web/manage/_badges.html:5
 msgid "SSO only"
 msgstr "Nur SSO"
+
+#: web/templates/web/manage/ai.html:7
+msgid ""
+"Connection and system prompt of the AI assistant. Values entered here take "
+"precedence over the .env file; an empty field means “value from the .env "
+"file”. Changes apply immediately, without a restart."
+msgstr "Verbindung und System-Prompt des KI-Assistenten. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart."
+
+#: web/templates/web/manage/ai.html:17
+msgid "Connection"
+msgstr "Verbindung"
+
+#: web/templates/web/manage/ai.html:19
+msgid "Currently in use"
+msgstr "Aktuell gültig"
+
+#: web/templates/web/manage/ai.html:22
+msgid "API key set"
+msgstr "API-Schlüssel hinterlegt"
+
+#: web/templates/web/manage/ai.html:22
+msgid "no API key"
+msgstr "kein API-Schlüssel"
+
+#: web/templates/web/manage/ai.html:36
+msgid ""
+"The API key is stored in the database, is never shown again and is not part "
+"of a backup."
+msgstr "Der API-Schlüssel wird in der Datenbank gespeichert, nie wieder angezeigt und ist in keinem Backup enthalten."
+
+#: web/templates/web/manage/ai.html:40
+msgid "System prompt"
+msgstr "System-Prompt"
+
+#: web/templates/web/manage/ai.html:41
+msgid "Customised"
+msgstr "Angepasst"
+
+#: web/templates/web/manage/ai.html:41
+msgid "Default"
+msgstr "Standard"
+
+#: web/templates/web/manage/ai.html:42
+msgid ""
+"Tells the assistant who it is and how it should answer. A changed prompt "
+"applies to new conversations; existing conversations keep theirs."
+msgstr "Sagt dem Assistenten, wer er ist und wie er antworten soll. Ein geänderter Prompt gilt für neue Unterhaltungen; bestehende behalten ihren."
+
+#: web/templates/web/manage/ai.html:46
+msgid "Fixed rules that are always added (not editable)"
+msgstr "Feste Regeln, die immer angehängt werden (nicht änderbar)"
+
+#: web/templates/web/manage/ai.html:47
+msgid ""
+"They set the language of the answer (the language of the user) and make sure "
+"the assistant never deletes anything and changes data only as a proposal "
+"that the user approves."
+msgstr "Sie legen die Sprache der Antwort fest (die Sprache des Benutzers) und stellen sicher, dass der Assistent nie etwas löscht und Daten nur als Vorschlag ändert, den der Benutzer freigibt."
+
+#: web/templates/web/manage/ai.html:57 web/templates/web/manage/ai.html:65
+msgid "Test"
+msgstr "Testen"
+
+#: web/templates/web/manage/ai.html:59
+msgid "Reset system prompt to default"
+msgstr "System-Prompt auf Standard zurücksetzen"
+
+#: web/templates/web/manage/ai.html:66
+msgid ""
+"“Test” checks the values entered above without saving them: connection and "
+"answer, tool call, local text recognition and the file upload to the model. "
+"It sends a few short requests to the provider."
+msgstr "„Testen“ prüft die oben eingegebenen Werte, ohne sie zu speichern: Verbindung und Antwort, Werkzeugaufruf, lokale Texterkennung und den Datei-Upload an das Modell. Dabei gehen einige kurze Anfragen an den Anbieter."
+
+#: web/templates/web/manage/ai.html:67
+msgid "Test is running …"
+msgstr "Test läuft …"
+
+#: web/templates/web/manage/ai.html:72
+msgid "Who may use the assistant"
+msgstr "Wer den Assistenten nutzen darf"
+
+#: web/templates/web/manage/ai.html:73 web/templates/web/manage/system.html:118
+msgid "Only members of the group “KI” and superusers can use the assistant."
+msgstr ""
+"Nur Mitglieder der Gruppe „KI“ und Superuser können den Assistenten nutzen."
+
+#: web/templates/web/manage/ai.html:74
+#, python-format
+msgid "%(counter)s active member"
+msgid_plural "%(counter)s active members"
+msgstr[0] "%(counter)s aktives Mitglied"
+msgstr[1] "%(counter)s aktive Mitglieder"
+
+#: web/templates/web/manage/ai.html:74
+msgid "Edit group “KI”"
+msgstr "Gruppe „KI“ bearbeiten"
 
 #: web/templates/web/manage/backup.html:7
 msgid ""
@@ -2537,7 +2841,10 @@ msgid ""
 "The import replaces all existing data and files with the content of the "
 "backup. Backups from this version and from older versions (0.1.0 and later) "
 "can be imported."
-msgstr "Der Import ersetzt alle vorhandenen Daten und Dateien durch den Inhalt des Backups. Importiert werden können Backups dieser Version und älterer Versionen (ab 0.1.0)."
+msgstr ""
+"Der Import ersetzt alle vorhandenen Daten und Dateien durch den Inhalt des "
+"Backups. Importiert werden können Backups dieser Version und älterer "
+"Versionen (ab 0.1.0)."
 
 #: web/templates/web/manage/backup.html:37
 msgid "The file is only checked first. Nothing is changed before you confirm."
@@ -2571,7 +2878,9 @@ msgstr "Dateien"
 msgid ""
 "This backup comes from the older version %(backup)s. It is converted to "
 "version %(installed)s during the import."
-msgstr "Dieses Backup stammt aus der älteren Version %(backup)s. Es wird beim Import auf Version %(installed)s umgestellt."
+msgstr ""
+"Dieses Backup stammt aus der älteren Version %(backup)s. Es wird beim Import "
+"auf Version %(installed)s umgestellt."
 
 #: web/templates/web/manage/backup_confirm.html:30
 msgid ""
@@ -2666,7 +2975,12 @@ msgstr "Neue Gruppe"
 msgid "Edit group"
 msgstr "Gruppe bearbeiten"
 
-#: web/templates/web/manage/groups/form.html:26
+#: web/templates/web/manage/groups/form.html:23
+#: web/templates/web/manage/groups/list.html:28
+msgid "Default group"
+msgstr "Standardgruppe"
+
+#: web/templates/web/manage/groups/form.html:27
 msgid ""
 "Only active users are listed. Your own membership cannot be changed here."
 msgstr ""
@@ -2684,22 +2998,6 @@ msgstr ""
 #: web/templates/web/manage/groups/list.html:18
 msgid "Shared objects"
 msgstr "Freigegebene Objekte"
-
-#: web/templates/web/manage/groups/list.html:28
-msgid "Default group"
-msgstr "Standardgruppe"
-
-#: web/templates/web/manage/groups/list.html:29
-msgid "Contains every user automatically."
-msgstr "Enthält automatisch alle Benutzer."
-
-#: web/templates/web/manage/groups/list.html:30
-msgid "May create own contracts and master data."
-msgstr "Darf eigene Verträge und Stammdaten anlegen."
-
-#: web/templates/web/manage/groups/list.html:31
-msgid "May manage users and groups."
-msgstr "Darf Benutzer und Gruppen verwalten."
 
 #: web/templates/web/manage/reminders.html:9
 msgid "All"
@@ -2800,11 +3098,6 @@ msgstr "Test-E-Mail an mich senden"
 msgid "Single sign-on"
 msgstr "Single Sign-on"
 
-#: web/templates/web/manage/system.html:79
-#: web/templates/web/manage/system.html:108
-msgid "On"
-msgstr "An"
-
 #: web/templates/web/manage/system.html:81
 msgid "SSO server"
 msgstr "SSO-Server"
@@ -2839,11 +3132,6 @@ msgstr "Modell"
 #: web/templates/web/manage/system.html:114
 msgid "Members of “KI”"
 msgstr "Mitglieder von „KI“"
-
-#: web/templates/web/manage/system.html:118
-msgid "Only members of the group “KI” and superusers can use the assistant."
-msgstr ""
-"Nur Mitglieder der Gruppe „KI“ und Superuser können den Assistenten nutzen."
 
 #: web/templates/web/manage/users/confirm_delete.html:3
 #: web/templates/web/manage/users/confirm_delete.html:5
@@ -2940,12 +3228,8 @@ msgid "Active (may sign in)"
 msgstr "Aktiv (darf sich anmelden)"
 
 #: web/templates/web/manage/users/form.html:43
-msgid ""
-"“Benutzer” may create own contracts and master data, “Administratoren” may "
-"manage users and groups. Every user is automatically in “Alle”."
-msgstr ""
-"„Benutzer“ dürfen eigene Verträge und Stammdaten anlegen, „Administratoren“ "
-"Benutzer und Gruppen verwalten. Jeder Benutzer ist automatisch in „Alle“."
+msgid "Every user is automatically in “Alle”."
+msgstr "Jeder Benutzer ist automatisch in „Alle“."
 
 #: web/templates/web/manage/users/list.html:13
 msgid "Search user name, name or email"

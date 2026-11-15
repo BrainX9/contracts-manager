@@ -101,6 +101,10 @@ class SharingForm(forms.ModelForm):
         if self.instance.pk is None and self.instance.owner_id is None and self.request_user:
             self.instance.owner = self.request_user
         present = [name for name in SHARING_FIELDS if name in self.fields]
+        # Ohne die Gruppe "KI" (nur Zugang zum Assistenten, seit 0.3.0)
+        for name in present:
+            if SHARING_FIELDS[name][1] == 'groups':
+                self.fields[name].queryset = perms.shareable_groups(self.instance)
         if self.instance.pk and present:
             roles = perms.get_roles(self.instance)
             for name in present:

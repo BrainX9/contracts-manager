@@ -38,8 +38,15 @@ class SiteSettings(models.Model):
     """
     Einstellungen der Anwendung, die Administratoren unter Verwaltung ›
     System ändern (Version 0.7 beta). Es gibt genau einen Datensatz
-    (SiteSettings.load). Zugangsdaten gehören nicht hierher, sondern in .env.
+    (SiteSettings.load). Zugangsdaten stehen in der .env; einzige Ausnahme
+    ist der API-Schlüssel des KI-Assistenten (Version 0.3.0), der nie
+    angezeigt und nie ins Backup geschrieben wird.
     """
+    AI_ON = "on"
+    AI_OFF = "off"
+    AI_ENABLED_CHOICES = [(AI_ON, _("On")), (AI_OFF, _("Off"))]
+    AI_PROVIDER_CHOICES = [("openai", _("OpenAI or OpenAI-compatible")), ("anthropic", "Anthropic (Claude)")]
+
     sso_login_label = models.CharField(
         _("label of the SSO button"),
         max_length=60,
@@ -51,6 +58,15 @@ class SiteSettings(models.Model):
     default_payment_methods_created = models.BooleanField(
         _("default payment methods created"), default=False, editable=False,
     )
+
+    # Version 0.3.0: KI-Assistent. Ein leeres Feld bedeutet "Wert aus der
+    # .env"; ausgewertet wird das nur in assistant.config.
+    ai_enabled = models.CharField(_("AI assistant"), max_length=3, blank=True, choices=AI_ENABLED_CHOICES)
+    ai_provider = models.CharField(_("provider"), max_length=20, blank=True, choices=AI_PROVIDER_CHOICES)
+    ai_model = models.CharField(_("model"), max_length=200, blank=True)
+    ai_base_url = models.CharField(_("address of the API (base URL)"), max_length=500, blank=True)
+    ai_api_key = models.CharField(_("API key"), max_length=500, blank=True)
+    ai_system_prompt = models.TextField(_("system prompt"), blank=True)
 
     class Meta:
         verbose_name = _("application settings")

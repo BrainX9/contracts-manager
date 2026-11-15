@@ -14,13 +14,16 @@ Nachrichten kommen anbieterneutral herein::
     {"role": "tool", "tool_call_id": "...", "name": "...", "content": "..."}
 
 Werkzeuge werden als ``{"name", "description", "parameters"}`` (JSON-Schema)
-übergeben. Zugangsdaten kommen nur aus den Settings (.env).
+übergeben. Anbieter, Modell, Adresse und Schlüssel kommen aus
+``assistant.config`` (Verwaltung vor .env, seit 0.3.0).
 """
 
 import json
 from dataclasses import dataclass, field
 
 from django.conf import settings
+
+from .config import current
 
 
 class ProviderError(Exception):
@@ -61,16 +64,17 @@ def _parse_arguments(raw):
 
 
 class OpenAIProvider:
-    def __init__(self):
+    def __init__(self, config=None):
         from openai import OpenAI
 
+        self.config = config = config or current()
         self.client = OpenAI(
-            api_key=settings.AI_API_KEY or "none",
-            base_url=settings.AI_BASE_URL or None,
-            timeout=settings.AI_TIMEOUT,
-            max_retries=2,
+            api_key=config.api_key or "none",
+            base_url=config.base_url or None,
+            timeout=config.timeout,
+            max_retries=config.max_retries,
         )
-        self.model = settings.AI_MODEL
+        self.model = config.model
 
     @staticmethod
     def convert_messages(system, messages):
@@ -109,7 +113,7 @@ class OpenAIProvider:
         try:
             response = self.client.chat.completions.create(**kwargs)
         except openai.APIError as error:
-            raise ProviderError(_error_text(error)) from error
+            raise ProviderError(_error_text(error, self.config.api_key)) from error
         message = response.choices[0].message
         calls = [
             {"id": call.id, "name": call.function.name, "arguments": _parse_arguments(call.function.arguments)}
@@ -131,17 +135,18 @@ class AnthropicProvider:
     NAME = "anthropic"
     FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
-    def __init__(self):
+    def __init__(self, config=None):
         from anthropic import Anthropic
 
+        self.config = config = config or current()
         self.client = Anthropic(
-            api_key=settings.AI_API_KEY,
-            base_url=settings.AI_BASE_URL or None,
-            timeout=settings.AI_TIMEOUT,
-            max_retries=2,
+            api_key=config.api_key,
+            base_url=config.base_url or None,
+            timeout=config.timeout,
+            max_retries=config.max_retries,
         )
-        self.model = settings.AI_MODEL
-        self.use_fallback = not settings.AI_BASE_URL
+        self.model = config.model
+        self.use_fallback = not config.base_url
 
     @classmethod
     def convert_messages(cls, messages):
@@ -224,7 +229,7 @@ class AnthropicProvider:
             else:
                 response = self.client.messages.create(**kwargs)
         except anthropic.APIError as error:
-            raise ProviderError(_error_text(error)) from error
+            raise ProviderError(_error_text(error, self.config.api_key)) from error
         if response.stop_reason == "refusal":
             details = getattr(response, "stop_details", None)
             raise RefusalError(getattr(details, "category", None))
@@ -252,23 +257,25 @@ PROVIDERS = {
 }
 
 
-def get_provider():
+def get_provider(config=None):
     """
-    Anbieter laut AI_PROVIDER. Fehlt das Modell, gibt es einen ProviderError.
+    Anbieter laut Konfiguration (ohne Angabe die gültige, siehe
+    assistant.config). Fehlt das Modell, gibt es einen ProviderError.
     """
-    provider_class = PROVIDERS.get(settings.AI_PROVIDER)
+    config = config or current()
+    provider_class = PROVIDERS.get(config.provider)
     if provider_class is None:
-        raise ProviderError(f"Unknown AI_PROVIDER “{settings.AI_PROVIDER}”.")
-    if not settings.AI_MODEL:
-        raise ProviderError("AI_MODEL is not set.")
-    return provider_class()
+        raise ProviderError(f"Unknown AI provider “{config.provider}”.")
+    if not config.model:
+        raise ProviderError("No AI model is set.")
+    return provider_class(config)
 
 
-def _error_text(error):
+def _error_text(error, api_key=""):
     """
     Kurze Fehlermeldung ohne Zugangsdaten (Status und Text des Anbieters).
     """
     status = getattr(error, "status_code", None)
     message = getattr(error, "message", None) or str(error)
-    message = message.replace(settings.AI_API_KEY, "***") if settings.AI_API_KEY else message
+    message = message.replace(api_key, "***") if api_key else message
     return f"{status}: {message}" if status else message
