@@ -38,10 +38,11 @@ services:
       retries: 10
 
   app:
-    # Fertiges Image aus der GitHub Container Registry (gebaut bei jedem
-    # Versions-Tag). APP_IMAGE_TAG in .env hält eine Version fest, z. B.
-    # 0.1.0; Standard ist die neueste Version.
-    image: ghcr.io/brainx9/contracts-manager:${APP_IMAGE_TAG:-latest}
+    # Fertiges Image von Docker Hub (gebaut bei jedem Versions-Tag; dasselbe
+    # Image liegt auch unter ghcr.io/brainx9/contracts-manager).
+    # APP_IMAGE_TAG in .env hält eine Version fest, z. B. 0.3.0; Standard
+    # ist die neueste Version.
+    image: brainx9/contracts-manager:${APP_IMAGE_TAG:-latest}
     container_name: contracts-manager-app
     restart: unless-stopped
     # Nicht als root: Benutzer, dem der Ordner media gehört (siehe README)
@@ -78,7 +79,7 @@ services:
   # media). Gleiches Image wie app; startet erst, wenn app läuft und die
   # Migrationen eingespielt hat.
   worker:
-    image: ghcr.io/brainx9/contracts-manager:${APP_IMAGE_TAG:-latest}
+    image: brainx9/contracts-manager:${APP_IMAGE_TAG:-latest}
     container_name: contracts-manager-worker
     restart: unless-stopped
     user: "${APP_UID:-1000}:${APP_GID:-1000}"

@@ -1,13 +1,18 @@
-# Baut das Docker-Image und veröffentlicht es in der GitHub Container Registry.
+# Baut das Docker-Image und veröffentlicht es bei Docker Hub und in der
+# GitHub Container Registry.
 #
 # Auslöser:
-# - Tag "v…" (z. B. v0.1.0): Tests, dann Image für amd64 und arm64 als
-#   ghcr.io/<owner>/contracts-manager:<Version> und :latest
+# - Tag "v…" (z. B. v0.3.0): Tests, dann Image für amd64 und arm64 als
+#   <Docker-Hub-Name>:<Version> und :latest sowie unter gleichem Tag als
+#   ghcr.io/<owner>/contracts-manager
 # - Manuell (Actions › Docker image › Run workflow): nur Bauen und Tests,
 #   nichts wird veröffentlicht
 #
-# Die Anmeldung an ghcr.io nutzt das eingebaute GITHUB_TOKEN, es sind keine
-# eigenen Secrets nötig.
+# Docker Hub (seit 0.3.0, die Compose-Datei lädt von dort) braucht die
+# Secrets DOCKERHUB_USERNAME und DOCKERHUB_TOKEN (siehe docs/development.md).
+# Fehlen sie, schlägt die Anmeldung fehl und es wird nichts veröffentlicht,
+# auch nicht bei ghcr.io. Die Anmeldung an ghcr.io nutzt das eingebaute
+# GITHUB_TOKEN.
 
 name: Docker image
 
@@ -21,7 +26,9 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/contracts-manager
+  # Name bei Docker Hub; in einem Fork auf das eigene Konto ändern
+  DOCKERHUB_IMAGE: brainx9/contracts-manager
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/contracts-manager
 
 jobs:
   build:
@@ -68,12 +75,21 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE }}
-          # v0.1.0 -> 0.1.0, dazu latest
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          # v0.3.0 -> 0.3.0, dazu latest
           flavor: latest=false
           tags: |
             type=match,pattern=v(.*),group=1
             type=raw,value=latest
+
+      - name: Anmeldung an Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Anmeldung an ghcr.io
         if: startsWith(github.ref, 'refs/tags/v')
@@ -82,17 +98,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Optional: zusätzlich Docker Hub (siehe docs/development.md).
-      # Dafür die Secrets DOCKERHUB_USERNAME und DOCKERHUB_TOKEN anlegen,
-      # den Schritt einkommentieren und oben unter "images" den Namen bei
-      # Docker Hub ergänzen.
-      # - name: Anmeldung an Docker Hub
-      #   if: startsWith(github.ref, 'refs/tags/v')
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Image für amd64 und arm64 bauen und veröffentlichen
         if: startsWith(github.ref, 'refs/tags/v')
