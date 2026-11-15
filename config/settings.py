@@ -303,7 +303,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.3.1"
 
 # --- Fehlversuche bei der Anmeldung (django-axes) ----------------------------
 # Nach 5 falschen Passwörtern für denselben Benutzernamen von derselben

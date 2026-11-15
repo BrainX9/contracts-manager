@@ -19,9 +19,11 @@ RUN apt-get update \
         tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Abhängigkeiten installieren
+# Abhängigkeiten installieren. pip zuerst aktualisieren: das Basis-Image
+# bringt eine ältere Version mit bekannten Sicherheitsmeldungen mit (0.3.1).
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Startskript außerhalb von /app, damit es auch mit eingebundenem Code
 # (Entwicklung) erhalten bleibt

@@ -372,6 +372,14 @@ Keine neuen Abhängigkeiten. Die Werkzeuge des KI-Assistenten (`assistant/tools.
 - Backup: Eintrag `0.3.0` in `backup_upgrades.VERSIONS`, Schritt von 0.2.0 ist `no_changes`.
 - `APP_VERSION` ist `0.3.0`; Tag `v0.3.0`, Push und GitHub-Release nur auf Anweisung.
 
+### Version 0.3.1: Sicherheitsupdate (Pillow)
+Keine neuen Abhängigkeiten, keine Migration, keine Änderung an der Oberfläche.
+
+- `Pillow>=13.0,<14` (bisher `<13`): Pillow 12.3.0 hat zahlreiche Sicherheitsmeldungen, die erst 13.0.0 behebt. Die App öffnet hochgeladene Bilder mit Pillow (`contracts.logos`, `assistant.extraction`). **Obergrenzen in `requirements.txt` bei Sicherheitsmeldungen prüfen**, sie können ein Update verhindern.
+- `Dockerfile`: `pip` wird vor der Installation aktualisiert (das Basis-Image bringt eine ältere Version mit).
+- Backup: Eintrag `0.3.1` in `backup_upgrades.VERSIONS`, Schritt von 0.3.0 ist `no_changes`.
+- `APP_VERSION` ist `0.3.1`; Tag `v0.3.1`, Push und GitHub-Release nur auf Anweisung.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle
