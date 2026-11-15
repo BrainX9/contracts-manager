@@ -30,7 +30,7 @@ diff docker-compose.yml docker-compose.new.yml
 
 If `diff` prints nothing you are up to date (`rm docker-compose.new.yml`); otherwise `mv docker-compose.new.yml docker-compose.yml` and `sudo docker compose up -d`. For the file of one release instead of the newest, replace `main` in the address by the tag, e.g. `v0.1.0`.
 
-**Pin a version.** With the default `latest`, every `docker compose pull` fetches the newest version. To decide yourself when to update, set `APP_IMAGE_TAG` in `.env` (e.g. `APP_IMAGE_TAG=0.2.0`) and raise it when you want to update. The available versions are listed on GitHub under *Tags* and *Packages*.
+**Pin a version.** With the default `latest`, every `docker compose pull` fetches the newest version. To decide yourself when to update, set `APP_IMAGE_TAG` in `.env` (e.g. `APP_IMAGE_TAG=0.3.0`) and raise it when you want to update. The available versions are listed on GitHub under *Tags* and *Packages*.
 
 **Go back to an older version.** Set `APP_IMAGE_TAG` to the older version, then `sudo docker compose pull` and `sudo docker compose up -d`. Migrations are **not** undone: if the newer version changed the database, the older one may not start. In that case restore the backup made before the update (see [Restore](#restore)) first.
 
@@ -99,6 +99,7 @@ In addition to the database dump above, the app can write **one ZIP file with al
 |---|---|---|
 | Content | Database only | Database content and files (logos, icons of payment methods, documents, attachments of the assistant) |
 | Passwords | Included (as hashes) | **Not included** |
+| API key of the AI assistant (if set in the app) | Included | **Not included**; an import keeps the key of the installation |
 | Restore into | The same PostgreSQL major version | The same or a newer version of Contracts Manager (backups of 0.1.0 and later) |
 | Automation | Task Scheduler | Manual, or the command below |
 

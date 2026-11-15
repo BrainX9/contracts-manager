@@ -81,17 +81,26 @@ docker compose restart app
 
 The workflow [`.github/workflows/docker-image.yml`](../.github/workflows/docker-image.yml) builds the image on GitHub:
 
-- **A tag `v…`** (e.g. `v0.2.0`) builds the image, runs the tests inside it and, if they pass, publishes it for `amd64` and `arm64` as `ghcr.io/brainx9/contracts-manager:<version>` and `:latest`.
+- **A tag `v…`** (e.g. `v0.3.0`) builds the image, runs the tests inside it and, if they pass, publishes it for `amd64` and `arm64` as `brainx9/contracts-manager:<version>` and `:latest` on Docker Hub, and under the same tags as `ghcr.io/brainx9/contracts-manager`.
 - **Run manually** (Actions › Docker image › Run workflow) builds and tests only; nothing is published.
 
 To release a version: set `APP_VERSION` in `config/settings.py`, merge into `main`, then create and push the tag:
 
 ```bash
-git tag v0.2.0 && git push origin v0.2.0
+git tag v0.3.0 && git push origin v0.3.0
 ```
 
-### Package visibility and Docker Hub
+### Docker Hub and the GitHub Container Registry
 
-The image is published to the GitHub Container Registry. If `docker compose pull` asks for a login, open the package on GitHub (your profile › *Packages* › `contracts-manager` › *Package settings* › *Change package visibility*) and make it **Public**; the visibility of a package is independent of the one of the repository.
+Since 0.3.0 the Compose file downloads the image from Docker Hub; the GitHub Container Registry gets the same image as a mirror, so installations with an older Compose file keep working.
 
-To publish to Docker Hub as well, create the secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` in the repository, uncomment the Docker Hub step in the workflow and add the Docker Hub image name under `images` in the metadata step.
+**Docker Hub** needs two secrets in the GitHub repository (*Settings › Secrets and variables › Actions › New repository secret*):
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | the Docker Hub user name |
+| `DOCKERHUB_TOKEN` | an access token from Docker Hub (*Account settings › Personal access tokens*, permission *Read & Write*), not the password |
+
+The repository on Docker Hub is created by the first push; it is public by default. Without the secrets the workflow stops at the login and publishes nothing, neither to Docker Hub nor to the GitHub Container Registry. In a fork, change `DOCKERHUB_IMAGE` in the workflow to your own account.
+
+**GitHub Container Registry:** if `docker pull ghcr.io/…` asks for a login, open the package on GitHub (your profile › *Packages* › `contracts-manager` › *Package settings* › *Change package visibility*) and make it **Public**; the visibility of a package is independent of the one of the repository.

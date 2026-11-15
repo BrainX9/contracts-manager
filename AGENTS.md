@@ -24,7 +24,7 @@ Mit „Maintainer“ ist die Person gemeint, die das Repository betreut (GitHub:
 - `gunicorn` als Server, `whitenoise` für statische Dateien
 - `django-guardian` für Berechtigungen pro Objekt (ab Version 0.3a)
 - Konfiguration über Umgebungsvariablen (z. B. mit `django-environ`)
-- Docker Compose mit den Services `app` und `db`, seit Version 0.5 zusätzlich `worker` (django-q2); `app` und `worker` nutzen das veröffentlichte Image von `ghcr.io`
+- Docker Compose mit den Services `app` und `db`, seit Version 0.5 zusätzlich `worker` (django-q2); `app` und `worker` nutzen das veröffentlichte Image von Docker Hub (seit 0.3.0, zusätzlich `ghcr.io`)
 - Oberfläche: eigene Django-Templates mit HTMX (`django-htmx`) und Bootstrap 5 in der App `web`, inklusive Verwaltung von Benutzern und Gruppen (`/manage/`, seit 0.6); Django-Admin nur für Superuser
 - htmx, Bootstrap und Bootstrap Icons liegen lokal in `web/static/web/vendor/` (kein CDN)
 - `Pillow` für Logos, `mozilla-django-oidc` für Single Sign-on (ab Version 0.4)
@@ -350,6 +350,27 @@ Keine neuen Abhängigkeiten. Die Werkzeuge des KI-Assistenten (`assistant/tools.
 - GitHub-Issue-Formulare unter `.github/ISSUE_TEMPLATE/` (englisch, feste Feld-IDs), leere Issues aus, Links zur Doku und zur privaten Sicherheitsmeldung.
 - README „Configuration“ nennt alle Variablen; `config/tests.py` vergleicht die in `config/settings.py` gelesenen Variablen mit README und `.env.example` (läuft nur, wenn das README vorhanden ist, also nicht im Image). Neue Variablen an beiden Stellen eintragen.
 - `APP_VERSION` ist `0.2.0`; Tag `v0.2.0` und Push nur auf Anweisung.
+
+### Version 0.3.0: KI-Einstellungen in der Verwaltung, Gruppe „KI“, Docker Hub
+Keine neuen Abhängigkeiten. Die Werkzeuge des KI-Assistenten (`assistant/tools.py`) sind unverändert.
+
+**KI-Einstellungen (`/manage/ai/`, nur Superuser)**
+- `web.SiteSettings` (Migration `web/0004`): `ai_enabled` (leer, `on`, `off`), `ai_provider`, `ai_model`, `ai_base_url`, `ai_api_key`, `ai_system_prompt`. Ein leeres Feld bedeutet „Wert aus der `.env`“. `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS` und `AI_TIMEOUT` bleiben nur in der `.env`.
+- `assistant.config` ist die einzige Stelle, die Verwaltung und `.env` zusammenführt (`current()`, `enabled()`, `merge()`); Anbieter (`get_provider(config=None)`), Agent, `perms.can_use_assistant` und die Ansichten lesen nur von dort, nie direkt `settings.AI_ENABLED`/`AI_PROVIDER`/`AI_MODEL`/`AI_BASE_URL`/`AI_API_KEY`.
+- **API-Schlüssel:** einzige Zugangsdaten in der Datenbank (Entscheidung des Maintainers). Er wird nie angezeigt (leeres Feld = behalten, Kästchen zum Entfernen), nie ins Backup geschrieben (`contracts.backup.serialize_objects`) und nie aus einem Backup übernommen; beim Import bleibt der Schlüssel der Installation (`installed_ai_api_key`). Fehlermeldungen der Anbieter ersetzen ihn durch `***`.
+- **System-Prompt:** `assistant.agent.DEFAULT_PROMPT` ist der änderbare allgemeine Teil (eigener Text in `ai_system_prompt`, unveränderter Standard wird nicht gespeichert, „Auf Standard zurücksetzen“). `FIXED_RULES` (Sprache, Datum, Sichtbarkeit, reiner Text, nie löschen, Änderungen nur als Vorschlag) wird immer angehängt und ist nicht änderbar. Ein geänderter Prompt gilt für neue Unterhaltungen (`Conversation.system_prompt` bleibt festgeschrieben).
+- **Test** (`assistant.selftest`): prüft die eingegebenen, nicht gespeicherten Werte (`AISettingsForm.candidate()`) in vier Schritten: `connection`, `tools`, `local` (pypdf und Tesseract mit erzeugten Testdateien), `file` (PDF als Werkzeug-Ergebnis an das Modell, nur Claude, sonst „nicht verfügbar“). Läuft im Webserver, nicht im Worker, damit ein ungespeicherter Schlüssel nirgends abgelegt wird: per HTMX ein Schritt je Anfrage (Zeitgrenze 25 s, gunicorn 60 s), ohne JavaScript alle nacheinander mit 8 s. Ohne Verbindung enden die weiteren Schritte.
+
+**Gruppe „KI“**
+- `perms.GROUP_DESCRIPTIONS`/`group_description` beschreiben die vier Standardgruppen (Gruppenliste, Gruppenseite, Benutzerformular; Filter `group_description` in `web_format`).
+- `perms.shareable_groups(obj)`: Freigaben im Frontend und im Django-Admin bieten „KI“ nicht an; hat die Gruppe an einem Objekt schon eine Rolle, bleibt sie dort sichtbar und entfernbar.
+
+**Docker Hub**
+- Der Workflow veröffentlicht an Docker Hub (`brainx9/contracts-manager`, Secrets `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN`) und zusätzlich wie bisher an `ghcr.io`. `docker-compose.yml` und die Doku nennen Docker Hub; ältere Compose-Dateien mit `ghcr.io` funktionieren weiter. Ohne die Secrets wird nichts veröffentlicht.
+
+**Weiteres**
+- Backup: Eintrag `0.3.0` in `backup_upgrades.VERSIONS`, Schritt von 0.2.0 ist `no_changes`.
+- `APP_VERSION` ist `0.3.0`; Tag `v0.3.0`, Push und GitHub-Release nur auf Anweisung.
 
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)

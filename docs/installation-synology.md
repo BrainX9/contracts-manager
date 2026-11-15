@@ -61,7 +61,7 @@ curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/.env
 chmod 600 .env
 ```
 
-The second file is the template for your settings and is saved as `.env` right away. `main` fetches the current files; use a version tag (e.g. `v0.2.0`) in the address for the files of one release.
+The second file is the template for your settings and is saved as `.env` right away. `main` fetches the current files; use a version tag (e.g. `v0.3.0`) in the address for the files of one release.
 
 ## 3. Configure `.env`
 
@@ -87,7 +87,7 @@ Email, single sign-on and Paperless are optional – see the [configuration guid
 cd /volume1/docker/contracts-manager && sudo docker compose up -d
 ```
 
-Docker downloads the ready-made image `ghcr.io/brainx9/contracts-manager` (built for `amd64` and `arm64`); nothing is built on the Synology.
+Docker downloads the ready-made image `brainx9/contracts-manager` from Docker Hub (built for `amd64` and `arm64`); nothing is built on the Synology.
 
 On the first start PostgreSQL creates the database in `db`, then the app applies the migrations. Check the status:
 
@@ -113,19 +113,19 @@ On older Synology versions the command may be called `docker-compose`.
 
 ## The Docker image
 
-`app` and `worker` run the image `ghcr.io/brainx9/contracts-manager` from the GitHub Container Registry. GitHub builds it whenever a new version is released; nothing is built on the Synology.
+`app` and `worker` run the image `brainx9/contracts-manager` from Docker Hub (the same image is also available as `ghcr.io/brainx9/contracts-manager`). GitHub builds it whenever a new version is released; nothing is built on the Synology.
 
 | | |
 |---|---|
-| Image | `ghcr.io/brainx9/contracts-manager` |
-| Tags | `latest` (newest version) and one per version, e.g. `0.2.0` |
+| Image | `brainx9/contracts-manager` on Docker Hub |
+| Tags | `latest` (newest version) and one per version, e.g. `0.3.0` |
 | Platforms | `linux/amd64` (Intel/AMD) and `linux/arm64` (ARM). Other platforms such as 32-bit ARM are not published; [build the image yourself](../README.md#docker-image) there. |
 | Database | `pgvector/pgvector:pg17` from Docker Hub |
 
 **Pin a version.** `latest` moves with every release. To decide yourself when to update, set a fixed version in `.env`:
 
 ```dotenv
-APP_IMAGE_TAG=0.2.0
+APP_IMAGE_TAG=0.3.0
 ```
 
 `docker compose pull` then changes nothing until you raise it. Updating and going back: [operations › update](operations.md#update).
@@ -137,7 +137,7 @@ APP_IMAGE_TAG=0.2.0
 | Message | Cause and fix |
 |---|---|
 | `curl: (22) … 404` when downloading the files | The address is mistyped, or the tag in it does not exist |
-| `manifest unknown` / `not found` | The version in `APP_IMAGE_TAG` does not exist (typo, or a leading `v`): use e.g. `0.2.0`, or remove the line for `latest` |
+| `manifest unknown` / `not found` | The version in `APP_IMAGE_TAG` does not exist (typo, or a leading `v`): use e.g. `0.3.0`, or remove the line for `latest` |
 | `container name … is already in use` | An old stack with the same containers still runs: run `sudo docker compose down` in its folder |
 
 ## 5. Sign in as the first administrator
