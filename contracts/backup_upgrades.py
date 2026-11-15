@@ -88,6 +88,16 @@ VERSIONS = (
             "web": ["0004_ai_settings"],
             "assistant": ["0003_repair_columns_from_0_8a"],
         },
+        # 0.3.0 -> 0.3.1: keine Migration, nur aktualisierte Abhängigkeiten
+        no_changes,
+    ),
+    BackupVersion(
+        "0.3.1",
+        {
+            "contracts": ["0015_payment_method"],
+            "web": ["0004_ai_settings"],
+            "assistant": ["0003_repair_columns_from_0_8a"],
+        },
     ),
 )
 

@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.3.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.3.1-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -92,7 +92,7 @@ The user interface is available in **English and German** (per user).
 <td valign="top">
 
 ### 🔗 Integrations, AI and design
-- **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, OpenAI or OpenAI-compatible provider, configured in `.env` or in the app (with a connection test and an editable system prompt)s; local text recognition (Tesseract)
+- **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, OpenAI or OpenAI-compatible provider, configured in `.env` or in the app (with a connection test and an editable system prompt); local text recognition (Tesseract)
 - **Backup and import** of all data and files as a single ZIP file (without passwords), in the app or on the command line; backups of older versions (0.1.0 and later) can be imported
 - **Single sign-on** with the Synology SSO Server (OpenID Connect), local login stays available
 - **Paperless-ngx** links to documents and correspondents (links only, no access to Paperless)
@@ -261,7 +261,7 @@ Planned, not yet implemented:
 > [!IMPORTANT]
 > This project was developed primarily by **[Claude](https://www.anthropic.com/claude)** (Anthropic's AI assistant, via [Claude Code](https://claude.com/claude-code)), working phase by phase under the direction and review of the maintainer. Requirements, decisions and testing are human; most of the code, tests and documentation were written by Claude.
 
-Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 420) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
+Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 440) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
 
 ## License
 
