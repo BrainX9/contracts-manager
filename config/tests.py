@@ -20,6 +20,21 @@ OTHER_VARIABLES = {
 }
 
 
+# Version 0.4.0: Diese Einstellungen stehen in der Verwaltung (E-Mail, Single
+# Sign-on, KI). Die Variablen wirken weiter, sollen aber nicht mehr genutzt
+# werden: Das README nennt sie in einer eigenen Tabelle, .env.example nicht.
+MOVED_TO_APP = {
+    "EMAIL_HOST", "EMAIL_PORT", "EMAIL_USE_TLS", "EMAIL_USE_SSL",
+    "EMAIL_HOST_USER", "EMAIL_HOST_PASSWORD", "DEFAULT_FROM_EMAIL",
+    "APP_BASE_URL", "REMINDER_SEND_TIME",
+    "OIDC_ENABLED", "OIDC_OP_BASE_URL", "OIDC_RP_CLIENT_ID", "OIDC_RP_CLIENT_SECRET",
+    "OIDC_CREATE_USERS", "OIDC_USERNAME_CLAIM", "OIDC_RP_SCOPES", "OIDC_RP_SIGN_ALGO",
+    "OIDC_OP_AUTHORIZATION_ENDPOINT", "OIDC_OP_TOKEN_ENDPOINT",
+    "OIDC_OP_USER_ENDPOINT", "OIDC_OP_JWKS_ENDPOINT",
+    "AI_ENABLED", "AI_PROVIDER", "AI_API_KEY", "AI_MODEL", "AI_BASE_URL",
+}
+
+
 def settings_variables():
     """Namen aller Variablen, die config/settings.py über django-environ liest."""
     source = (BASE_DIR / "config" / "settings.py").read_text(encoding="utf-8")
@@ -35,8 +50,9 @@ def compose_variables():
 @skipUnless(README.exists(), "README.md fehlt (im Docker-Image nicht enthalten)")
 class ConfigurationDocsTest(SimpleTestCase):
     """
-    Version 0.2.0: Die Tabelle "Configuration" im README und .env.example
-    nennen jede Variable. Schlägt der Test fehl, die neue Variable an beiden
+    Version 0.2.0: Der Abschnitt "Configuration" im README nennt jede
+    Variable, .env.example jede, die nicht in die Verwaltung gewandert ist
+    (MOVED_TO_APP). Schlägt der Test fehl, die neue Variable an beiden
     Stellen eintragen.
     """
 
@@ -57,4 +73,10 @@ class ConfigurationDocsTest(SimpleTestCase):
 
     def test_env_example_lists_every_variable(self):
         expected = (settings_variables() | compose_variables() | OTHER_VARIABLES) - SET_BY_COMPOSE
-        self.assertEqual(sorted(expected - self.documented(BASE_DIR / ".env.example")), [])
+        documented = self.documented(BASE_DIR / ".env.example")
+        self.assertEqual(sorted(expected - MOVED_TO_APP - documented), [])
+
+    def test_env_example_omits_settings_of_the_app(self):
+        # Jede dieser Variablen wird noch gelesen, steht aber nicht mehr in der Vorlage
+        self.assertEqual(sorted(MOVED_TO_APP - settings_variables()), [])
+        self.assertEqual(sorted(MOVED_TO_APP & self.documented(BASE_DIR / ".env.example")), [])

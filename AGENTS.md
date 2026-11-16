@@ -409,6 +409,9 @@ Neue Abhängigkeit (freigegeben): `markdown-it-py` (4.x). Die Werkzeuge des KI-A
 - `Dockerfile`: `apt-get upgrade` (Korrekturen von Debian, z. B. zlib) und `pip` nach der Installation entfernen (bringt eine Kopie von Teilen von setuptools mit; im Betrieb unnötig). Im Container gibt es daher kein `pip`.
 - `docker-compose.yml` (nach 0.3.1): Healthcheck der App in der Shell (`bash`, `/dev/tcp`) statt mit Python.
 
+**Doku nach 0.4.0 (Entscheidung des Maintainers)**
+- `.env.example` und die Anleitungen in `docs/` nennen die Variablen für E-Mail, Single Sign-on und die Verbindung des KI-Assistenten nicht mehr (`EMAIL_*`, `DEFAULT_FROM_EMAIL`, `APP_BASE_URL`, `REMINDER_SEND_TIME`, `OIDC_*`, `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL`); sie wirken weiter. Das README führt sie in einer eigenen Tabelle „Settings that moved to the app“ mit dem Hinweis, sie nicht mehr zu nutzen. `config/tests.py` (`MOVED_TO_APP`) prüft beides. Wandert eine weitere Einstellung in die Verwaltung: dort eintragen, aus `.env.example` entfernen, im README in die zweite Tabelle verschieben.
+
 **Weiteres**
 - Backup: Eintrag `0.4.0` in `backup_upgrades.VERSIONS`, Schritt von 0.3.1 ist `no_changes`.
 - `APP_VERSION` ist `0.4.0`; Tag `v0.4.0`, Push und GitHub-Release nur auf Anweisung.

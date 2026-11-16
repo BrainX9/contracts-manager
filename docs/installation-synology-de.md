@@ -248,8 +248,8 @@ Kurzanleitung für `vi`: Mit den Pfeiltasten zur Zeile gehen, `i` drücken
 (Bearbeiten), Text ändern, dann `Esc` drücken und `:wq` + Enter tippen
 (speichern und beenden). Ohne Speichern beenden: `Esc`, `:q!` + Enter.
 
-Ändere die Zeilen `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `USE_HTTPS`
-und `APP_BASE_URL` (Adresse für Links in E-Mails) je nach Variante:
+Ändere die Zeilen `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` und `USE_HTTPS`
+je nach Variante:
 
 **Variante A – nur zum ersten Test im Heimnetz, ohne HTTPS**
 
@@ -257,7 +257,6 @@ und `APP_BASE_URL` (Adresse für Links in E-Mails) je nach Variante:
 ALLOWED_HOSTS=192.168.1.10
 CSRF_TRUSTED_ORIGINS=http://192.168.1.10:8000
 USE_HTTPS=False
-APP_BASE_URL=http://192.168.1.10:8000
 ```
 
 **Variante B – dauerhaft über den Reverse Proxy mit HTTPS (empfohlen)**
@@ -266,7 +265,6 @@ APP_BASE_URL=http://192.168.1.10:8000
 ALLOWED_HOSTS=vertraege.deinname.synology.me
 CSRF_TRUSTED_ORIGINS=https://vertraege.deinname.synology.me
 USE_HTTPS=True
-APP_BASE_URL=https://vertraege.deinname.synology.me
 ```
 
 Regeln, die oft schiefgehen:
@@ -285,9 +283,11 @@ Synology schon belegt ist, `APP_PORT` auf einen anderen Wert setzen
 Die Zeile `DATA_PATH` bleibt auskommentiert: Datenbank und Uploads liegen
 in den Ordnern `db` und `media` neben der `docker-compose.yml`.
 
-E-Mail (für Erinnerungen und Passwort-Reset), Single Sign-on, Paperless
-und den KI-Assistenten kannst du später ergänzen, siehe
-[Konfiguration](configuration.md). Für die Installation sind sie nicht nötig.
+E-Mail (für Erinnerungen und Passwort-Reset), Single Sign-on und den
+KI-Assistenten richtest du später in der App ein, unter **Verwaltung**
+(siehe [Konfiguration](configuration.md)). Für die Installation sind sie
+nicht nötig. Dort trägst du unter **E-Mail-Einstellungen › Adresse der App**
+auch die Adresse ein, die in Links in E-Mails stehen soll.
 
 ### 5.3 Kontrolle
 
