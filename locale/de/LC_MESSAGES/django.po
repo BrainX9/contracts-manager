@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 16:34+0100\n"
+"POT-Creation-Date: 2026-11-15 23:25+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -15,8 +15,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: assistant/apps.py:24 web/models.py:64
-#: web/templates/web/manage/system.html:105
+#: assistant/apps.py:24 web/models.py:76
+#: web/templates/web/manage/system.html:107
 msgid "AI assistant"
 msgstr "KI-Assistent"
 
@@ -44,7 +44,7 @@ msgstr "antwortet"
 msgid "error"
 msgstr "Fehler"
 
-#: assistant/models.py:28 assistant/models.py:68 web/models.py:15
+#: assistant/models.py:28 assistant/models.py:68 web/models.py:16
 msgid "user"
 msgstr "Benutzer"
 
@@ -56,7 +56,7 @@ msgstr "Titel"
 msgid "status"
 msgstr "Status"
 
-#: assistant/models.py:35 web/models.py:69
+#: assistant/models.py:35 web/models.py:81
 msgid "system prompt"
 msgstr "System-Prompt"
 
@@ -118,7 +118,7 @@ msgstr "Werkzeugaufrufe"
 msgid "tool call ID"
 msgstr "ID des Werkzeugaufrufs"
 
-#: assistant/models.py:85 web/models.py:65
+#: assistant/models.py:85 web/models.py:77
 msgid "provider"
 msgstr "Anbieter"
 
@@ -397,7 +397,9 @@ msgstr "Das Modell hat das Test-Werkzeug aufgerufen."
 msgid ""
 "The model answered without calling the tool. The assistant needs a model "
 "that supports tools (function calling)."
-msgstr "Das Modell hat geantwortet, ohne das Werkzeug aufzurufen. Der Assistent braucht ein Modell, das Werkzeuge unterstützt (Function Calling)."
+msgstr ""
+"Das Modell hat geantwortet, ohne das Werkzeug aufzurufen. Der Assistent "
+"braucht ein Modell, das Werkzeuge unterstützt (Function Calling)."
 
 #: assistant/selftest.py:156
 msgid "PDF"
@@ -421,7 +423,9 @@ msgstr "%(label)s: nicht erkannt"
 msgid ""
 "Files are only sent to the model with Claude (provider Anthropic). With this "
 "provider the assistant works with the locally recognised text."
-msgstr "Dateien gehen nur bei Claude (Anbieter Anthropic) an das Modell. Bei diesem Anbieter arbeitet der Assistent mit dem lokal erkannten Text."
+msgstr ""
+"Dateien gehen nur bei Claude (Anbieter Anthropic) an das Modell. Bei diesem "
+"Anbieter arbeitet der Assistent mit dem lokal erkannten Text."
 
 #: assistant/selftest.py:187
 msgid "The model did not ask for the file."
@@ -723,7 +727,7 @@ msgstr "Aktueller Betrag"
 msgid "No costs"
 msgstr "Keine Kosten"
 
-#: contracts/apps.py:112 web/templates/web/base.html:61
+#: contracts/apps.py:115 web/templates/web/base.html:61
 #: web/templates/web/categories/_results.html:19
 #: web/templates/web/consumers/_results.html:22
 #: web/templates/web/contracts/cost_form.html:7
@@ -738,11 +742,11 @@ msgstr "Keine Kosten"
 #: web/templates/web/manage/system.html:22
 #: web/templates/web/manage/users/detail.html:74
 #: web/templates/web/payment_methods/_results.html:21
-#: web/templates/web/providers/_results.html:23 web/views.py:651
+#: web/templates/web/providers/_results.html:23 web/views.py:652
 msgid "Contracts"
 msgstr "Verträge"
 
-#: contracts/backup.py:277
+#: contracts/backup.py:280
 #, python-format
 msgid ""
 "This backup was created with the newer version %(backup)s (installed: "
@@ -752,7 +756,7 @@ msgstr ""
 "(installiert: %(installed)s). Aktualisiere zuerst Contracts Manager und "
 "importiere das Backup danach."
 
-#: contracts/backup.py:281
+#: contracts/backup.py:284
 #, python-format
 msgid ""
 "This backup was created with version %(backup)s, which this version cannot "
@@ -763,7 +767,7 @@ msgstr ""
 "importieren kann (installiert: %(installed)s). Backups der Beta-Versionen "
 "werden nicht unterstützt."
 
-#: contracts/backup.py:289
+#: contracts/backup.py:292
 #, python-format
 msgid ""
 "This backup does not match version %(backup)s (different database state) and "
@@ -772,21 +776,21 @@ msgstr ""
 "Dieses Backup passt nicht zu Version %(backup)s (anderer Stand der "
 "Datenbank) und kann nicht importiert werden."
 
-#: contracts/backup.py:298 contracts/backup.py:300 contracts/backup.py:324
+#: contracts/backup.py:301 contracts/backup.py:303 contracts/backup.py:327
 msgid "This file is not a Contracts Manager backup."
 msgstr "Diese Datei ist kein Backup von Contracts Manager."
 
-#: contracts/backup.py:302
+#: contracts/backup.py:305
 msgid "This backup has a format that this version cannot read."
 msgstr "Dieses Backup hat ein Format, das diese Version nicht lesen kann."
 
-#: contracts/backup.py:315
+#: contracts/backup.py:318
 #, python-format
 msgid "The backup contains a file with an invalid path: %(name)s"
 msgstr "Das Backup enthält eine Datei mit unzulässigem Pfad: %(name)s"
 
-#: contracts/backup.py:347 contracts/backup.py:350 contracts/backup.py:352
-#: contracts/backup.py:355 contracts/backup.py:435 contracts/backup.py:478
+#: contracts/backup.py:350 contracts/backup.py:353 contracts/backup.py:355
+#: contracts/backup.py:358 contracts/backup.py:449 contracts/backup.py:492
 msgid "The backup is damaged."
 msgstr "Das Backup ist beschädigt."
 
@@ -1300,7 +1304,11 @@ msgid ""
 "documents and have new contracts proposed. The assistant acts with the "
 "rights of the user. This group is only about access to the assistant and is "
 "therefore not offered when sharing objects."
-msgstr "Darf den KI-Assistenten nutzen: Fragen zu den Verträgen stellen, die man sehen darf, Dokumente hochladen und neue Verträge vorschlagen lassen. Der Assistent arbeitet mit den Rechten des Benutzers. Die Gruppe regelt nur den Zugang zum Assistenten und wird deshalb bei Freigaben nicht angeboten."
+msgstr ""
+"Darf den KI-Assistenten nutzen: Fragen zu den Verträgen stellen, die man "
+"sehen darf, Dokumente hochladen und neue Verträge vorschlagen lassen. Der "
+"Assistent arbeitet mit den Rechten des Benutzers. Die Gruppe regelt nur den "
+"Zugang zum Assistenten und wird deshalb bei Freigaben nicht angeboten."
 
 #: contracts/templates/admin/contracts/contract/change_list.html:42
 #: web/templates/web/contracts/_results.html:11
@@ -1511,101 +1519,105 @@ msgstr "Das Dokument wurde gespeichert."
 msgid "The document has been deleted."
 msgstr "Das Dokument wurde gelöscht."
 
-#: web/forms.py:100
+#: web/forms.py:28
+msgid "Markdown is supported: **bold**, *italic*, lists with “-”, headings with “#”, links as [text](https://example.com) and tables."
+msgstr "Markdown wird unterstützt: **fett**, *kursiv*, Listen mit „-“, Überschriften mit „#“, Links als [Text](https://example.com) und Tabellen."
+
+#: web/forms.py:107
 msgid "Email address"
 msgstr "E-Mail-Adresse"
 
-#: web/forms.py:102
+#: web/forms.py:109
 msgid "Used for reminders and to reset your password."
 msgstr "Für Erinnerungen und zum Zurücksetzen des Passworts."
 
-#: web/forms.py:117 web/manage_forms.py:67
+#: web/forms.py:124 web/manage_forms.py:67
 msgid "This email address is already used by another account."
 msgstr "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet."
 
-#: web/forms.py:206
+#: web/forms.py:214
 msgid "Remove logo"
 msgstr "Logo entfernen"
 
-#: web/forms.py:222
+#: web/forms.py:231
 msgid "The owner already has a contract partner with this name."
 msgstr "Der Eigentümer hat bereits einen Vertragspartner mit diesem Namen."
 
-#: web/forms.py:247
+#: web/forms.py:257
 msgid "The owner already has a consumer with this name."
 msgstr "Der Eigentümer hat bereits einen Verbraucher mit diesem Namen."
 
-#: web/forms.py:258
+#: web/forms.py:268
 msgid "Remove icon"
 msgstr "Icon entfernen"
 
-#: web/forms.py:268
+#: web/forms.py:278
 msgid "The owner already has a payment method with this name."
 msgstr "Der Eigentümer hat bereits eine Zahlungsmethode mit diesem Namen."
 
-#: web/forms.py:292
+#: web/forms.py:302
 msgid "The owner already has a category with this name in this main category."
 msgstr ""
 "Der Eigentümer hat bereits eine Kategorie mit diesem Namen in dieser "
 "Hauptkategorie."
 
-#: web/forms.py:303
+#: web/forms.py:313
 msgid "– none (this is a main category) –"
 msgstr "– keine (dies ist eine Hauptkategorie) –"
 
-#: web/forms.py:304
+#: web/forms.py:314
 msgid "Leave empty for a main category."
 msgstr "Für eine Hauptkategorie leer lassen."
 
-#: web/forms.py:328
+#: web/forms.py:338
 msgid "No document"
 msgstr "Kein Dokument"
 
-#: web/forms.py:359
+#: web/forms.py:369
 msgid "Leave empty to use the file name."
 msgstr "Leer lassen, um den Dateinamen zu verwenden."
 
-#: web/forms.py:360
+#: web/forms.py:370
 #, python-format
 msgid "PDF, images, Office documents, text or emails, up to %(size)s."
 msgstr "PDF, Bilder, Office-Dokumente, Text oder E-Mails, bis %(size)s."
 
-#: web/forms.py:388
+#: web/forms.py:398
 msgid "Please enter a name."
 msgstr "Bitte gib einen Namen an."
 
-#: web/forms.py:394
+#: web/forms.py:404
 msgid "This Paperless document is already linked to this contract."
 msgstr "Dieses Paperless-Dokument ist bereits mit diesem Vertrag verknüpft."
 
-#: web/forms.py:425
+#: web/forms.py:435
 #, python-format
 msgid "%(days)s day"
 msgid_plural "%(days)s days"
 msgstr[0] "%(days)s Tag"
 msgstr[1] "%(days)s Tage"
 
-#: web/forms.py:433 web/templates/web/manage/system.html:69
+#: web/forms.py:443 web/templates/web/manage/system.html:69
 msgid "no email address"
 msgstr "keine E-Mail-Adresse"
 
-#: web/forms.py:440
+#: web/forms.py:450
 msgid "Please select at least one recipient with an email address."
 msgstr "Bitte wähle mindestens einen Empfänger mit E-Mail-Adresse."
 
-#: web/forms.py:446 web/templates/web/includes/sharing_rows.html:8
+#: web/forms.py:456 web/templates/web/includes/sharing_rows.html:8
 msgid "No access"
 msgstr "Kein Zugriff"
 
-#: web/forms.py:447 web/templates/web/includes/sharing_rows.html:9
+#: web/forms.py:457 web/templates/web/includes/sharing_rows.html:9
 msgid "Reader"
 msgstr "Leser"
 
-#: web/forms.py:448 web/templates/web/includes/sharing_rows.html:10
+#: web/forms.py:458 web/templates/web/includes/sharing_rows.html:10
 msgid "Editor"
 msgstr "Bearbeiter"
 
-#: web/forms.py:458 web/templates/web/includes/access_card.html:6
+#: web/forms.py:468 web/templates/web/includes/access_card.html:6
 #: web/templates/web/includes/sharing_rows.html:18
 #: web/templates/web/sharing.html:22
 msgid "Owner"
@@ -1671,11 +1683,11 @@ msgstr ""
 "Der neue Eigentümer hat bereits Objekte mit diesen Namen: %(names)s. Bitte "
 "zuerst umbenennen."
 
-#: web/manage_forms.py:173 web/models.py:89
+#: web/manage_forms.py:173 web/manage_forms.py:438 web/models.py:128
 msgid "SSO Login"
 msgstr "SSO Login"
 
-#: web/manage_forms.py:186 web/models.py:68
+#: web/manage_forms.py:186 web/models.py:80
 msgid "API key"
 msgstr "API-Schlüssel"
 
@@ -1683,16 +1695,16 @@ msgstr "API-Schlüssel"
 msgid "Remove the stored API key"
 msgstr "Gespeicherten API-Schlüssel entfernen"
 
-#: web/manage_forms.py:203
+#: web/manage_forms.py:203 web/manage_forms.py:352 web/manage_forms.py:445
 #, python-format
 msgid "As in the .env file (%(value)s)"
 msgstr "Wie in der Datei .env (%(value)s)"
 
-#: web/manage_forms.py:205
+#: web/manage_forms.py:205 web/manage_forms.py:449
 msgid "on"
 msgstr "ein"
 
-#: web/manage_forms.py:205
+#: web/manage_forms.py:205 web/manage_forms.py:449
 msgid "off"
 msgstr "aus"
 
@@ -1700,7 +1712,7 @@ msgstr "aus"
 msgid "Default address of the provider"
 msgstr "Standardadresse des Anbieters"
 
-#: web/manage_forms.py:213
+#: web/manage_forms.py:213 web/manage_forms.py:340 web/manage_forms.py:446
 msgid "Empty: value from the .env file."
 msgstr "Leer: Wert aus der Datei .env."
 
@@ -1708,7 +1720,9 @@ msgstr "Leer: Wert aus der Datei .env."
 msgid ""
 "Only for OpenAI-compatible providers or a proxy, e.g. https://example.com/"
 "v1. Empty: value from the .env file."
-msgstr "Nur für OpenAI-kompatible Anbieter oder einen Proxy, z. B. https://example.com/v1. Leer: Wert aus der Datei .env."
+msgstr ""
+"Nur für OpenAI-kompatible Anbieter oder einen Proxy, z. B. https://"
+"example.com/v1. Leer: Wert aus der Datei .env."
 
 #: web/manage_forms.py:219
 msgid "A key is stored. Leave empty to keep it."
@@ -1716,7 +1730,9 @@ msgstr "Ein Schlüssel ist gespeichert. Leer lassen, um ihn zu behalten."
 
 #: web/manage_forms.py:223
 msgid "No key is stored here; the key from the .env file is used."
-msgstr "Hier ist kein Schlüssel gespeichert; es gilt der Schlüssel aus der Datei .env."
+msgstr ""
+"Hier ist kein Schlüssel gespeichert; es gilt der Schlüssel aus der "
+"Datei .env."
 
 #: web/manage_forms.py:224
 msgid "No key is set yet."
@@ -1726,104 +1742,209 @@ msgstr "Noch kein Schlüssel hinterlegt."
 msgid "The system prompt may have at most 20,000 characters."
 msgstr "Der System-Prompt darf höchstens 20.000 Zeichen haben."
 
-#: web/manage_forms.py:273
+#: web/manage_forms.py:320 web/models.py:92
+msgid "SMTP password"
+msgstr "SMTP-Passwort"
+
+#: web/manage_forms.py:323
+msgid "Remove the stored password"
+msgstr "Gespeichertes Passwort entfernen"
+
+#: web/manage_forms.py:356
+msgid "Address the emails come from, often the same as the SMTP user. Empty: value from the .env file."
+msgstr "Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. Leer: Wert aus der Datei .env."
+
+#: web/manage_forms.py:359
+msgid "Public address of the app, used for links in emails. Empty: value from the .env file."
+msgstr "Öffentliche Adresse der App, für Links in E-Mails. Leer: Wert aus der Datei .env."
+
+#: web/manage_forms.py:362
+#, python-format
+msgid "Empty: value from the .env file (%(value)s)."
+msgstr "Leer: Wert aus der Datei .env (%(value)s)."
+
+#: web/manage_forms.py:366
+msgid "A password is stored. Leave empty to keep it."
+msgstr "Ein Passwort ist gespeichert. Leer lassen, um es zu behalten."
+
+#: web/manage_forms.py:367
+msgid "No password is stored here; the password from the .env file is used."
+msgstr "Hier ist kein Passwort gespeichert; es gilt das Passwort aus der Datei .env."
+
+#: web/manage_forms.py:368
+msgid "No password is set yet."
+msgstr "Es ist noch kein Passwort hinterlegt."
+
+#: web/manage_forms.py:374
+msgid "Enter the host name only, e.g. smtp.example.com."
+msgstr "Nur den Servernamen eingeben, z. B. smtp.example.com."
+
+#: web/manage_forms.py:395
+msgid "Enter a time such as 07:00."
+msgstr "Gib eine Uhrzeit wie 07:00 ein."
+
+#: web/manage_forms.py:426
+msgid "Client secret"
+msgstr "Client-Secret"
+
+#: web/manage_forms.py:429
+msgid "Remove the stored client secret"
+msgstr "Gespeichertes Client-Secret entfernen"
+
+#: web/manage_forms.py:452
+msgid "On: a user who signs in for the first time is created automatically, without a local password and never as an administrator."
+msgstr "An: Wer sich zum ersten Mal anmeldet, wird automatisch angelegt, ohne lokales Passwort und nie als Administrator."
+
+#: web/manage_forms.py:466
+msgid "For the Synology SSO Server the address of the NAS, e.g. https://nas.example.com; the endpoints are derived from it. Empty: value from the .env file."
+msgstr "Beim Synology SSO Server die Adresse des NAS, z. B. https://nas.example.com; die Endpunkte ergeben sich daraus. Leer: Wert aus der Datei .env."
+
+#: web/manage_forms.py:470
+msgid "Synology: “username”, other providers often “preferred_username”. Empty: value from the .env file."
+msgstr "Synology: „username“, andere Anbieter oft „preferred_username“. Leer: Wert aus der Datei .env."
+
+#: web/manage_forms.py:478
+msgid "A client secret is stored. Leave empty to keep it."
+msgstr "Ein Client-Secret ist gespeichert. Leer lassen, um es zu behalten."
+
+#: web/manage_forms.py:479
+msgid "No client secret is stored here; the one from the .env file is used."
+msgstr "Hier ist kein Client-Secret gespeichert; es gilt das aus der Datei .env."
+
+#: web/manage_forms.py:480
+msgid "No client secret is set yet."
+msgstr "Es ist noch kein Client-Secret hinterlegt."
+
+#: web/manage_forms.py:490
+#, python-format
+msgid "Supported: %(values)s."
+msgstr "Unterstützt: %(values)s."
+
+#: web/manage_forms.py:511
+msgid "address of the SSO server or the endpoints"
+msgstr "Adresse des SSO-Servers oder die Endpunkte"
+
+#: web/manage_forms.py:514 web/models.py:99 web/sso_check.py:37
+msgid "client ID"
+msgstr "Client-ID"
+
+#: web/manage_forms.py:515 web/models.py:100 web/sso_check.py:38
+msgid "client secret"
+msgstr "Client-Secret"
+
+#: web/manage_forms.py:520
+#, python-format
+msgid "Single sign-on can only be switched on with complete settings. Missing: %(missing)s."
+msgstr "Single Sign-on lässt sich nur mit vollständigen Angaben einschalten. Es fehlt: %(missing)s."
+
+#: web/manage_forms.py:539
 msgid "Backup file (ZIP)"
 msgstr "Backup-Datei (ZIP)"
 
-#: web/manage_views.py:148
+#: web/manage_views.py:155
 #, python-format
 msgid "The user “%(name)s” has been created."
 msgstr "Der Benutzer „%(name)s“ wurde angelegt."
 
-#: web/manage_views.py:162
+#: web/manage_views.py:169
 msgid ""
 "The email could not be sent. Please check the email settings under System."
 msgstr ""
 "Die E-Mail konnte nicht verschickt werden. Bitte die E-Mail-Einstellungen "
 "unter System prüfen."
 
-#: web/manage_views.py:165
+#: web/manage_views.py:172
 #, python-format
 msgid "An invitation has been sent to %(email)s."
 msgstr "Eine Einladung wurde an %(email)s geschickt."
 
-#: web/manage_views.py:167
+#: web/manage_views.py:174
 #, python-format
 msgid "A link to reset the password has been sent to %(email)s."
 msgstr "Ein Link zum Zurücksetzen des Passworts wurde an %(email)s geschickt."
 
-#: web/manage_views.py:215
+#: web/manage_views.py:222
 msgid "The user has been saved."
 msgstr "Der Benutzer wurde gespeichert."
 
-#: web/manage_views.py:230
+#: web/manage_views.py:237
 msgid "The user has no email address."
 msgstr "Der Benutzer hat keine E-Mail-Adresse."
 
-#: web/manage_views.py:232
+#: web/manage_views.py:239
 msgid "The user is deactivated."
 msgstr "Der Benutzer ist deaktiviert."
 
-#: web/manage_views.py:251
+#: web/manage_views.py:258
 msgid "The user has been activated."
 msgstr "Der Benutzer wurde aktiviert."
 
-#: web/manage_views.py:253
+#: web/manage_views.py:260
 msgid "The user has been deactivated and can no longer sign in."
 msgstr "Der Benutzer wurde deaktiviert und kann sich nicht mehr anmelden."
 
-#: web/manage_views.py:274
+#: web/manage_views.py:281
 #, python-format
 msgid "The user “%(name)s” has been deleted."
 msgstr "Der Benutzer „%(name)s“ wurde gelöscht."
 
-#: web/manage_views.py:301
+#: web/manage_views.py:308
 #, python-format
 msgid "%(count)s objects have been transferred to %(name)s."
 msgstr "%(count)s Objekte wurden an %(name)s übertragen."
 
-#: web/manage_views.py:402
+#: web/manage_views.py:409
 #, python-format
 msgid "The group “%(name)s” has been saved."
 msgstr "Die Gruppe „%(name)s“ wurde gespeichert."
 
-#: web/manage_views.py:424
+#: web/manage_views.py:431
 #, python-format
 msgid "The group “%(name)s” has been deleted."
 msgstr "Die Gruppe „%(name)s“ wurde gelöscht."
 
-#: web/manage_views.py:522 web/manage_views.py:590
+#: web/manage_views.py:531 web/manage_views.py:599 web/manage_views.py:667
+#: web/manage_views.py:728
 msgid "The settings have been saved."
 msgstr "Die Einstellungen wurden gespeichert."
 
-#: web/manage_views.py:526
+#: web/manage_views.py:535 web/manage_views.py:675
 msgid "Please enter your email address under Settings first."
 msgstr "Bitte trage zuerst unter Einstellungen deine E-Mail-Adresse ein."
 
-#: web/manage_views.py:532
+#: web/manage_views.py:541 web/manage_views.py:683
 #, python-format
 msgid "The test email could not be sent: %(error)s"
 msgstr "Die Test-E-Mail konnte nicht verschickt werden: %(error)s"
 
-#: web/manage_views.py:534
+#: web/manage_views.py:543
 #, python-format
 msgid "A test email has been sent to %(email)s."
 msgstr "Eine Test-E-Mail wurde an %(email)s geschickt."
 
-#: web/manage_views.py:582
+#: web/manage_views.py:591
 msgid "The system prompt has been reset to the default."
 msgstr "Der System-Prompt wurde auf den Standard zurückgesetzt."
 
-#: web/manage_views.py:713
+#: web/manage_views.py:673
+msgid "No SMTP server is set, neither here nor in the .env file."
+msgstr "Es ist kein SMTP-Server hinterlegt, weder hier noch in der Datei .env."
+
+#: web/manage_views.py:684
+#, python-format
+msgid "A test email has been sent to %(email)s. Nothing was saved."
+msgstr "Eine Test-E-Mail wurde an %(email)s geschickt. Gespeichert wurde nichts."
+
+#: web/manage_views.py:822
 msgid "The uploaded backup is no longer available. Please upload it again."
 msgstr ""
 "Das hochgeladene Backup ist nicht mehr vorhanden. Bitte lade es erneut hoch."
 
-#: web/manage_views.py:717
+#: web/manage_views.py:826
 msgid "The import was cancelled. Nothing has been changed."
 msgstr "Der Import wurde abgebrochen. Es wurde nichts geändert."
 
-#: web/manage_views.py:731
+#: web/manage_views.py:840
 msgid ""
 "The backup has been imported. No user has a password now: choose a new one "
 "via “Forgot password?”."
@@ -1831,67 +1952,198 @@ msgstr ""
 "Das Backup wurde importiert. Kein Benutzer hat jetzt ein Passwort: Wähle "
 "über „Passwort vergessen?“ ein neues."
 
-#: web/models.py:18
+#: web/models.py:19
 msgid "language"
 msgstr "Sprache"
 
-#: web/models.py:25 web/models.py:26
+#: web/models.py:26 web/models.py:27
 msgid "user preferences"
 msgstr "Benutzereinstellungen"
 
-#: web/models.py:47 web/templates/web/manage/ai.html:20
-#: web/templates/web/manage/system.html:79
-#: web/templates/web/manage/system.html:108
+#: web/models.py:51 web/models.py:59 web/templates/web/manage/ai.html:20
+#: web/templates/web/manage/sso.html:20 web/templates/web/manage/system.html:80
+#: web/templates/web/manage/system.html:110
 msgid "On"
 msgstr "An"
 
-#: web/models.py:47 web/templates/web/contracts/_reminder.html:19
+#: web/models.py:51 web/models.py:59
+#: web/templates/web/contracts/_reminder.html:19
 #: web/templates/web/manage/ai.html:20
 #: web/templates/web/manage/reminders.html:40
-#: web/templates/web/manage/system.html:79
-#: web/templates/web/manage/system.html:108
+#: web/templates/web/manage/sso.html:20 web/templates/web/manage/system.html:80
+#: web/templates/web/manage/system.html:110
 msgid "Off"
 msgstr "Aus"
 
-#: web/models.py:48
+#: web/models.py:53
+msgid "STARTTLS (usually port 587)"
+msgstr "STARTTLS (meist Port 587)"
+
+#: web/models.py:54
+msgid "SSL/TLS (usually port 465)"
+msgstr "SSL/TLS (meist Port 465)"
+
+#: web/models.py:55
+msgid "None (unencrypted)"
+msgstr "Keine (unverschlüsselt)"
+
+#: web/models.py:60
 msgid "OpenAI or OpenAI-compatible"
 msgstr "OpenAI oder OpenAI-kompatibel"
 
-#: web/models.py:51
+#: web/models.py:63
 msgid "label of the SSO button"
 msgstr "Beschriftung der SSO-Schaltfläche"
 
-#: web/models.py:54
+#: web/models.py:66
 msgid "Shown on the login page. Leave empty for “SSO Login”."
 msgstr "Erscheint auf der Anmeldeseite. Leer lassen für „SSO Login“."
 
-#: web/models.py:59
+#: web/models.py:71
 msgid "default payment methods created"
 msgstr "Standard-Zahlungsmethoden angelegt"
 
-#: web/models.py:66
+#: web/models.py:78
 msgid "model"
 msgstr "Modell"
 
-#: web/models.py:67
+#: web/models.py:79
 msgid "address of the API (base URL)"
 msgstr "Adresse der API (Basis-URL)"
 
-#: web/models.py:72 web/models.py:73
+#: web/models.py:86 web/templates/web/manage/email.html:17
+#: web/templates/web/manage/system.html:57
+msgid "SMTP server"
+msgstr "SMTP-Server"
+
+#: web/models.py:88
+msgid "port"
+msgstr "Port"
+
+#: web/models.py:90
+msgid "encryption"
+msgstr "Verschlüsselung"
+
+#: web/models.py:91 web/templates/web/manage/system.html:59
+msgid "SMTP user"
+msgstr "SMTP-Benutzer"
+
+#: web/models.py:93
+msgid "sender address"
+msgstr "Absenderadresse"
+
+#: web/models.py:94
+msgid "address of the app"
+msgstr "Adresse der App"
+
+#: web/models.py:95
+msgid "send reminders daily at"
+msgstr "Erinnerungen täglich senden um"
+
+#: web/models.py:97
+msgid "single sign-on"
+msgstr "Single Sign-on"
+
+#: web/models.py:98
+msgid "address of the SSO server"
+msgstr "Adresse des SSO-Servers"
+
+#: web/models.py:101
+msgid "create unknown users"
+msgstr "Unbekannte Benutzer anlegen"
+
+#: web/models.py:102
+msgid "claim with the user name"
+msgstr "Claim mit dem Benutzernamen"
+
+#: web/models.py:103
+msgid "scopes"
+msgstr "Scopes"
+
+#: web/models.py:104
+msgid "signing algorithm"
+msgstr "Signaturverfahren"
+
+#: web/models.py:105 web/sso_check.py:39
+msgid "authorization endpoint"
+msgstr "Autorisierungs-Endpunkt"
+
+#: web/models.py:106
+msgid "token endpoint"
+msgstr "Token-Endpunkt"
+
+#: web/models.py:107
+msgid "user info endpoint"
+msgstr "Benutzerdaten-Endpunkt"
+
+#: web/models.py:108
+msgid "JWKS endpoint"
+msgstr "JWKS-Endpunkt"
+
+#: web/models.py:111 web/models.py:112
 msgid "application settings"
 msgstr "Anwendungseinstellungen"
 
-#: web/models.py:76
+#: web/models.py:115
 msgid "Application settings"
 msgstr "Anwendungseinstellungen"
 
-#: web/oidc.py:110
+#: web/oidc.py:164
 msgid ""
 "Single sign-on failed. Your account may not be set up for this application "
 "yet."
 msgstr ""
 "Die Anmeldung über Single Sign-on ist fehlgeschlagen. Möglicherweise ist "
 "dein Konto für diese Anwendung noch nicht eingerichtet."
+
+#: web/sso_check.py:43 web/sso_check.py:44
+msgid "Settings complete"
+msgstr "Angaben vollständig"
+
+#: web/sso_check.py:43
+#, python-format
+msgid "Missing: %(missing)s."
+msgstr "Es fehlt: %(missing)s."
+
+#: web/sso_check.py:44
+msgid "Client ID, client secret and endpoints are set."
+msgstr "Client-ID, Client-Secret und Endpunkte sind hinterlegt."
+
+#: web/sso_check.py:48
+msgid "Signing keys (JWKS)"
+msgstr "Signaturschlüssel (JWKS)"
+
+#: web/sso_check.py:50 web/sso_check.py:71
+msgid "No address set."
+msgstr "Keine Adresse hinterlegt."
+
+#: web/sso_check.py:58
+#, python-format
+msgid "%(url)s answers, but contains no keys."
+msgstr "%(url)s antwortet, enthält aber keine Schlüssel."
+
+#: web/sso_check.py:59
+#, python-format
+msgid "%(count)s key(s) loaded from %(url)s."
+msgstr "%(count)s Schlüssel von %(url)s geladen."
+
+#: web/sso_check.py:77
+#, python-format
+msgid "%(url)s answers with HTTP %(status)s."
+msgstr "%(url)s antwortet mit HTTP %(status)s."
+
+#: web/sso_check.py:80
+#, python-format
+msgid "%(url)s is reachable (HTTP %(status)s)."
+msgstr "%(url)s ist erreichbar (HTTP %(status)s)."
+
+#: web/sso_check.py:89
+msgid "Token endpoint"
+msgstr "Token-Endpunkt"
+
+#: web/sso_check.py:90
+msgid "User info endpoint"
+msgstr "Benutzerdaten-Endpunkt"
 
 #: web/templates/registration/login.html:3
 #: web/templates/registration/login.html:8
@@ -1933,7 +2185,7 @@ msgstr "Übersicht"
 #: web/templates/web/providers/detail.html:7
 #: web/templates/web/providers/form.html:7
 #: web/templates/web/providers/list.html:3
-#: web/templates/web/providers/list.html:6 web/views.py:942
+#: web/templates/web/providers/list.html:6 web/views.py:943
 msgid "Contract partners"
 msgstr "Vertragspartner"
 
@@ -1941,7 +2193,7 @@ msgstr "Vertragspartner"
 #: web/templates/web/categories/form.html:7
 #: web/templates/web/categories/list.html:3
 #: web/templates/web/categories/list.html:6
-#: web/templates/web/manage/users/detail.html:76 web/views.py:1169
+#: web/templates/web/manage/users/detail.html:76 web/views.py:1170
 msgid "Categories"
 msgstr "Kategorien"
 
@@ -1949,7 +2201,7 @@ msgstr "Kategorien"
 #: web/templates/web/consumers/form.html:7
 #: web/templates/web/consumers/list.html:3
 #: web/templates/web/consumers/list.html:6
-#: web/templates/web/manage/users/detail.html:77 web/views.py:995
+#: web/templates/web/manage/users/detail.html:77 web/views.py:996
 msgid "Consumers"
 msgstr "Verbraucher"
 
@@ -1957,7 +2209,7 @@ msgstr "Verbraucher"
 #: web/templates/web/payment_methods/detail.html:7
 #: web/templates/web/payment_methods/form.html:7
 #: web/templates/web/payment_methods/list.html:3
-#: web/templates/web/payment_methods/list.html:6 web/views.py:1063
+#: web/templates/web/payment_methods/list.html:6 web/views.py:1064
 msgid "Payment methods"
 msgstr "Zahlungsmethoden"
 
@@ -1985,32 +2237,43 @@ msgid "System"
 msgstr "System"
 
 #: web/templates/web/base.html:118 web/templates/web/manage/ai.html:3
-#: web/templates/web/manage/ai.html:6 web/templates/web/manage/system.html:119
+#: web/templates/web/manage/ai.html:6 web/templates/web/manage/system.html:121
 msgid "AI settings"
 msgstr "KI-Einstellungen"
 
-#: web/templates/web/base.html:122 web/templates/web/manage/backup.html:3
+#: web/templates/web/base.html:122 web/templates/web/manage/email.html:3
+#: web/templates/web/manage/email.html:6
+#: web/templates/web/manage/system.html:71
+msgid "Email settings"
+msgstr "E-Mail-Einstellungen"
+
+#: web/templates/web/base.html:126 web/templates/web/manage/sso.html:3
+#: web/templates/web/manage/sso.html:6 web/templates/web/manage/system.html:77
+msgid "Single sign-on"
+msgstr "Single Sign-on"
+
+#: web/templates/web/base.html:130 web/templates/web/manage/backup.html:3
 #: web/templates/web/manage/backup.html:6
 msgid "Backup"
 msgstr "Backup"
 
-#: web/templates/web/base.html:135 web/templates/web/preferences.html:3
+#: web/templates/web/base.html:143 web/templates/web/preferences.html:3
 #: web/templates/web/preferences.html:5
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: web/templates/web/base.html:137 web/templates/web/password_change.html:3
+#: web/templates/web/base.html:145 web/templates/web/password_change.html:3
 #: web/templates/web/password_change.html:5
 #: web/templates/web/password_change.html:11
 #: web/templates/web/preferences.html:26
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: web/templates/web/base.html:140 web/templates/web/manage/system.html:11
+#: web/templates/web/base.html:148 web/templates/web/manage/system.html:11
 msgid "Django administration"
 msgstr "Django-Verwaltung"
 
-#: web/templates/web/base.html:146
+#: web/templates/web/base.html:154
 msgid "Log out"
 msgstr "Abmelden"
 
@@ -2165,7 +2428,7 @@ msgstr "Kategorie bearbeiten"
 #: web/templates/web/categories/form.html:3
 #: web/templates/web/categories/form.html:9
 #: web/templates/web/categories/form.html:12
-#: web/templates/web/categories/list.html:8 web/views.py:495
+#: web/templates/web/categories/list.html:8 web/views.py:496
 msgid "New category"
 msgstr "Neue Kategorie"
 
@@ -2189,9 +2452,9 @@ msgstr "Bearbeiten"
 #: web/templates/web/contracts/_document_form.html:36
 #: web/templates/web/contracts/form.html:49
 #: web/templates/web/contracts/reminder_form.html:50
-#: web/templates/web/manage/ai.html:53
+#: web/templates/web/manage/ai.html:53 web/templates/web/manage/email.html:46
 #: web/templates/web/manage/groups/form.html:32
-#: web/templates/web/manage/system.html:95
+#: web/templates/web/manage/sso.html:60 web/templates/web/manage/system.html:97
 #: web/templates/web/manage/users/form.html:52
 #: web/templates/web/payment_methods/form.html:36
 #: web/templates/web/preferences.html:15
@@ -2266,7 +2529,7 @@ msgstr "Verbraucher bearbeiten"
 #: web/templates/web/consumers/form.html:3
 #: web/templates/web/consumers/form.html:9
 #: web/templates/web/consumers/form.html:12
-#: web/templates/web/consumers/list.html:8 web/views.py:497
+#: web/templates/web/consumers/list.html:8 web/views.py:498
 msgid "New consumer"
 msgstr "Neuer Verbraucher"
 
@@ -2656,9 +2919,12 @@ msgstr "Bitte versuche es später noch einmal."
 msgid ""
 "The test was not started: please correct the marked fields first (save shows "
 "the details)."
-msgstr "Der Test wurde nicht gestartet: Bitte korrigiere zuerst die Eingaben (Speichern zeigt die Einzelheiten)."
+msgstr ""
+"Der Test wurde nicht gestartet: Bitte korrigiere zuerst die Eingaben "
+"(Speichern zeigt die Einzelheiten)."
 
 #: web/templates/web/manage/_ai_test.html:13
+#: web/templates/web/manage/sso.html:74
 msgid "OK"
 msgstr "OK"
 
@@ -2667,6 +2933,7 @@ msgid "Not available"
 msgstr "Nicht verfügbar"
 
 #: web/templates/web/manage/_ai_test.html:13
+#: web/templates/web/manage/sso.html:74
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
@@ -2699,13 +2966,17 @@ msgid ""
 "Connection and system prompt of the AI assistant. Values entered here take "
 "precedence over the .env file; an empty field means “value from the .env "
 "file”. Changes apply immediately, without a restart."
-msgstr "Verbindung und System-Prompt des KI-Assistenten. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart."
+msgstr ""
+"Verbindung und System-Prompt des KI-Assistenten. Hier eingetragene Werte "
+"haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der "
+"Datei .env“. Änderungen gelten sofort, ohne Neustart."
 
-#: web/templates/web/manage/ai.html:17
+#: web/templates/web/manage/ai.html:17 web/templates/web/manage/sso.html:17
 msgid "Connection"
 msgstr "Verbindung"
 
-#: web/templates/web/manage/ai.html:19
+#: web/templates/web/manage/ai.html:19 web/templates/web/manage/email.html:19
+#: web/templates/web/manage/sso.html:19
 msgid "Currently in use"
 msgstr "Aktuell gültig"
 
@@ -2721,7 +2992,9 @@ msgstr "kein API-Schlüssel"
 msgid ""
 "The API key is stored in the database, is never shown again and is not part "
 "of a backup."
-msgstr "Der API-Schlüssel wird in der Datenbank gespeichert, nie wieder angezeigt und ist in keinem Backup enthalten."
+msgstr ""
+"Der API-Schlüssel wird in der Datenbank gespeichert, nie wieder angezeigt "
+"und ist in keinem Backup enthalten."
 
 #: web/templates/web/manage/ai.html:40
 msgid "System prompt"
@@ -2739,7 +3012,9 @@ msgstr "Standard"
 msgid ""
 "Tells the assistant who it is and how it should answer. A changed prompt "
 "applies to new conversations; existing conversations keep theirs."
-msgstr "Sagt dem Assistenten, wer er ist und wie er antworten soll. Ein geänderter Prompt gilt für neue Unterhaltungen; bestehende behalten ihren."
+msgstr ""
+"Sagt dem Assistenten, wer er ist und wie er antworten soll. Ein geänderter "
+"Prompt gilt für neue Unterhaltungen; bestehende behalten ihren."
 
 #: web/templates/web/manage/ai.html:46
 msgid "Fixed rules that are always added (not editable)"
@@ -2750,9 +3025,14 @@ msgid ""
 "They set the language of the answer (the language of the user) and make sure "
 "the assistant never deletes anything and changes data only as a proposal "
 "that the user approves."
-msgstr "Sie legen die Sprache der Antwort fest (die Sprache des Benutzers) und stellen sicher, dass der Assistent nie etwas löscht und Daten nur als Vorschlag ändert, den der Benutzer freigibt."
+msgstr ""
+"Sie legen die Sprache der Antwort fest (die Sprache des Benutzers) und "
+"stellen sicher, dass der Assistent nie etwas löscht und Daten nur als "
+"Vorschlag ändert, den der Benutzer freigibt."
 
 #: web/templates/web/manage/ai.html:57 web/templates/web/manage/ai.html:65
+#: web/templates/web/manage/email.html:47 web/templates/web/manage/sso.html:61
+#: web/templates/web/manage/sso.html:68
 msgid "Test"
 msgstr "Testen"
 
@@ -2765,7 +3045,10 @@ msgid ""
 "“Test” checks the values entered above without saving them: connection and "
 "answer, tool call, local text recognition and the file upload to the model. "
 "It sends a few short requests to the provider."
-msgstr "„Testen“ prüft die oben eingegebenen Werte, ohne sie zu speichern: Verbindung und Antwort, Werkzeugaufruf, lokale Texterkennung und den Datei-Upload an das Modell. Dabei gehen einige kurze Anfragen an den Anbieter."
+msgstr ""
+"„Testen“ prüft die oben eingegebenen Werte, ohne sie zu speichern: "
+"Verbindung und Antwort, Werkzeugaufruf, lokale Texterkennung und den Datei-"
+"Upload an das Modell. Dabei gehen einige kurze Anfragen an den Anbieter."
 
 #: web/templates/web/manage/ai.html:67
 msgid "Test is running …"
@@ -2775,7 +3058,7 @@ msgstr "Test läuft …"
 msgid "Who may use the assistant"
 msgstr "Wer den Assistenten nutzen darf"
 
-#: web/templates/web/manage/ai.html:73 web/templates/web/manage/system.html:118
+#: web/templates/web/manage/ai.html:73 web/templates/web/manage/system.html:120
 msgid "Only members of the group “KI” and superusers can use the assistant."
 msgstr ""
 "Nur Mitglieder der Gruppe „KI“ und Superuser können den Assistenten nutzen."
@@ -2936,6 +3219,53 @@ msgstr ""
 msgid "Replace everything and import"
 msgstr "Alles ersetzen und importieren"
 
+#: web/templates/web/manage/email.html:7
+msgid "SMTP server for reminders, invitations and password reset. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart."
+msgstr "SMTP-Server für Erinnerungen, Einladungen und das Zurücksetzen von Passwörtern. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart."
+
+#: web/templates/web/manage/email.html:21
+msgid "no user"
+msgstr "kein Benutzer"
+
+#: web/templates/web/manage/email.html:22
+msgid "password set"
+msgstr "Passwort hinterlegt"
+
+#: web/templates/web/manage/email.html:22
+msgid "no password"
+msgstr "kein Passwort"
+
+#: web/templates/web/manage/email.html:23
+msgid "sender"
+msgstr "Absender"
+
+#: web/templates/web/manage/email.html:23
+#: web/templates/web/manage/system.html:54
+msgid "No SMTP server configured: emails are only written to the log."
+msgstr "Kein SMTP-Server eingerichtet: E-Mails werden nur ins Log geschrieben."
+
+#: web/templates/web/manage/email.html:33
+msgid "The password is stored in the database, is never shown again and is not part of a backup."
+msgstr "Das Passwort wird in der Datenbank gespeichert, nie wieder angezeigt und ist nicht Teil eines Backups."
+
+#: web/templates/web/manage/email.html:37
+msgid "Links and reminders"
+msgstr "Links und Erinnerungen"
+
+#: web/templates/web/manage/email.html:42
+#, python-format
+msgid "Reminders are currently sent daily at %(reminder_time)s."
+msgstr "Erinnerungen werden derzeit täglich um %(reminder_time)s Uhr verschickt."
+
+#: web/templates/web/manage/email.html:42
+msgid "Address of the app not set: links in reminders are incomplete."
+msgstr "Adresse der App nicht gesetzt: Links in Erinnerungen sind unvollständig."
+
+#: web/templates/web/manage/email.html:48
+#, python-format
+msgid "“Test” sends an email to %(email)s with the values entered above, without saving them."
+msgstr "„Testen“ schickt mit den oben eingegebenen Werten eine E-Mail an %(email)s, ohne sie zu speichern."
+
 #: web/templates/web/manage/groups/confirm_delete.html:3
 #: web/templates/web/manage/groups/confirm_delete.html:5
 msgid "Delete group"
@@ -3008,8 +3338,8 @@ msgid "Reminders of all contracts. Visible to superusers only."
 msgstr "Erinnerungen aller Verträge. Nur für Superuser sichtbar."
 
 #: web/templates/web/manage/reminders.html:23
-#: web/templates/web/manage/system.html:78
-#: web/templates/web/manage/system.html:107
+#: web/templates/web/manage/system.html:79
+#: web/templates/web/manage/system.html:109
 msgid "Status"
 msgstr "Status"
 
@@ -3021,6 +3351,58 @@ msgstr "E-Mails ab %(date)s"
 #: web/templates/web/manage/reminders.html:45
 msgid "No reminders."
 msgstr "Keine Erinnerungen."
+
+#: web/templates/web/manage/sso.html:7
+msgid "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart. The local login always stays available."
+msgstr "Anmeldung über OpenID Connect, z. B. mit dem Synology SSO Server. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart. Die lokale Anmeldung bleibt immer möglich."
+
+#: web/templates/web/manage/sso.html:21
+msgid "no client ID"
+msgstr "keine Client-ID"
+
+#: web/templates/web/manage/sso.html:22
+msgid "client secret set"
+msgstr "Client-Secret hinterlegt"
+
+#: web/templates/web/manage/sso.html:22
+msgid "no client secret"
+msgstr "kein Client-Secret"
+
+#: web/templates/web/manage/sso.html:23
+msgid "Redirect URI"
+msgstr "Redirect-URI"
+
+#: web/templates/web/manage/sso.html:24
+msgid "Enter this address as redirect URI at the SSO provider."
+msgstr "Trage diese Adresse beim SSO-Anbieter als Redirect-URI ein."
+
+#: web/templates/web/manage/sso.html:32
+msgid "The client secret is stored in the database, is never shown again and is not part of a backup."
+msgstr "Das Client-Secret wird in der Datenbank gespeichert, nie wieder angezeigt und ist nicht Teil eines Backups."
+
+#: web/templates/web/manage/sso.html:36
+msgid "Users and login page"
+msgstr "Benutzer und Anmeldeseite"
+
+#: web/templates/web/manage/sso.html:42
+msgid "A user is matched by the user name from the SSO, ignoring upper and lower case, never by the email address."
+msgstr "Ein Benutzer wird über den Benutzernamen aus dem SSO zugeordnet, ohne Beachtung der Groß- und Kleinschreibung, nie über die E-Mail-Adresse."
+
+#: web/templates/web/manage/sso.html:47
+msgid "Advanced: other providers"
+msgstr "Erweitert: andere Anbieter"
+
+#: web/templates/web/manage/sso.html:48
+msgid "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above, otherwise taken from the .env file; the grey text shows the value from the .env file."
+msgstr "Nur nötig für andere Anbieter als den Synology SSO Server (z. B. Authentik, Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers oben, sonst aus der Datei .env; der graue Text zeigt den Wert aus der Datei .env."
+
+#: web/templates/web/manage/sso.html:62
+msgid "“Test” checks the values entered above without saving them."
+msgstr "„Testen“ prüft die oben eingegebenen Werte, ohne sie zu speichern."
+
+#: web/templates/web/manage/sso.html:79
+msgid "Test finished. Nothing was saved. Whether client ID and client secret are correct only shows when a user signs in: after saving, try the SSO button in a private browser window and stay logged in here."
+msgstr "Test abgeschlossen. Gespeichert wurde nichts. Ob Client-ID und Client-Secret stimmen, zeigt erst eine Anmeldung: Probiere nach dem Speichern die SSO-Schaltfläche in einem privaten Browserfenster aus und bleib hier angemeldet."
 
 #: web/templates/web/manage/system.html:18
 msgid "Active users"
@@ -3066,18 +3448,6 @@ msgstr "Täglich um"
 msgid "Failed tasks (7 days)"
 msgstr "Fehlgeschlagene Aufgaben (7 Tage)"
 
-#: web/templates/web/manage/system.html:54
-msgid "No SMTP server configured: emails are only written to the log."
-msgstr "Kein SMTP-Server eingerichtet: E-Mails werden nur ins Log geschrieben."
-
-#: web/templates/web/manage/system.html:57
-msgid "SMTP server"
-msgstr "SMTP-Server"
-
-#: web/templates/web/manage/system.html:59
-msgid "SMTP user"
-msgstr "SMTP-Benutzer"
-
 #: web/templates/web/manage/system.html:61
 msgid "Sender"
 msgstr "Absender"
@@ -3094,42 +3464,39 @@ msgstr "Nicht gesetzt: Links in Erinnerungen sind unvollständig."
 msgid "Send test email to me"
 msgstr "Test-E-Mail an mich senden"
 
-#: web/templates/web/manage/system.html:76
-msgid "Single sign-on"
-msgstr "Single Sign-on"
-
-#: web/templates/web/manage/system.html:81
+#: web/templates/web/manage/system.html:82
 msgid "SSO server"
 msgstr "SSO-Server"
 
-#: web/templates/web/manage/system.html:83
+#: web/templates/web/manage/system.html:84
 msgid "Create unknown users"
 msgstr "Unbekannte Benutzer anlegen"
 
-#: web/templates/web/manage/system.html:84
+#: web/templates/web/manage/system.html:85
 msgid "Yes"
 msgstr "Ja"
 
-#: web/templates/web/manage/system.html:84
+#: web/templates/web/manage/system.html:85
 msgid "No"
 msgstr "Nein"
 
-#: web/templates/web/manage/system.html:87
-msgid ""
-"Settings are changed in the .env file on the server, followed by a restart."
-msgstr ""
-"Geändert werden die Einstellungen in der .env auf dem Server, danach neu "
-"starten."
+#: web/templates/web/manage/system.html:88
+msgid "Single sign-on settings"
+msgstr "Einstellungen für Single Sign-on"
 
-#: web/templates/web/manage/system.html:110
+#: web/templates/web/manage/system.html:89
+msgid "A superuser changes these settings under Administration › Single sign-on."
+msgstr "Ein Superuser ändert diese Einstellungen unter Verwaltung › Single Sign-on."
+
+#: web/templates/web/manage/system.html:112
 msgid "Provider"
 msgstr "Anbieter"
 
-#: web/templates/web/manage/system.html:112
+#: web/templates/web/manage/system.html:114
 msgid "Model"
 msgstr "Modell"
 
-#: web/templates/web/manage/system.html:114
+#: web/templates/web/manage/system.html:116
 msgid "Members of “KI”"
 msgstr "Mitglieder von „KI“"
 
@@ -3394,7 +3761,7 @@ msgstr "Zahlungsmethode bearbeiten"
 #: web/templates/web/payment_methods/form.html:3
 #: web/templates/web/payment_methods/form.html:9
 #: web/templates/web/payment_methods/form.html:12
-#: web/templates/web/payment_methods/list.html:8 web/views.py:499
+#: web/templates/web/payment_methods/list.html:8 web/views.py:500
 msgid "New payment method"
 msgstr "Neue Zahlungsmethode"
 
@@ -3414,7 +3781,7 @@ msgstr ""
 msgid "Change the password you use to log in."
 msgstr "Ändere das Passwort, mit dem du dich anmeldest."
 
-#: web/templates/web/preferences.html:28 web/views.py:132
+#: web/templates/web/preferences.html:28 web/views.py:133
 msgid "You sign in via single sign-on and have no local password."
 msgstr "Du meldest dich über Single Sign-on an und hast kein lokales Passwort."
 
@@ -3482,7 +3849,7 @@ msgstr "Vertragspartner bearbeiten"
 #: web/templates/web/providers/form.html:3
 #: web/templates/web/providers/form.html:9
 #: web/templates/web/providers/form.html:12
-#: web/templates/web/providers/list.html:8 web/views.py:493
+#: web/templates/web/providers/list.html:8 web/views.py:494
 msgid "New contract partner"
 msgstr "Neuer Vertragspartner"
 
@@ -3506,44 +3873,44 @@ msgstr ""
 "Eine Rolle für eine Gruppe gilt für alle ihre Mitglieder. Die Gruppe „Alle“ "
 "enthält jeden Benutzer."
 
-#: web/views.py:120
+#: web/views.py:121
 msgid "Your settings have been saved."
 msgstr "Deine Einstellungen wurden gespeichert."
 
-#: web/views.py:138
+#: web/views.py:139
 msgid "Your password has been changed."
 msgstr "Dein Passwort wurde geändert."
 
-#: web/views.py:265
+#: web/views.py:266
 msgid "The sharing settings have been saved."
 msgstr "Die Freigaben wurden gespeichert."
 
-#: web/views.py:477
+#: web/views.py:478
 msgid "The reminder has been saved."
 msgstr "Die Erinnerung wurde gespeichert."
 
-#: web/views.py:518
+#: web/views.py:519
 msgid "The contract has been created. You can now add its costs."
 msgstr "Der Vertrag wurde angelegt. Jetzt kannst du die Kosten hinzufügen."
 
-#: web/views.py:539
+#: web/views.py:540
 msgid "The contract has been saved."
 msgstr "Der Vertrag wurde gespeichert."
 
-#: web/views.py:559
+#: web/views.py:560
 #, python-format
 msgid "The contract “%(name)s” has been deleted."
 msgstr "Der Vertrag „%(name)s“ wurde gelöscht."
 
-#: web/views.py:625
+#: web/views.py:626
 msgid "The cost entry has been saved."
 msgstr "Der Kosteneintrag wurde gespeichert."
 
-#: web/views.py:640
+#: web/views.py:641
 msgid "The cost entry has been deleted."
 msgstr "Der Kosteneintrag wurde gelöscht."
 
-#: web/views.py:653
+#: web/views.py:654
 msgid ""
 "Readers may view the contract and its costs. Editors may also edit the "
 "contract and its costs, but not delete it or change the sharing. The owner "
@@ -3553,27 +3920,27 @@ msgstr ""
 "und Kosten außerdem bearbeiten, aber nicht löschen und keine Freigaben "
 "ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:900
+#: web/views.py:901
 msgid "The contract partner has been created."
 msgstr "Der Vertragspartner wurde angelegt."
 
-#: web/views.py:906
+#: web/views.py:907
 msgid "The contract partner has been saved."
 msgstr "Der Vertragspartner wurde gespeichert."
 
-#: web/views.py:912
+#: web/views.py:913
 msgid ""
 "The contract partner cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Vertragspartner kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:913
+#: web/views.py:914
 #, python-format
 msgid "The contract partner “%(name)s” has been deleted."
 msgstr "Der Vertragspartner „%(name)s“ wurde gelöscht."
 
-#: web/views.py:944
+#: web/views.py:945
 msgid ""
 "Readers may view the contract partner and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -3583,26 +3950,26 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:975
+#: web/views.py:976
 msgid "The consumer has been created."
 msgstr "Der Verbraucher wurde angelegt."
 
-#: web/views.py:981
+#: web/views.py:982
 msgid "The consumer has been saved."
 msgstr "Der Verbraucher wurde gespeichert."
 
-#: web/views.py:987
+#: web/views.py:988
 msgid "The consumer cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Verbraucher kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:988
+#: web/views.py:989
 #, python-format
 msgid "The consumer “%(name)s” has been deleted."
 msgstr "Der Verbraucher „%(name)s“ wurde gelöscht."
 
-#: web/views.py:997
+#: web/views.py:998
 msgid ""
 "Readers may view the consumer and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "
@@ -3612,27 +3979,27 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1023
+#: web/views.py:1024
 msgid "The payment method has been created."
 msgstr "Die Zahlungsmethode wurde angelegt."
 
-#: web/views.py:1029
+#: web/views.py:1030
 msgid "The payment method has been saved."
 msgstr "Die Zahlungsmethode wurde gespeichert."
 
-#: web/views.py:1035
+#: web/views.py:1036
 msgid ""
 "The payment method cannot be deleted because it is still used in contracts."
 msgstr ""
 "Die Zahlungsmethode kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1036
+#: web/views.py:1037
 #, python-format
 msgid "The payment method “%(name)s” has been deleted."
 msgstr "Die Zahlungsmethode „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1065
+#: web/views.py:1066
 msgid ""
 "Readers may view the payment method and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -3642,15 +4009,15 @@ msgstr ""
 "Bearbeiter dürfen sie außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1139
+#: web/views.py:1140
 msgid "The category has been created."
 msgstr "Die Kategorie wurde angelegt."
 
-#: web/views.py:1150
+#: web/views.py:1151
 msgid "The category has been saved."
 msgstr "Die Kategorie wurde gespeichert."
 
-#: web/views.py:1157
+#: web/views.py:1158
 msgid ""
 "The category cannot be deleted because it is still used in contracts or has "
 "subcategories."
@@ -3658,12 +4025,12 @@ msgstr ""
 "Die Kategorie kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird oder Unterkategorien hat."
 
-#: web/views.py:1159
+#: web/views.py:1160
 #, python-format
 msgid "The category “%(name)s” has been deleted."
 msgstr "Die Kategorie „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1171
+#: web/views.py:1172
 msgid ""
 "Readers may view the category and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "

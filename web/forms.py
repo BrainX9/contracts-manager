@@ -23,6 +23,13 @@ from contracts.models import (
 from .models import UserPreferences
 
 
+# Hinweis an den Notizfeldern mit Markdown (Version 0.4.0, web.markdown)
+MARKDOWN_HELP = _(
+    "Markdown is supported: **bold**, *italic*, lists with “-”, headings with “#”, "
+    "links as [text](https://example.com) and tables."
+)
+
+
 class BootstrapFormMixin:
     """
     Setzt die CSS-Klassen von Bootstrap an allen Eingabefeldern.
@@ -188,6 +195,7 @@ class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
             "start_date": DateInput(),
             "notes": forms.Textarea(attrs={"rows": 4}),
         }
+        help_texts = {"notes": MARKDOWN_HELP}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -217,6 +225,7 @@ class ProviderForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
             "logo": forms.FileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
             "notes": forms.Textarea(attrs={"rows": 4}),
         }
+        help_texts = {"notes": MARKDOWN_HELP}
         error_messages = {
             NON_FIELD_ERRORS: {
                 "unique_together": _("The owner already has a contract partner with this name."),
@@ -242,6 +251,7 @@ class ConsumerForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
         model = Consumer
         fields = ["name", "number", "notes"]
         widgets = {"notes": forms.Textarea(attrs={"rows": 4})}
+        help_texts = {"notes": MARKDOWN_HELP}
         error_messages = {
             NON_FIELD_ERRORS: {
                 "unique_together": _("The owner already has a consumer with this name."),

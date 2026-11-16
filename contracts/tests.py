@@ -2026,15 +2026,26 @@ class BackupTest(TestCase):
 
         site = SiteSettings.load()
         site.ai_api_key, site.ai_model, site.ai_system_prompt = "sk-geheim-123", "modell-a", "Du bist Karl."
+        # Seit 0.4.0 ebenso: SMTP-Passwort und Client-Secret des SSO
+        site.email_password, site.email_host = "smtp-geheim-456", "smtp.example.test"
+        site.sso_client_secret, site.sso_client_id = "sso-geheim-789", "contracts"
+        site.reminder_send_time = "06:30"
         site.save()
         buffer, _info = self.export()
         row = next(row for row in self.read_json(buffer, "data.json") if row["model"] == "web.sitesettings")
-        self.assertEqual(row["fields"]["ai_api_key"], "")
+        for name in SiteSettings.SECRET_FIELDS:
+            self.assertEqual(row["fields"][name], "", name)
         self.assertEqual(row["fields"]["ai_model"], "modell-a")
+        self.assertEqual(row["fields"]["email_host"], "smtp.example.test")
         buffer.seek(0)
-        self.assertNotIn(b"sk-geheim-123", buffer.read())
-        # Beim Import bleibt der Schlüssel der Installation, der Rest kommt aus dem Backup
+        content = buffer.read()
+        for secret in (b"sk-geheim-123", b"smtp-geheim-456", b"sso-geheim-789"):
+            self.assertNotIn(secret, content)
+        # Beim Import bleiben die Zugangsdaten der Installation, der Rest kommt aus dem Backup
         site.ai_api_key, site.ai_model = "sk-installation", "modell-b"
+        site.email_password, site.email_host = "smtp-installation", "anderer.example.test"
+        site.sso_client_secret, site.sso_client_id = "sso-installation", "anders"
+        site.reminder_send_time = ""
         site.save()
         buffer.seek(0)
         with self.captureOnCommitCallbacks(execute=True):
@@ -2042,6 +2053,16 @@ class BackupTest(TestCase):
         site = SiteSettings.load()
         self.assertEqual((site.ai_api_key, site.ai_model, site.ai_system_prompt),
                          ("sk-installation", "modell-a", "Du bist Karl."))
+        self.assertEqual((site.email_password, site.email_host), ("smtp-installation", "smtp.example.test"))
+        self.assertEqual((site.sso_client_secret, site.sso_client_id), ("sso-installation", "contracts"))
+        # Die Uhrzeit aus dem Backup gilt auch im Zeitplan des Workers
+        from django.utils import timezone
+        from django_q.models import Schedule
+
+        from .apps import REMINDER_SCHEDULE_NAME
+
+        schedule = Schedule.objects.get(name=REMINDER_SCHEDULE_NAME)
+        self.assertEqual(timezone.localtime(schedule.next_run).strftime("%H:%M"), "06:30")
 
     def test_export_reports_missing_file(self):
         import os

@@ -21,3 +21,11 @@ def group_description(name):
     from contracts.permissions import group_description as describe
 
     return describe(name)
+
+
+@register.filter
+def markdown(text):
+    """Notiz mit Markdown als HTML (web.markdown), ohne HTML aus der Eingabe."""
+    from web.markdown import render
+
+    return render(text)

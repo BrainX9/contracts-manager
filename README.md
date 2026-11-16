@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.3.1-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.4.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -40,7 +40,7 @@ The user interface is available in **English and German** (per user).
 <td width="50%" valign="top">
 
 ### 📄 Contracts and costs
-- Contracts with partner, category, consumer, **payment method**, start date, term, contract number and notes
+- Contracts with partner, category, consumer, **payment method**, start date, term, contract number and notes with **Markdown** (headings, lists, links, tables)
 - Automatic reference numbers per year (e.g. `20260001`)
 - Cost history with payment interval (weekly, monthly, quarterly, yearly); the current amount is picked by date
 - **Documents** per contract: upload files (PDF, images, Office, up to 20 MB) or link Paperless-ngx documents, and attach them to cost entries
@@ -86,6 +86,7 @@ The user interface is available in **English and German** (per user).
 - Manage **users and groups** in the web interface: invite by email, deactivate, delete, edit memberships
 - Role **“Administratoren”** for user management without being a superuser – with safeguards against privilege escalation
 - Superusers: transfer all objects of a user, see all reminders, link to the Django admin
+- **Email and single sign-on** are configured in the app (superusers), each with a test – no restart, `.env` stays supported
 - System page with worker status, email settings and a test email
 
 </td>
@@ -138,7 +139,7 @@ The user interface is available in **English and German** (per user).
 | Background jobs | django-q2 with the database as broker |
 | AI (optional) | OpenAI and Anthropic Python SDKs; OpenAI-compatible providers via base URL |
 | Auth | Django auth, optional OpenID Connect (mozilla-django-oidc), login lockout (django-axes) |
-| Images | Pillow |
+| Images, Markdown | Pillow, markdown-it-py |
 | Serving | gunicorn, whitenoise |
 | Deployment | Docker Compose with three services: `app`, `worker`, `db` |
 
@@ -207,7 +208,7 @@ For a production setup on a Synology NAS (project folder, reverse proxy with HTT
 
 ## Configuration
 
-All settings come from environment variables in `.env` – no secrets in the code.
+Settings come from environment variables in `.env` – no secrets in the code. The AI assistant, email and single sign-on can also be configured in the app under **Administration** (superusers only, without a restart); a value entered there takes precedence over `.env`.
 
 | Variable | Purpose |
 |---|---|
@@ -219,10 +220,10 @@ All settings come from environment variables in `.env` – no secrets in the cod
 | `APP_IMAGE_TAG` | Version of the Docker image (default `latest`, e.g. `0.3.0` to stay on one version) |
 | `APP_UID`, `APP_GID` | User and group the containers run as (default `1000`, not root) |
 | `GUNICORN_CMD_ARGS` | Replaces the gunicorn options of the image (bind address, workers, timeout) |
-| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP for reminders, invitations and password reset (`EMAIL_USE_SSL` for port 465) |
-| `APP_BASE_URL` | Public address of the app, used for links in emails |
-| `REMINDER_SEND_TIME` | Daily time for reminders (default `07:00`) |
-| `OIDC_ENABLED`, `OIDC_OP_BASE_URL`, `OIDC_RP_CLIENT_ID`, `OIDC_RP_CLIENT_SECRET`, `OIDC_CREATE_USERS` | Single sign-on |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP for reminders, invitations and password reset (`EMAIL_USE_SSL` for port 465); also under Administration › Email settings |
+| `APP_BASE_URL` | Public address of the app, used for links in emails; also under Administration › Email settings |
+| `REMINDER_SEND_TIME` | Daily time for reminders (default `07:00`); also under Administration › Email settings |
+| `OIDC_ENABLED`, `OIDC_OP_BASE_URL`, `OIDC_RP_CLIENT_ID`, `OIDC_RP_CLIENT_SECRET`, `OIDC_CREATE_USERS` | Single sign-on; all `OIDC_*` values can also be set under Administration › Single sign-on |
 | `OIDC_USERNAME_CLAIM`, `OIDC_RP_SCOPES`, `OIDC_RP_SIGN_ALGO` | Single sign-on: claim with the user name (default `username`), scopes, signing algorithm |
 | `OIDC_OP_AUTHORIZATION_ENDPOINT`, `OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT` | Single sign-on endpoints for providers other than the Synology SSO Server (default: derived from `OIDC_OP_BASE_URL`) |
 | `PAPERLESS_URL` | Base address of Paperless-ngx for links |
@@ -242,7 +243,7 @@ Set by `docker-compose.yml` itself, not in `.env`: `DATABASE_URL` (built from th
 |---|---|
 | [Installation on a Synology NAS](docs/installation-synology.md) | Project folder, Compose file and `.env`, first start, superuser, reverse proxy with HTTPS, daily backup |
 | [Schritt-für-Schritt-Anleitung Synology (deutsch)](docs/installation-synology-de.md) | Detailed German walkthrough for beginners: Container Manager, SSH, Compose file and `.env`, HTTPS, daily backups, updates, troubleshooting |
-| [Configuration](docs/configuration.md) | Users and sharing, email and reminders, single sign-on, documents, Paperless-ngx, AI assistant |
+| [Configuration](docs/configuration.md) | Users and sharing, settings in the app, email and reminders, single sign-on, notes with Markdown, documents, Paperless-ngx, AI assistant |
 | [Operations](docs/operations.md) | Updates, backup and restore, export and import of all data as one file, restart with an encrypted folder |
 | [Development](docs/development.md) | Local development, translations, tests, project structure |
 
@@ -261,7 +262,7 @@ Planned, not yet implemented:
 > [!IMPORTANT]
 > This project was developed primarily by **[Claude](https://www.anthropic.com/claude)** (Anthropic's AI assistant, via [Claude Code](https://claude.com/claude-code)), working phase by phase under the direction and review of the maintainer. Requirements, decisions and testing are human; most of the code, tests and documentation were written by Claude.
 
-Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 440) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
+Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 470) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
 
 ## License
 

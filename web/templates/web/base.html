@@ -117,6 +117,14 @@
              {% if url_name == 'manage_ai' %}aria-current="page"{% endif %}>
             <i class="bi bi-stars" aria-hidden="true"></i>{% translate "AI settings" %}
           </a>
+          <a class="app-nav-link{% if url_name == 'manage_email' %} active{% endif %}" href="{% url 'manage_email' %}"
+             {% if url_name == 'manage_email' %}aria-current="page"{% endif %}>
+            <i class="bi bi-envelope" aria-hidden="true"></i>{% translate "Email settings" %}
+          </a>
+          <a class="app-nav-link{% if url_name == 'manage_sso' %} active{% endif %}" href="{% url 'manage_sso' %}"
+             {% if url_name == 'manage_sso' %}aria-current="page"{% endif %}>
+            <i class="bi bi-shield-check" aria-hidden="true"></i>{% translate "Single sign-on" %}
+          </a>
           <a class="app-nav-link{% if 'manage_backup' in url_name %} active{% endif %}" href="{% url 'manage_backup' %}"
              {% if url_name == 'manage_backup' %}aria-current="page"{% endif %}>
             <i class="bi bi-archive" aria-hidden="true"></i>{% translate "Backup" %}

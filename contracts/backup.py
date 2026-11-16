@@ -14,8 +14,9 @@ Regeln:
   eines hatte, wählt über "Passwort vergessen?" ein neues
   (``PASSWORD_RESET_MARKER``, siehe ``web.forms.WebPasswordResetForm``);
   sonst ``manage.py changepassword``.
-- Der API-Schlüssel des KI-Assistenten (web.SiteSettings, seit 0.3.0) wird
-  ebenfalls nie exportiert; beim Import bleibt der Schlüssel der
+- Zugangsdaten in web.SiteSettings (API-Schlüssel des KI-Assistenten seit
+  0.3.0, SMTP-Passwort und Client-Secret des SSO seit 0.4.0) werden
+  ebenfalls nie exportiert; beim Import bleiben die Zugangsdaten der
   Installation erhalten.
 - Der Import ersetzt den gesamten Bestand (kein Zusammenführen). Er nimmt
   Backups der installierten und älterer unterstützter Versionen an
@@ -174,9 +175,11 @@ def serialize_objects():
             for row in rows:
                 row["fields"]["password"] = "" if is_password_usable(row["fields"]["password"]) else "!"
         elif model._meta.label_lower == "web.sitesettings":
-            # API-Schlüssel des KI-Assistenten nie exportieren (0.3.0)
+            # Zugangsdaten nie exportieren: API-Schlüssel des KI-Assistenten
+            # (0.3.0), SMTP-Passwort und Client-Secret des SSO (0.4.0)
             for row in rows:
-                row["fields"]["ai_api_key"] = ""
+                for name in site_secret_fields():
+                    row["fields"][name] = ""
         counts[model._meta.label_lower] = len(rows)
         objects.extend(rows)
     return objects, counts
@@ -395,17 +398,27 @@ def reset_sequences():
             cursor.execute(statement)
 
 
-def installed_ai_api_key():
+def site_secret_fields():
+    """Felder mit Zugangsdaten in web.SiteSettings."""
+    from web.models import SiteSettings
+
+    return SiteSettings.SECRET_FIELDS
+
+
+def installed_secrets():
     """
-    In der Verwaltung hinterlegter API-Schlüssel des KI-Assistenten. Er
-    steht in keinem Backup und bleibt bei einem Import erhalten.
+    In der Verwaltung hinterlegte Zugangsdaten (API-Schlüssel des
+    KI-Assistenten, SMTP-Passwort, Client-Secret des SSO). Sie stehen in
+    keinem Backup und bleiben bei einem Import erhalten.
     """
     from web.models import SiteSettings
 
-    return SiteSettings.objects.filter(pk=1).values_list("ai_api_key", flat=True).first() or ""
+    row = SiteSettings.objects.filter(pk=1).values(*SiteSettings.SECRET_FIELDS).first() or {}
+    return {name: row.get(name) or "" for name in SiteSettings.SECRET_FIELDS}
 
 
-def load_into_database(objects, ai_api_key=""):
+def load_into_database(objects, secrets=None):
+    secrets = secrets or {}
     try:
         deferred = []
         # Einzeln laden und sofort speichern: Verweise über natürliche
@@ -419,8 +432,9 @@ def load_into_database(objects, ai_api_key=""):
                     item.object.password = PASSWORD_RESET_MARKER
             elif item.object._meta.label_lower == "web.sitesettings":
                 # Nie aus dem Backup, auch nicht von Hand eingetragen; es
-                # bleibt der Schlüssel dieser Installation
-                item.object.ai_api_key = ai_api_key
+                # bleiben die Zugangsdaten dieser Installation
+                for name in site_secret_fields():
+                    setattr(item.object, name, secrets.get(name, ""))
             item.save()
             if item.deferred_fields:
                 deferred.append(item)
@@ -477,9 +491,9 @@ def import_backup(source):
             except (OSError, zipfile.BadZipFile) as error:
                 raise BackupError(_("The backup is damaged.")) from error
             with transaction.atomic():
-                ai_api_key = installed_ai_api_key()
+                secrets = installed_secrets()
                 flush_tables()
-                load_into_database(objects, ai_api_key)
+                load_into_database(objects, secrets)
                 reset_sequences()
                 Session.objects.all().delete()
             replace_media(staging)
@@ -490,6 +504,15 @@ def import_backup(source):
     from . import payment_defaults
 
     payment_defaults.ensure_safely()
+    # Die Uhrzeit der Erinnerungen kann aus dem Backup kommen (0.4.0)
+    try:
+        from .apps import ensure_reminder_schedule
+
+        ensure_reminder_schedule()
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception("Zeitplan der Erinnerungen nach dem Import nicht angepasst")
     return info_from_manifest(manifest)
 
 

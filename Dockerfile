@@ -13,17 +13,23 @@ WORKDIR /app
 
 # gettext für die Übersetzungen (makemessages, compilemessages);
 # tesseract (Deutsch, Englisch) und poppler (pdftoppm) für die lokale
-# Texterkennung in Scans und Fotos (KI-Assistent, Version 0.8b)
+# Texterkennung in Scans und Fotos (KI-Assistent, Version 0.8b).
+# apt-get upgrade (0.4.0): Sicherheitskorrekturen von Debian einspielen,
+# die das Basis-Image noch nicht enthält.
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends gettext \
         tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Abhängigkeiten installieren. pip zuerst aktualisieren: das Basis-Image
-# bringt eine ältere Version mit bekannten Sicherheitsmeldungen mit (0.3.1).
+# Abhängigkeiten installieren. Danach pip selbst entfernen (0.4.0): Im
+# Betrieb wird es nicht gebraucht, und es bringt eine eigene Kopie von
+# Teilen von setuptools mit, für die Sicherheitsmeldungen bestehen.
+# ensurepip enthält pip noch einmal als Paketdatei.
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip uninstall -y pip \
+    && rm -rf /usr/local/lib/python3.12/ensurepip
 
 # Startskript außerhalb von /app, damit es auch mit eingebundenem Code
 # (Entwicklung) erhalten bleibt

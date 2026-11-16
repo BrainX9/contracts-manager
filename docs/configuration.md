@@ -2,13 +2,16 @@
 
 [← Back to README](../README.md)
 
-All settings come from environment variables in `.env` (see [`.env.example`](../.env.example)). After changing `.env`, restart with `sudo docker compose up -d`.
+Settings come from environment variables in `.env` (see [`.env.example`](../.env.example)). After changing `.env`, restart with `sudo docker compose up -d`.
+
+The AI assistant, email and single sign-on can also be configured **in the app** under Administration (superusers only), without a restart. A value entered there takes precedence over `.env`; an empty field means “value from `.env`”. `.env` stays supported, but new installations are best configured in the app: what Docker and the database need (`SECRET_KEY`, `POSTGRES_*`, `ALLOWED_HOSTS`, ports) remains in `.env`.
 
 - [First administrator](#first-administrator)
 - [Users and sharing](#users-and-sharing)
 - [Administration in the web interface](#administration-in-the-web-interface)
 - [Email and reminders](#email-and-reminders)
 - [Single sign-on with the Synology SSO Server](#single-sign-on-with-the-synology-sso-server)
+- [Notes with Markdown](#notes-with-markdown)
 - [Documents](#documents)
 - [Paperless-ngx links](#paperless-ngx-links)
 - [AI assistant](#ai-assistant)
@@ -78,6 +81,8 @@ In the sidebar under **Administration** (`/manage/`), visible to superusers and 
 | Reminders | reminders of all contracts | superusers only |
 | System | version, worker status, email settings, test email, single sign-on | Administrators, superusers |
 | AI settings | provider, model, API key and system prompt of the AI assistant, with a test | superusers only |
+| Email settings | SMTP server, sender, address of the app and time of the reminders, with a test email | superusers only |
+| Single sign-on | on/off, SSO server, client ID and secret, endpoints, with a test | superusers only |
 
 **Safeguards for administrators**, so they cannot grant themselves more rights: they cannot edit superusers; only superusers grant the group “Administratoren” and the superuser flag; nobody changes their own groups or active status; default groups cannot be renamed or deleted. Note that whoever manages users and groups can still grant indirect access to shared objects via group membership – give the role to trusted people only.
 
@@ -91,7 +96,15 @@ The Django admin (`/admin/`) remains available to superusers only.
 
 Contracts Manager sends emails via SMTP: reminders, invitations and password reset links. Without SMTP settings, emails are only written to the log.
 
-### SMTP (example: IONOS)
+### SMTP in the app
+
+A superuser enters the SMTP server under **Administration › Email settings**: server, port, encryption (STARTTLS, SSL/TLS or none), user, password, sender address and the public address of the app. Changes apply immediately, also for the worker.
+
+- An empty field means “value from `.env`”; the page shows which values are currently in use.
+- The **password** is stored in the database, never shown again and never written to a backup file. Leave the field empty to keep it. An import keeps the password of the installation.
+- **Test** sends an email to your own address with the values you entered, *before* saving them.
+
+### SMTP in `.env` (example: IONOS)
 
 ```dotenv
 EMAIL_HOST=smtp.ionos.de
@@ -132,7 +145,7 @@ On a contract page under **Reminder › Set up** (edit rights on the contract re
 
 After the reminder date the reminder switches itself off and is shown as done; set a new date to reuse it. Recipients without an email address or without (continued) read access are skipped. Emails use the recipient's language.
 
-The **worker** service (django-q2) sends reminders daily at `REMINDER_SEND_TIME` (default `07:00`). If the worker is down at that time, the run happens once after it starts; missed days are not caught up. **Administration › System** shows the last and next run. To trigger a run manually:
+The **worker** service (django-q2) sends reminders daily at the time set under **Administration › Email settings**, otherwise at `REMINDER_SEND_TIME` (default `07:00`). If the worker is down at that time, the run happens once after it starts; missed days are not caught up. **Administration › System** shows the last and next run. To trigger a run manually:
 
 ```bash
 sudo docker compose exec app python manage.py send_reminders
@@ -150,7 +163,16 @@ Users can optionally sign in with their Synology account (OpenID Connect via the
    - Redirect URI: `https://contracts.example.com/oidc/callback/` (exactly like this, with a trailing slash)
 3. Note the **application ID** (client ID) and **application secret** (client secret).
 
-### 2. Add to `.env`
+### 2. Enter the settings in the app
+
+Under **Administration › Single sign-on** (superusers only) switch single sign-on on and enter the address of the SSO server (e.g. `https://nas.example.com`), the client ID and the client secret. The page shows the **redirect URI** to enter at the provider. Changes apply immediately, without a restart.
+
+- The **client secret** is stored in the database, never shown again and never written to a backup file.
+- **Test** checks the values you entered before saving them: whether everything is filled in and whether the container reaches the key, token and user info endpoints. Whether client ID and secret are correct only shows when a user signs in – try the SSO button in a private browser window and stay logged in as superuser in the other one.
+- Single sign-on can only be switched on with complete settings. The local login always stays available, so a wrong setting cannot lock you out.
+- **Other providers** (Authentik, Keycloak, …): open *Advanced* and enter the four endpoints, the scopes, the signing algorithm and the claim with the user name (often `preferred_username`).
+
+### Alternative: `.env`
 
 ```dotenv
 OIDC_ENABLED=True
@@ -161,15 +183,15 @@ OIDC_RP_CLIENT_SECRET=<application secret>
 # OIDC_CREATE_USERS=False
 ```
 
-After `sudo docker compose up -d`, the login page shows the button **SSO Login**. Administrators can change its label under **Administration › System** (e.g. “Log in with Synology”); leave the field empty to go back to “SSO Login”.
+After `sudo docker compose up -d`, the login page shows the button **SSO Login**. Its label can be changed under **Administration › Single sign-on** or **Administration › System** (e.g. “Log in with Synology”); leave the field empty to go back to “SSO Login”.
 
 The SSO Server endpoints (`/webman/sso/…`) are derived from `OIDC_OP_BASE_URL`. The token, user info and key endpoints are called by the container itself, so it must be able to reach that address. If it cannot, override them individually with an internal address (`OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT`). `OIDC_OP_AUTHORIZATION_ENDPOINT` must be reachable from the browser.
 
 ### Rules
 
 - Users are matched by **user name** (claim `username` of the SSO Server), case-insensitive: Synology user `anna` signs in as Contracts Manager user `anna`.
-- With `OIDC_CREATE_USERS=False` (default) only users created beforehand may sign in; others see an error on the login page.
-- With `OIDC_CREATE_USERS=True` unknown users are created on first sign-in: groups “Benutzer” and “Alle”, no local password, never superuser or staff.
+- With *Create unknown users* off (`OIDC_CREATE_USERS=False`, default) only users created beforehand may sign in; others see an error on the login page.
+- With *Create unknown users* on (`OIDC_CREATE_USERS=True`) unknown users are created on first sign-in: groups “Benutzer” and “Alle”, no local password, never superuser or staff.
 - Deactivated users cannot sign in via SSO either.
 - **Log out** ends the Contracts Manager session only, not the SSO Server session.
 
@@ -184,6 +206,20 @@ A contract can have a **payment method** (optional), for example PayPal or direc
 - **Contract list:** the filter “Payment method” appears as soon as a visible contract has one.
 
 **Defaults.** *PayPal*, *American Express*, *Visa* and *Lastschrift* (direct debit) are created once, as soon as there is a superuser: on the first start of a new installation, after the update from 0.1.0, and after importing a backup that has no payment methods yet. They are ordinary records: the first superuser owns them and the group “Alle” may read them, so every user can select them. Superusers can rename them, replace the icon or delete them like any other value; a deleted default is not created again. The icons are simple tiles drawn for this project, not the logos of the companies.
+
+## Notes with Markdown
+
+The notes of a contract, a contract partner and a consumer support [Markdown](https://commonmark.org/help/):
+
+| You type | You get |
+|---|---|
+| `# Heading`, `## Smaller heading` | headings |
+| `**bold**`, `*italic*`, `~~struck through~~` | **bold**, *italic*, ~~struck through~~ |
+| `- item` or `1. item` | lists |
+| `[text](https://example.com)` | a link (opens in a new tab) |
+| `\| A \| B \|` with a line `\|---\|---\|` below | a table |
+
+A single line break stays a line break, so notes written before 0.4.0 look the same as before. For safety, HTML in a note is shown as text and not executed, and images are not embedded (they would contact other servers when the page is opened). The short notes of cost entries and documents remain plain text.
 
 ## Documents
 

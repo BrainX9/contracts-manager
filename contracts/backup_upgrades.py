@@ -98,6 +98,17 @@ VERSIONS = (
             "web": ["0004_ai_settings"],
             "assistant": ["0003_repair_columns_from_0_8a"],
         },
+        # 0.3.1 -> 0.4.0: nur neue Felder mit Standardwert in web.SiteSettings
+        # (E-Mail, Single Sign-on), die beim Laden leer bleiben
+        no_changes,
+    ),
+    BackupVersion(
+        "0.4.0",
+        {
+            "contracts": ["0015_payment_method"],
+            "web": ["0005_site_settings_email_sso"],
+            "assistant": ["0003_repair_columns_from_0_8a"],
+        },
     ),
 )
 

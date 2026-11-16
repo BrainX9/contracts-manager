@@ -12,3 +12,4 @@ django-axes[ipware]>=8.3,<9
 openai>=3.40,<4
 anthropic>=2.0,<3
 pypdf>=6.0,<8
+markdown-it-py>=4.0,<5

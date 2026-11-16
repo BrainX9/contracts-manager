@@ -22,27 +22,38 @@ def user_language(user):
     return preferences.language if preferences else settings.LANGUAGE_CODE
 
 
+def mail_config():
+    """Gültige E-Mail-Einstellungen: Verwaltung vor .env (seit 0.4.0)."""
+    from web import site_config
+
+    return site_config.mail()
+
+
 def absolute_url(path):
     """
-    Vollständige Adresse für Links in E-Mails (APP_BASE_URL + Pfad).
+    Vollständige Adresse für Links in E-Mails (Adresse der App + Pfad).
     """
-    return f"{settings.APP_BASE_URL}{path}" if settings.APP_BASE_URL else path
+    base_url = mail_config().base_url
+    return f"{base_url}{path}" if base_url else path
 
 
-def build_mail(name, context, to, language=None):
+def build_mail(name, context, to, language=None, config=None, connection=None):
     """
     Erzeugt eine E-Mail aus den Vorlagen ``emails/<name>*`` in der
     angegebenen Sprache. Gibt eine EmailMultiAlternatives zurück.
+    ``config`` und ``connection`` nur für den Test ungespeicherter
+    Einstellungen (Verwaltung › E-Mail).
     """
     language = language or settings.LANGUAGE_CODE
-    context = {"base_url": settings.APP_BASE_URL, **context}
+    config = config or mail_config()
+    context = {"base_url": config.base_url, **context}
     with translation.override(language):
         subject = render_to_string(f"emails/{name}_subject.txt", context)
         # Betreff muss einzeilig sein
         subject = settings.EMAIL_SUBJECT_PREFIX + " ".join(subject.split())
         text = render_to_string(f"emails/{name}.txt", context)
         html = render_to_string(f"emails/{name}.html", context)
-    message = EmailMultiAlternatives(subject, text, settings.DEFAULT_FROM_EMAIL, to)
+    message = EmailMultiAlternatives(subject, text, config.sender, to, connection=connection)
     message.attach_alternative(html, "text/html")
     return message
 
