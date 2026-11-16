@@ -2,9 +2,12 @@
 
 [← Back to README](../README.md)
 
-Settings come from environment variables in `.env` (see [`.env.example`](../.env.example)). After changing `.env`, restart with `sudo docker compose up -d`.
+There are two places for settings:
 
-The AI assistant, email and single sign-on can also be configured **in the app** under Administration (superusers only), without a restart. A value entered there takes precedence over `.env`; an empty field means “value from `.env`”. `.env` stays supported, but new installations are best configured in the app: what Docker and the database need (`SECRET_KEY`, `POSTGRES_*`, `ALLOWED_HOSTS`, ports) remains in `.env`.
+- **`.env`** (see [`.env.example`](../.env.example)) holds what Docker and the database need before the app runs: `SECRET_KEY`, `POSTGRES_*`, `ALLOWED_HOSTS`, ports and a few more. After changing `.env`, restart with `sudo docker compose up -d`.
+- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Changes apply immediately, without a restart.
+
+Email, single sign-on and the AI assistant could formerly only be set with variables in `.env`. These variables still work, and a value entered in the app takes precedence over them, but please do not use them for new installations: a later version will read these settings from the app only. The README lists them under [Settings that moved to the app](../README.md#settings-that-moved-to-the-app).
 
 - [First administrator](#first-administrator)
 - [Users and sharing](#users-and-sharing)
@@ -100,23 +103,13 @@ Contracts Manager sends emails via SMTP: reminders, invitations and password res
 
 A superuser enters the SMTP server under **Administration › Email settings**: server, port, encryption (STARTTLS, SSL/TLS or none), user, password, sender address and the public address of the app. Changes apply immediately, also for the worker.
 
-- An empty field means “value from `.env`”; the page shows which values are currently in use.
+- The page shows which values are currently in use.
 - The **password** is stored in the database, never shown again and never written to a backup file. Leave the field empty to keep it. An import keeps the password of the installation.
 - **Test** sends an email to your own address with the values you entered, *before* saving them.
 
-### SMTP in `.env` (example: IONOS)
+**Example IONOS:** server `smtp.ionos.de`, port `587` with STARTTLS (or port `465` with SSL/TLS), the mailbox as user. The sender must belong to the mailbox.
 
-```dotenv
-EMAIL_HOST=smtp.ionos.de
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=contracts@your-domain.com
-EMAIL_HOST_PASSWORD=<mailbox password>
-DEFAULT_FROM_EMAIL=Contracts Manager <contracts@your-domain.com>
-APP_BASE_URL=https://contracts.example.com
-```
-
-With IONOS the sender (`DEFAULT_FROM_EMAIL`) must belong to the mailbox. Alternatively use port 465 with `EMAIL_USE_TLS=False` and `EMAIL_USE_SSL=True`. `APP_BASE_URL` is needed for links in reminders, which are created in the background without a browser request.
+The **address of the app** on the same page is needed for links in reminders, which are created in the background without a browser request.
 
 Send a test email from **Administration › System**, or on the command line:
 
@@ -145,7 +138,7 @@ On a contract page under **Reminder › Set up** (edit rights on the contract re
 
 After the reminder date the reminder switches itself off and is shown as done; set a new date to reuse it. Recipients without an email address or without (continued) read access are skipped. Emails use the recipient's language.
 
-The **worker** service (django-q2) sends reminders daily at the time set under **Administration › Email settings**, otherwise at `REMINDER_SEND_TIME` (default `07:00`). If the worker is down at that time, the run happens once after it starts; missed days are not caught up. **Administration › System** shows the last and next run. To trigger a run manually:
+The **worker** service (django-q2) sends reminders daily at the time set under **Administration › Email settings**, by default at `07:00`. If the worker is down at that time, the run happens once after it starts; missed days are not caught up. **Administration › System** shows the last and next run. To trigger a run manually:
 
 ```bash
 sudo docker compose exec app python manage.py send_reminders
@@ -172,26 +165,15 @@ Under **Administration › Single sign-on** (superusers only) switch single sign
 - Single sign-on can only be switched on with complete settings. The local login always stays available, so a wrong setting cannot lock you out.
 - **Other providers** (Authentik, Keycloak, …): open *Advanced* and enter the four endpoints, the scopes, the signing algorithm and the claim with the user name (often `preferred_username`).
 
-### Alternative: `.env`
+The login page then shows the button **SSO Login**. Its label can be changed on the same page or under **Administration › System** (e.g. “Log in with Synology”); leave the field empty to go back to “SSO Login”.
 
-```dotenv
-OIDC_ENABLED=True
-OIDC_OP_BASE_URL=https://nas.example.com
-OIDC_RP_CLIENT_ID=<application ID>
-OIDC_RP_CLIENT_SECRET=<application secret>
-# Optional: create unknown users on first sign-in (default: False)
-# OIDC_CREATE_USERS=False
-```
-
-After `sudo docker compose up -d`, the login page shows the button **SSO Login**. Its label can be changed under **Administration › Single sign-on** or **Administration › System** (e.g. “Log in with Synology”); leave the field empty to go back to “SSO Login”.
-
-The SSO Server endpoints (`/webman/sso/…`) are derived from `OIDC_OP_BASE_URL`. The token, user info and key endpoints are called by the container itself, so it must be able to reach that address. If it cannot, override them individually with an internal address (`OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT`). `OIDC_OP_AUTHORIZATION_ENDPOINT` must be reachable from the browser.
+The SSO Server endpoints (`/webman/sso/…`) are derived from the address of the SSO server. The token, user info and key endpoints are called by the container itself, so it must be able to reach that address. If it cannot, enter them individually with an internal address under *Advanced*. The authorization endpoint must be reachable from the browser.
 
 ### Rules
 
 - Users are matched by **user name** (claim `username` of the SSO Server), case-insensitive: Synology user `anna` signs in as Contracts Manager user `anna`.
-- With *Create unknown users* off (`OIDC_CREATE_USERS=False`, default) only users created beforehand may sign in; others see an error on the login page.
-- With *Create unknown users* on (`OIDC_CREATE_USERS=True`) unknown users are created on first sign-in: groups “Benutzer” and “Alle”, no local password, never superuser or staff.
+- With *Create unknown users* off (default) only users created beforehand may sign in; others see an error on the login page.
+- With *Create unknown users* on unknown users are created on first sign-in: groups “Benutzer” and “Alle”, no local password, never superuser or staff.
 - Deactivated users cannot sign in via SSO either.
 - **Log out** ends the Contracts Manager session only, not the SSO Server session.
 
@@ -259,35 +241,15 @@ The links open Paperless in a new tab, where you sign in as usual. Contracts Man
 
 Contracts Manager has an optional chat assistant that answers questions about your contracts (“How much do I pay for insurance per month?”). It is switched off until you configure a provider.
 
-```dotenv
-AI_ENABLED=True
-# "anthropic": Claude
-# "openai": OpenAI and OpenAI-compatible providers (IONOS AI Model Hub, Mistral, Ollama, …)
-AI_PROVIDER=anthropic
-AI_API_KEY=<your API key>
-AI_MODEL=claude-sonnet-5-5
-# Optional for Claude: thinking depth low | medium | high (empty = model default)
-AI_EFFORT=medium
-# Only for OpenAI-compatible providers other than OpenAI:
-# AI_BASE_URL=https://<provider>/v1
-```
+A superuser sets it up under **Administration › AI settings**. Then add the users who may use the assistant to the group **“KI”** (Administration › Groups); superusers can always use it. The assistant appears in the sidebar, and **Administration › System** shows its status.
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `AI_EFFORT` | model default | Claude only: how much the model thinks before answering. `low` or `medium` is usually enough for questions and costs less. |
-| `AI_MAX_TOKENS` | `16000` | Maximum length of one answer, including the model's thinking |
-| `AI_MAX_TOOL_ROUNDS` | `8` | Maximum number of tool rounds per answer |
-| `AI_TIMEOUT` | `120` | Seconds to wait for the provider |
-
-**Claude specifics:** current Claude models always think before answering. Contracts Manager stores these thinking blocks with the conversation and sends them back unchanged, keeps the system prompt of a conversation fixed, and never changes the tool list within a conversation – Claude rejects changed histories otherwise. When calling Anthropic directly (no `AI_BASE_URL`), a request the model declines for safety reasons is automatically retried on Anthropic's recommended fallback model where possible; otherwise the chat shows that the request was declined.
-
-Restart with `sudo docker compose up -d`. Then add the users who may use the assistant to the group **“KI”** (Administration › Groups); superusers can always use it. The assistant appears in the sidebar, and **Administration › System** shows its status.
+**Claude specifics:** current Claude models always think before answering. Contracts Manager stores these thinking blocks with the conversation and sends them back unchanged, keeps the system prompt of a conversation fixed, and never changes the tool list within a conversation – Claude rejects changed histories otherwise. When calling Anthropic directly (no own address of the API), a request the model declines for safety reasons is automatically retried on Anthropic's recommended fallback model where possible; otherwise the chat shows that the request was declined.
 
 ### Settings in the app
 
-Instead of, or in addition to, `.env`, a superuser can configure the assistant under **Administration › AI settings** – without a restart:
+Under **Administration › AI settings** – without a restart:
 
-- **Connection:** on/off, provider, model, address of the API and API key. A value entered here takes precedence over `.env`; an empty field means “value from `.env`”. To use only `.env` again, clear the fields.
+- **Connection:** on/off, provider (Claude, OpenAI or an OpenAI-compatible provider such as the IONOS AI Model Hub, Mistral or Ollama), model, address of the API and API key.
 - **API key:** it is stored in the database, never shown again and never written to a backup file. Leave the field empty to keep the stored key. An import keeps the key of the installation.
 - **System prompt:** the window shows the text that tells the assistant who it is and how it should answer. Change it as you like; *Reset system prompt to default* brings back the built-in text. A few fixed rules are always added and cannot be edited (answer in the language of the user, never delete anything, changes only as proposals the user approves); the page shows them. A changed prompt applies to new conversations, existing ones keep theirs.
 - **Test:** checks the values you entered *before* saving them. It sends a few short requests to the provider.
@@ -299,7 +261,14 @@ Instead of, or in addition to, `.env`, a superuser can configure the assistant u
 | Local text recognition | reading a PDF and an image inside the container (pypdf, Tesseract) |
 | File upload to the model | a PDF is sent to the model and read – only with Claude; other providers always work with the locally recognised text |
 
-`AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS` and `AI_TIMEOUT` stay in `.env`.
+Only the fine tuning stays in `.env` (restart with `sudo docker compose up -d` after a change):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AI_EFFORT` | model default | Claude only: how much the model thinks before answering (`low`, `medium`, `high`). `low` or `medium` is usually enough for questions and costs less. |
+| `AI_MAX_TOKENS` | `16000` | Maximum length of one answer, including the model's thinking |
+| `AI_MAX_TOOL_ROUNDS` | `8` | Maximum number of tool rounds per answer |
+| `AI_TIMEOUT` | `120` | Seconds to wait for the provider |
 
 **What it can do:** search contracts, read details, cost history, documents and reminders, calculate totals, and look up contract partners, categories and consumers – always only what the user is allowed to see.
 
@@ -328,4 +297,4 @@ The interface is available in German (default) and English. Each user chooses th
 - **HTTPS:** with `USE_HTTPS=True`, session and CSRF cookies are only sent via HTTPS. HSTS can be enabled with `SECURE_HSTS_SECONDS` or in the Synology reverse proxy.
 - **Containers** run as a non-root user (`APP_UID`/`APP_GID`, default `1000`); the code in the image is read-only.
 - **Uploads:** logos are checked (PNG, JPEG, WebP, max. 2 MB), re-encoded without metadata and only delivered to users who may view the contract partner.
-- **Secrets** only in `.env`, never in the repository.
+- **Secrets** only in `.env` or in the app (Administration; never shown again, never written to a backup file), never in the repository.

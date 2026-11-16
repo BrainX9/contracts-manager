@@ -74,12 +74,11 @@ Change at least:
 | `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` | the address the app is reached at, e.g. `contracts.example.com` and `https://contracts.example.com` |
 | `APP_PORT` | a free port on the Synology, e.g. `8000` |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | your first administrator, created on the first start (see step 5). Use a strong password, e.g. from `openssl rand -base64 18 \| tr -d '/+='` |
-| `APP_BASE_URL` | the public address, e.g. `https://contracts.example.com` |
 | `APP_UID`, `APP_GID` | optional: user and group for the containers (default `1000`), must own `media` |
 
 Keep `DEBUG=False`, and `USE_HTTPS=True` when the app is reached through the reverse proxy. Leave `DATA_PATH` and `COMPOSE_FILE` commented out: the data lives in `db` and `media` next to the Compose file, and `COMPOSE_FILE` is for development only.
 
-Email, single sign-on and Paperless are optional – see the [configuration guide](configuration.md).
+Email, single sign-on and the AI assistant are set up later in the app under **Administration** – see the [configuration guide](configuration.md). For links in emails, enter the public address there under **Email settings › Address of the app**.
 
 ## 4. Start
 

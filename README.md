@@ -208,7 +208,12 @@ For a production setup on a Synology NAS (project folder, reverse proxy with HTT
 
 ## Configuration
 
-Settings come from environment variables in `.env` – no secrets in the code. The AI assistant, email and single sign-on can also be configured in the app under **Administration** (superusers only, without a restart); a value entered there takes precedence over `.env`.
+There are two places for settings:
+
+- **`.env`** holds what Docker and the database need before the app runs – no secrets in the code.
+- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Changes apply immediately, without a restart.
+
+### Variables in `.env`
 
 | Variable | Purpose |
 |---|---|
@@ -220,14 +225,7 @@ Settings come from environment variables in `.env` – no secrets in the code. T
 | `APP_IMAGE_TAG` | Version of the Docker image (default `latest`, e.g. `0.3.0` to stay on one version) |
 | `APP_UID`, `APP_GID` | User and group the containers run as (default `1000`, not root) |
 | `GUNICORN_CMD_ARGS` | Replaces the gunicorn options of the image (bind address, workers, timeout) |
-| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP for reminders, invitations and password reset (`EMAIL_USE_SSL` for port 465); also under Administration › Email settings |
-| `APP_BASE_URL` | Public address of the app, used for links in emails; also under Administration › Email settings |
-| `REMINDER_SEND_TIME` | Daily time for reminders (default `07:00`); also under Administration › Email settings |
-| `OIDC_ENABLED`, `OIDC_OP_BASE_URL`, `OIDC_RP_CLIENT_ID`, `OIDC_RP_CLIENT_SECRET`, `OIDC_CREATE_USERS` | Single sign-on; all `OIDC_*` values can also be set under Administration › Single sign-on |
-| `OIDC_USERNAME_CLAIM`, `OIDC_RP_SCOPES`, `OIDC_RP_SIGN_ALGO` | Single sign-on: claim with the user name (default `username`), scopes, signing algorithm |
-| `OIDC_OP_AUTHORIZATION_ENDPOINT`, `OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT` | Single sign-on endpoints for providers other than the Synology SSO Server (default: derived from `OIDC_OP_BASE_URL`) |
 | `PAPERLESS_URL` | Base address of Paperless-ngx for links |
-| `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | Optional AI assistant; a superuser can also set these values, and the system prompt, in the app under Administration › AI settings |
 | `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT` | AI assistant: thinking depth (Claude), length of an answer, tool rounds per answer, timeout in seconds |
 | `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_MINUTES`, `SECURE_HSTS_SECONDS` | Login lockout after failed attempts, optional HSTS |
 | `DJANGO_LOG_LEVEL` | Log level of Django (default `WARNING`) |
@@ -235,7 +233,24 @@ Settings come from environment variables in `.env` – no secrets in the code. T
 
 Set by `docker-compose.yml` itself, not in `.env`: `DATABASE_URL` (built from the `POSTGRES_*` values) and `MEDIA_ROOT` (`/app/media` in the container).
 
-[`.env.example`](.env.example) lists every variable with comments. Details: [configuration guide](docs/configuration.md).
+[`.env.example`](.env.example) lists these variables with comments. Details: [configuration guide](docs/configuration.md).
+
+### Settings that moved to the app
+
+> [!NOTE]
+> The variables below still work, but please do not use them for new installations. Enter the values in the app instead; a later version will read these settings from the app only.
+
+A value entered in the app takes precedence over the variable; an empty field in the app means “value from `.env`”. To move an existing installation, enter the values in the app, check them with **Test**, then remove the lines from `.env`.
+
+| Variable | Now in the app under |
+|---|---|
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | Administration › Email settings: SMTP server, encryption, user, password, sender |
+| `APP_BASE_URL` | Administration › Email settings: address of the app, used for links in emails |
+| `REMINDER_SEND_TIME` | Administration › Email settings: daily time for reminders (default `07:00`) |
+| `OIDC_ENABLED`, `OIDC_OP_BASE_URL`, `OIDC_RP_CLIENT_ID`, `OIDC_RP_CLIENT_SECRET`, `OIDC_CREATE_USERS` | Administration › Single sign-on: on/off, SSO server, client ID, client secret, create unknown users |
+| `OIDC_USERNAME_CLAIM`, `OIDC_RP_SCOPES`, `OIDC_RP_SIGN_ALGO` | Administration › Single sign-on › Advanced: claim with the user name, scopes, signing algorithm |
+| `OIDC_OP_AUTHORIZATION_ENDPOINT`, `OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT` | Administration › Single sign-on › Advanced: endpoints for providers other than the Synology SSO Server |
+| `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | Administration › AI settings: on/off, provider, API key, model, address of the API |
 
 ## Documentation
 
