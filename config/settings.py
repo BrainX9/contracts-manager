@@ -120,6 +120,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "assistant.context_processors.assistant",
+                "web.context_processors.version_notice",
             ],
         },
     },
@@ -303,7 +304,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.4.0"
+APP_VERSION = "0.5.0"
 
 # --- Fehlversuche bei der Anmeldung (django-axes) ----------------------------
 # Nach 5 falschen Passwörtern für denselben Benutzernamen von derselben

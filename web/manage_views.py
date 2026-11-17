@@ -41,7 +41,7 @@ from contracts.apps import ensure_reminder_schedule
 from contracts.mail import build_mail, user_language
 from contracts.models import Contract, Reminder
 
-from . import site_config
+from . import site_config, update_check
 from .mail_backend import smtp_backend
 from .manage_forms import (
     AISettingsForm, BackupUploadForm, EmailSettingsForm, GroupForm, SiteSettingsForm, SSOSettingsForm,
@@ -489,6 +489,7 @@ class SystemView(ManageMixin, View):
         return {
             "settings_form": settings_form or SiteSettingsForm(instance=SiteSettings.load()),
             "version": settings.APP_VERSION,
+            "update": self.update_info() if self.request.user.is_superuser else None,
             "worker": self.worker_status(),
             "email": {
                 "smtp": mail.smtp,
@@ -522,8 +523,43 @@ class SystemView(ManageMixin, View):
     def get(self, request):
         return render(request, self.template_name, self.context())
 
+    def update_info(self):
+        """Stand der Update-Prüfung für Superuser (kein Zugriff auf das Netz)."""
+        site = SiteSettings.load()
+        return {
+            "enabled": site.update_check,
+            "installed": settings.APP_VERSION,
+            "latest": site.latest_version,
+            "checked_at": site.update_checked_at,
+            "available": update_check.newer_than_installed(site.latest_version),
+            "release_url": update_check.release_url(site.latest_version) if site.latest_version else "",
+            "releases_url": update_check.RELEASES_URL,
+        }
+
+    def post_update_check(self, request, action):
+        """Update-Prüfung ein-/ausschalten oder sofort ausführen (nur Superuser)."""
+        if not request.user.is_superuser:
+            raise PermissionDenied
+        site = SiteSettings.load()
+        if action == "update_check_now":
+            if not site.update_check:
+                messages.error(request, _("The update check is switched off."))
+            elif update_check.check():
+                messages.success(request, _("The update check is done."))
+            else:
+                messages.error(request, _("GitHub could not be reached. Please try again later."))
+        else:
+            site.update_check = action == "update_check_on"
+            site.save(update_fields=["update_check"])
+            messages.success(request, _("The update check has been switched on.") if site.update_check
+                             else _("The update check has been switched off."))
+        return redirect("manage_system")
+
     def post(self, request):
-        if request.POST.get("action") == "settings":
+        action = request.POST.get("action")
+        if action in ("update_check_on", "update_check_off", "update_check_now"):
+            return self.post_update_check(request, action)
+        if action == "settings":
             form = SiteSettingsForm(request.POST, instance=SiteSettings.load())
             if not form.is_valid():
                 return render(request, self.template_name, self.context(settings_form=form))

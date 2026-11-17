@@ -29,7 +29,7 @@ Mit „Maintainer“ ist die Person gemeint, die das Repository betreut (GitHub:
 - htmx, Bootstrap und Bootstrap Icons liegen lokal in `web/static/web/vendor/` (kein CDN)
 - `Pillow` für Logos, `mozilla-django-oidc` für Single Sign-on (ab Version 0.4)
 - `django-q2` (ORM-Broker, kein Redis) für Hintergrund-Aufgaben (ab Version 0.5)
-- `openai` und `anthropic` (offizielle SDKs) für den KI-Assistenten (ab Version 0.8a); OpenAI-kompatible Anbieter (IONOS, Ollama) über `AI_BASE_URL`
+- `openai` und `anthropic` (offizielle SDKs) für den KI-Assistenten (ab Version 0.8a); OpenAI-kompatible Anbieter (IONOS) über `AI_BASE_URL`, Ollama als eigener Anbieter (seit 0.5.0)
 - `markdown-it-py` für Markdown in Notizen (ab Version 0.4.0)
 - `django-axes` (mit `ipware`) gegen zu viele Fehlversuche bei der Anmeldung; Container laufen als Benutzer `APP_UID:APP_GID` (Standard 1000), nicht als root
 
@@ -415,6 +415,26 @@ Neue Abhängigkeit (freigegeben): `markdown-it-py` (4.x). Die Werkzeuge des KI-A
 **Weiteres**
 - Backup: Eintrag `0.4.0` in `backup_upgrades.VERSIONS`, Schritt von 0.3.1 ist `no_changes`.
 - `APP_VERSION` ist `0.4.0`; Tag `v0.4.0`, Push und GitHub-Release nur auf Anweisung.
+
+### Version 0.5.0: Ollama, Versionsanzeige und Update-Hinweis
+Keine neuen Abhängigkeiten. Die Werkzeuge des KI-Assistenten (`assistant/tools.py`) sind unverändert.
+
+**Ollama (Anbieter `ollama`)**
+- Eigener Eintrag in `SiteSettings.AI_PROVIDER_CHOICES` und `assistant.providers.PROVIDERS`, technisch derselbe `OpenAIProvider` (OpenAI-Schnittstelle von Ollama), ohne API-Schlüssel. Ohne Adresse gilt `assistant.config.OLLAMA_DEFAULT_URL` (`http://host.docker.internal:11434/v1`, der Docker-Host); eine Adresse der `.env` gilt nur, wenn dort auch Ollama der Anbieter ist. Ein Ollama auf einem anderen Rechner: dessen Adresse in der Verwaltung eintragen.
+- `docker-compose.yml`: `extra_hosts: host.docker.internal:host-gateway` bei `app` und `worker`, damit der Name im Container auf den Docker-Host zeigt (Änderung der Compose-Datei, in den Release-Notes erwähnen).
+- Der KI-Test hängt bei einem Fehler mit Ollama eine Ursachenliste an (`selftest.ollama_hint`); Dateien gehen wie bei allen Anbietern außer Claude nie an das Modell.
+
+**Versionsanzeige und Update-Hinweis (`web.update_check`, nur Superuser)**
+- Seitenleiste: Version und, wenn neuer, „Update x.y.z“ mit Link auf die Release-Notes (`web.context_processors.version_notice`, nur Superuser, eine Abfrage, kein Netzzugriff). Karte „Version und Updates“ unter Verwaltung › System (nur Superuser) mit „Jetzt prüfen“ und Schalter.
+- Der Worker fragt täglich `api.github.com/repos/BrainX9/contracts-manager/releases/latest` (Zeitplan `web.check_for_updates`, `web.apps.ensure_update_schedule`, erste Prüfung 5 Minuten nach dem Anlegen; Aufgabe `web.tasks.check_for_updates`). Ergebnis in `SiteSettings.latest_version` und `update_checked_at`; Seiten fragen nie selbst. Anonyme Anfrage, nur Standardbibliothek (`urllib`), allgemeiner User-Agent. **Standardmäßig an** (Entscheidung des Maintainers), abschaltbar (`SiteSettings.update_check`). Versionen werden numerisch verglichen, Beta-Namen ignoriert, Fehler lassen den letzten Stand stehen.
+- Neue Migration `web/0006`.
+
+**Sicherheit (Docker Scout)**
+- Gemeldet waren libxml2, poppler, expat, krb5, openjpeg2 und tar (Debian trixie), alle „Fix available: No“. `apt-get upgrade` fand nichts; die Pakete hängen an Tesseract, Poppler (Texterkennung) bzw. `dpkg` und lassen sich nicht entfernen. Nichts geändert; vor jedem Release das gebaute Image erneut prüfen.
+
+**Weiteres**
+- Backup: Eintrag `0.5.0` in `backup_upgrades.VERSIONS`, Schritt von 0.4.0 ist `no_changes`.
+- `APP_VERSION` ist `0.5.0`; Tag `v0.5.0`, Push und GitHub-Release nur auf Anweisung.
 
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)

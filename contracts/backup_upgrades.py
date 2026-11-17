@@ -109,6 +109,17 @@ VERSIONS = (
             "web": ["0005_site_settings_email_sso"],
             "assistant": ["0003_repair_columns_from_0_8a"],
         },
+        # 0.4.0 -> 0.5.0: nur neue Felder mit Standardwert in web.SiteSettings
+        # (Update-Prüfung) und ein weiterer Anbieter zur Auswahl
+        no_changes,
+    ),
+    BackupVersion(
+        "0.5.0",
+        {
+            "contracts": ["0015_payment_method"],
+            "web": ["0006_update_check_ollama"],
+            "assistant": ["0003_repair_columns_from_0_8a"],
+        },
     ),
 )
 

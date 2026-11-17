@@ -346,6 +346,35 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5 {
 /* Benutzermenü unten in der Seitenleiste */
 
 .app-user {
+  padding-top: 0.5rem;
+}
+
+/* Version und Update-Hinweis für Superuser, über dem Benutzermenü */
+.app-version {
+  margin-top: auto;
+  padding-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.app-version-link {
+  color: var(--bs-secondary-color);
+  text-decoration: none;
+}
+
+.app-version-link:hover {
+  text-decoration: underline;
+}
+
+.app-version-update {
+  text-decoration: none;
+}
+
+/* Ohne Versionszeile (kein Superuser) rückt das Benutzermenü nach unten */
+.app-nav + .app-user {
   margin-top: auto;
   padding-top: 1rem;
 }

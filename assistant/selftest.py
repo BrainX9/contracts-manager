@@ -24,6 +24,7 @@ from pathlib import Path
 from django.utils.translation import gettext as _
 
 from . import extraction
+from .config import OLLAMA
 from .providers import ProviderError, RefusalError, get_provider
 
 logger = logging.getLogger(__name__)
@@ -204,6 +205,16 @@ def check_file(config):
     })
 
 
+def ollama_hint(config):
+    """Mögliche Ursachen bei einem Fehler mit Ollama (Version 0.5.0), sonst leer."""
+    if config.provider != OLLAMA:
+        return ""
+    return " " + _(
+        "Ollama: check that it is running, that it listens on the network (OLLAMA_HOST=0.0.0.0), that "
+        "the container can reach %(url)s and that the model “%(model)s” has been pulled."
+    ) % {"url": config.base_url or "–", "model": config.model}
+
+
 CHECKS = {"connection": check_connection, "tools": check_tools, "local": check_local, "file": check_file}
 
 
@@ -216,7 +227,7 @@ def run_step(step, config, timeout=TEST_TIMEOUT):
     except RefusalError:
         return StepResult(step, FAILED, _("The model refused the test request."))
     except ProviderError as error:
-        return StepResult(step, FAILED, str(error))
+        return StepResult(step, FAILED, f"{error}{ollama_hint(config)}")
     except Exception as error:  # z. B. ungültige Adresse
         logger.exception("KI-Test fehlgeschlagen (%s)", step)
-        return StepResult(step, FAILED, type(error).__name__)
+        return StepResult(step, FAILED, f"{type(error).__name__}{ollama_hint(config)}")

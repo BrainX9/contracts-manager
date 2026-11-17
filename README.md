@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.4.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.5.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -93,7 +93,7 @@ The user interface is available in **English and German** (per user).
 <td valign="top">
 
 ### 🔗 Integrations, AI and design
-- **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, OpenAI or OpenAI-compatible provider, configured in `.env` or in the app (with a connection test and an editable system prompt); local text recognition (Tesseract)
+- **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, OpenAI, an OpenAI-compatible provider or **Ollama** with local models, configured in the app (with a connection test and an editable system prompt); local text recognition (Tesseract)
 - **Backup and import** of all data and files as a single ZIP file (without passwords), in the app or on the command line; backups of older versions (0.1.0 and later) can be imported
 - **Single sign-on** with the Synology SSO Server (OpenID Connect), local login stays available
 - **Paperless-ngx** links to documents and correspondents (links only, no access to Paperless)
@@ -137,7 +137,7 @@ The user interface is available in **English and German** (per user).
 | Frontend | Django templates, HTMX 2, Bootstrap 5.3, Bootstrap Icons – no Node build |
 | Database | PostgreSQL 17 (`pgvector/pgvector:pg17` image, ready for later RAG features) |
 | Background jobs | django-q2 with the database as broker |
-| AI (optional) | OpenAI and Anthropic Python SDKs; OpenAI-compatible providers via base URL |
+| AI (optional) | OpenAI and Anthropic Python SDKs; OpenAI-compatible providers and Ollama via base URL |
 | Auth | Django auth, optional OpenID Connect (mozilla-django-oidc), login lockout (django-axes) |
 | Images, Markdown | Pillow, markdown-it-py |
 | Serving | gunicorn, whitenoise |
@@ -211,7 +211,7 @@ For a production setup on a Synology NAS (project folder, reverse proxy with HTT
 There are two places for settings:
 
 - **`.env`** holds what Docker and the database need before the app runs – no secrets in the code.
-- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Changes apply immediately, without a restart.
+- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Superusers also see the installed version there and a hint when a newer version exists (checked once a day at GitHub; can be switched off). Changes apply immediately, without a restart.
 
 ### Variables in `.env`
 
@@ -258,7 +258,7 @@ A value entered in the app takes precedence over the variable; an empty field in
 |---|---|
 | [Installation on a Synology NAS](docs/installation-synology.md) | Project folder, Compose file and `.env`, first start, superuser, reverse proxy with HTTPS, daily backup |
 | [Schritt-für-Schritt-Anleitung Synology (deutsch)](docs/installation-synology-de.md) | Detailed German walkthrough for beginners: Container Manager, SSH, Compose file and `.env`, HTTPS, daily backups, updates, troubleshooting |
-| [Configuration](docs/configuration.md) | Users and sharing, settings in the app, email and reminders, single sign-on, notes with Markdown, documents, Paperless-ngx, AI assistant |
+| [Configuration](docs/configuration.md) | Users and sharing, settings in the app, email and reminders, single sign-on, notes with Markdown, documents, Paperless-ngx, AI assistant (also Ollama), version and updates |
 | [Operations](docs/operations.md) | Updates, backup and restore, export and import of all data as one file, restart with an encrypted folder |
 | [Development](docs/development.md) | Local development, translations, tests, project structure |
 
