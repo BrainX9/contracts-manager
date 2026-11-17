@@ -56,6 +56,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Ollama auf dem Docker-Host erreichbar machen (host.docker.internal,
+    # Version 0.5.0; KI-Anbieter "Ollama"). Auf anderen Rechnern im Netz
+    # nicht nötig, dort trägt man deren Adresse in der Verwaltung ein.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - type: bind
         source: ${DATA_PATH:-.}/media
@@ -99,6 +104,11 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    # Ollama auf dem Docker-Host erreichbar machen (host.docker.internal,
+    # Version 0.5.0; KI-Anbieter "Ollama"). Auf anderen Rechnern im Netz
+    # nicht nötig, dort trägt man deren Adresse in der Verwaltung ein.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - type: bind
         source: ${DATA_PATH:-.}/media

@@ -4,7 +4,8 @@ Anbindung der Sprachmodelle (Version 0.8a).
 Eine gemeinsame Schnittstelle für zwei Arten von Anbietern:
 
 - ``OpenAIProvider``: OpenAI und alle OpenAI-kompatiblen Anbieter (IONOS AI
-  Model Hub, Mistral, lokales Ollama) über ``AI_BASE_URL``
+  Model Hub, Mistral) über ``AI_BASE_URL``; Ollama (Anbieter "ollama") mit
+  Standardadresse ``assistant.config.OLLAMA_DEFAULT_URL``
 - ``AnthropicProvider``: Claude
 
 Nachrichten kommen anbieterneutral herein::
@@ -253,6 +254,9 @@ class AnthropicProvider:
 
 PROVIDERS = {
     "openai": OpenAIProvider,
+    # Ollama spricht die OpenAI-Schnittstelle (Version 0.5.0); ein
+    # API-Schlüssel ist nicht nötig
+    "ollama": OpenAIProvider,
     "anthropic": AnthropicProvider,
 }
 

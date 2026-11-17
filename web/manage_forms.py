@@ -212,8 +212,9 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["ai_base_url"].widget.attrs["placeholder"] = env.base_url or _("Default address of the provider")
         self.fields["ai_model"].help_text = _("Empty: value from the .env file.")
         self.fields["ai_base_url"].help_text = _(
-            "Only for OpenAI-compatible providers or a proxy, e.g. https://example.com/v1. "
-            "Empty: value from the .env file."
+            "Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://example.com/v1 or "
+            "http://192.168.1.20:11434/v1 for Ollama on another computer. For Ollama, empty means "
+            "the Docker host (host.docker.internal). Otherwise empty: value from the .env file."
         )
         if self.instance.ai_api_key:
             self.fields["api_key"].help_text = _("A key is stored. Leave empty to keep it.")

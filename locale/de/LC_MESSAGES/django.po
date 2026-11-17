@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 23:25+0100\n"
+"POT-Creation-Date: 2026-11-17 10:43+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -15,8 +15,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: assistant/apps.py:24 web/models.py:76
-#: web/templates/web/manage/system.html:107
+#: assistant/apps.py:24 web/models.py:80
+#: web/templates/web/manage/system.html:140
 msgid "AI assistant"
 msgstr "KI-Assistent"
 
@@ -56,7 +56,7 @@ msgstr "Titel"
 msgid "status"
 msgstr "Status"
 
-#: assistant/models.py:35 web/models.py:81
+#: assistant/models.py:35 web/models.py:85
 msgid "system prompt"
 msgstr "System-Prompt"
 
@@ -118,7 +118,7 @@ msgstr "Werkzeugaufrufe"
 msgid "tool call ID"
 msgstr "ID des Werkzeugaufrufs"
 
-#: assistant/models.py:85 web/models.py:77
+#: assistant/models.py:85 web/models.py:81
 msgid "provider"
 msgstr "Anbieter"
 
@@ -264,7 +264,7 @@ msgstr "Name"
 msgid "Address"
 msgstr "Adresse"
 
-#: assistant/proposals.py:114 web/templates/web/manage/system.html:52
+#: assistant/proposals.py:114 web/templates/web/manage/system.html:85
 #: web/templates/web/manage/users/detail.html:52
 #: web/templates/web/manage/users/list.html:24
 #: web/templates/web/providers/detail.html:36
@@ -364,36 +364,36 @@ msgstr "Dokument"
 msgid "Contract"
 msgstr "Vertrag"
 
-#: assistant/selftest.py:68
+#: assistant/selftest.py:69
 msgid "Connection and answer"
 msgstr "Verbindung und Antwort"
 
-#: assistant/selftest.py:69
+#: assistant/selftest.py:70
 msgid "Tool call"
 msgstr "Werkzeugaufruf"
 
-#: assistant/selftest.py:70
+#: assistant/selftest.py:71
 msgid "Local text recognition"
 msgstr "Lokale Texterkennung"
 
-#: assistant/selftest.py:71
+#: assistant/selftest.py:72
 msgid "File upload to the model"
 msgstr "Datei-Upload an das Modell"
 
-#: assistant/selftest.py:131
+#: assistant/selftest.py:132
 msgid "The model returned an empty answer."
 msgstr "Das Modell hat eine leere Antwort geliefert."
 
-#: assistant/selftest.py:132
+#: assistant/selftest.py:133
 #, python-format
 msgid "The model “%(model)s” answered: %(answer)s"
 msgstr "Das Modell „%(model)s“ hat geantwortet: %(answer)s"
 
-#: assistant/selftest.py:142
+#: assistant/selftest.py:143
 msgid "The model called the test tool."
 msgstr "Das Modell hat das Test-Werkzeug aufgerufen."
 
-#: assistant/selftest.py:144
+#: assistant/selftest.py:145
 msgid ""
 "The model answered without calling the tool. The assistant needs a model "
 "that supports tools (function calling)."
@@ -401,25 +401,25 @@ msgstr ""
 "Das Modell hat geantwortet, ohne das Werkzeug aufzurufen. Der Assistent "
 "braucht ein Modell, das Werkzeuge unterstützt (Function Calling)."
 
-#: assistant/selftest.py:156
+#: assistant/selftest.py:157
 msgid "PDF"
 msgstr "PDF"
 
-#: assistant/selftest.py:157
+#: assistant/selftest.py:158
 msgid "image (OCR)"
 msgstr "Bild (OCR)"
 
-#: assistant/selftest.py:168
+#: assistant/selftest.py:169
 #, python-format
 msgid "%(label)s: recognised"
 msgstr "%(label)s: erkannt"
 
-#: assistant/selftest.py:169
+#: assistant/selftest.py:170
 #, python-format
 msgid "%(label)s: not recognised"
 msgstr "%(label)s: nicht erkannt"
 
-#: assistant/selftest.py:176
+#: assistant/selftest.py:177
 msgid ""
 "Files are only sent to the model with Claude (provider Anthropic). With this "
 "provider the assistant works with the locally recognised text."
@@ -427,20 +427,25 @@ msgstr ""
 "Dateien gehen nur bei Claude (Anbieter Anthropic) an das Modell. Bei diesem "
 "Anbieter arbeitet der Assistent mit dem lokal erkannten Text."
 
-#: assistant/selftest.py:187
+#: assistant/selftest.py:188
 msgid "The model did not ask for the file."
 msgstr "Das Modell hat die Datei nicht angefordert."
 
-#: assistant/selftest.py:201
+#: assistant/selftest.py:202
 msgid "The model read the uploaded PDF file."
 msgstr "Das Modell hat die hochgeladene PDF-Datei gelesen."
 
-#: assistant/selftest.py:202
+#: assistant/selftest.py:203
 #, python-format
 msgid "The model did not read the file correctly. Answer: %(answer)s"
 msgstr "Das Modell hat die Datei nicht richtig gelesen. Antwort: %(answer)s"
 
-#: assistant/selftest.py:217
+#: assistant/selftest.py:213
+#, python-format
+msgid "Ollama: check that it is running, that it listens on the network (OLLAMA_HOST=0.0.0.0), that the container can reach %(url)s and that the model “%(model)s” has been pulled."
+msgstr "Ollama: Prüfe, ob es läuft, ob es im Netzwerk lauscht (OLLAMA_HOST=0.0.0.0), ob der Container %(url)s erreicht und ob das Modell „%(model)s“ geladen wurde (ollama pull)."
+
+#: assistant/selftest.py:228
 msgid "The model refused the test request."
 msgstr "Das Modell hat die Testanfrage abgelehnt."
 
@@ -617,11 +622,11 @@ msgstr "Bitte warte, bis die aktuelle Antwort fertig ist."
 msgid "This proposal has already been decided."
 msgstr "Über diesen Vorschlag wurde bereits entschieden."
 
-#: config/settings.py:166
+#: config/settings.py:167
 msgid "German"
 msgstr "Deutsch"
 
-#: config/settings.py:167
+#: config/settings.py:168
 msgid "English"
 msgstr "Englisch"
 
@@ -1507,7 +1512,7 @@ msgstr ""
 "Das ist eine Test-E-Mail von Contracts Manager. Wenn du sie lesen kannst, "
 "funktioniert der Versand."
 
-#: web/apps.py:12
+#: web/apps.py:36
 msgid "Web interface"
 msgstr "Oberfläche"
 
@@ -1520,8 +1525,12 @@ msgid "The document has been deleted."
 msgstr "Das Dokument wurde gelöscht."
 
 #: web/forms.py:28
-msgid "Markdown is supported: **bold**, *italic*, lists with “-”, headings with “#”, links as [text](https://example.com) and tables."
-msgstr "Markdown wird unterstützt: **fett**, *kursiv*, Listen mit „-“, Überschriften mit „#“, Links als [Text](https://example.com) und Tabellen."
+msgid ""
+"Markdown is supported: **bold**, *italic*, lists with “-”, headings with "
+"“#”, links as [text](https://example.com) and tables."
+msgstr ""
+"Markdown wird unterstützt: **fett**, *kursiv*, Listen mit „-“, Überschriften "
+"mit „#“, Links als [Text](https://example.com) und Tabellen."
 
 #: web/forms.py:107
 msgid "Email address"
@@ -1597,7 +1606,7 @@ msgid_plural "%(days)s days"
 msgstr[0] "%(days)s Tag"
 msgstr[1] "%(days)s Tage"
 
-#: web/forms.py:443 web/templates/web/manage/system.html:69
+#: web/forms.py:443 web/templates/web/manage/system.html:102
 msgid "no email address"
 msgstr "keine E-Mail-Adresse"
 
@@ -1683,11 +1692,11 @@ msgstr ""
 "Der neue Eigentümer hat bereits Objekte mit diesen Namen: %(names)s. Bitte "
 "zuerst umbenennen."
 
-#: web/manage_forms.py:173 web/manage_forms.py:438 web/models.py:128
+#: web/manage_forms.py:173 web/manage_forms.py:442 web/models.py:138
 msgid "SSO Login"
 msgstr "SSO Login"
 
-#: web/manage_forms.py:186 web/models.py:80
+#: web/manage_forms.py:186 web/models.py:84
 msgid "API key"
 msgstr "API-Schlüssel"
 
@@ -1695,16 +1704,16 @@ msgstr "API-Schlüssel"
 msgid "Remove the stored API key"
 msgstr "Gespeicherten API-Schlüssel entfernen"
 
-#: web/manage_forms.py:203 web/manage_forms.py:352 web/manage_forms.py:445
+#: web/manage_forms.py:203 web/manage_forms.py:353 web/manage_forms.py:449
 #, python-format
 msgid "As in the .env file (%(value)s)"
 msgstr "Wie in der Datei .env (%(value)s)"
 
-#: web/manage_forms.py:205 web/manage_forms.py:449
+#: web/manage_forms.py:205 web/manage_forms.py:453
 msgid "on"
 msgstr "ein"
 
-#: web/manage_forms.py:205 web/manage_forms.py:449
+#: web/manage_forms.py:205 web/manage_forms.py:453
 msgid "off"
 msgstr "aus"
 
@@ -1712,132 +1721,155 @@ msgstr "aus"
 msgid "Default address of the provider"
 msgstr "Standardadresse des Anbieters"
 
-#: web/manage_forms.py:213 web/manage_forms.py:340 web/manage_forms.py:446
+#: web/manage_forms.py:213 web/manage_forms.py:341 web/manage_forms.py:450
 msgid "Empty: value from the .env file."
 msgstr "Leer: Wert aus der Datei .env."
 
 #: web/manage_forms.py:215
-msgid ""
-"Only for OpenAI-compatible providers or a proxy, e.g. https://example.com/"
-"v1. Empty: value from the .env file."
-msgstr ""
-"Nur für OpenAI-kompatible Anbieter oder einen Proxy, z. B. https://"
-"example.com/v1. Leer: Wert aus der Datei .env."
+msgid "Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://example.com/v1 or http://192.168.1.20:11434/v1 for Ollama on another computer. For Ollama, empty means the Docker host (host.docker.internal). Otherwise empty: value from the .env file."
+msgstr "Nur für OpenAI-kompatible Anbieter, Ollama oder einen Proxy, z. B. https://example.com/v1 oder http://192.168.1.20:11434/v1 für Ollama auf einem anderen Rechner. Bei Ollama bedeutet leer: der Docker-Host (host.docker.internal). Sonst leer: Wert aus der Datei .env."
 
-#: web/manage_forms.py:219
+#: web/manage_forms.py:220
 msgid "A key is stored. Leave empty to keep it."
 msgstr "Ein Schlüssel ist gespeichert. Leer lassen, um ihn zu behalten."
 
-#: web/manage_forms.py:223
+#: web/manage_forms.py:224
 msgid "No key is stored here; the key from the .env file is used."
 msgstr ""
 "Hier ist kein Schlüssel gespeichert; es gilt der Schlüssel aus der "
 "Datei .env."
 
-#: web/manage_forms.py:224
+#: web/manage_forms.py:225
 msgid "No key is set yet."
 msgstr "Noch kein Schlüssel hinterlegt."
 
-#: web/manage_forms.py:239
+#: web/manage_forms.py:240
 msgid "The system prompt may have at most 20,000 characters."
 msgstr "Der System-Prompt darf höchstens 20.000 Zeichen haben."
 
-#: web/manage_forms.py:320 web/models.py:92
+#: web/manage_forms.py:321 web/models.py:96
 msgid "SMTP password"
 msgstr "SMTP-Passwort"
 
-#: web/manage_forms.py:323
+#: web/manage_forms.py:324
 msgid "Remove the stored password"
 msgstr "Gespeichertes Passwort entfernen"
 
-#: web/manage_forms.py:356
-msgid "Address the emails come from, often the same as the SMTP user. Empty: value from the .env file."
-msgstr "Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. Leer: Wert aus der Datei .env."
+#: web/manage_forms.py:357
+msgid ""
+"Address the emails come from, often the same as the SMTP user. Empty: value "
+"from the .env file."
+msgstr ""
+"Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. "
+"Leer: Wert aus der Datei .env."
 
-#: web/manage_forms.py:359
-msgid "Public address of the app, used for links in emails. Empty: value from the .env file."
-msgstr "Öffentliche Adresse der App, für Links in E-Mails. Leer: Wert aus der Datei .env."
+#: web/manage_forms.py:360
+msgid ""
+"Public address of the app, used for links in emails. Empty: value from "
+"the .env file."
+msgstr ""
+"Öffentliche Adresse der App, für Links in E-Mails. Leer: Wert aus der "
+"Datei .env."
 
-#: web/manage_forms.py:362
+#: web/manage_forms.py:363
 #, python-format
 msgid "Empty: value from the .env file (%(value)s)."
 msgstr "Leer: Wert aus der Datei .env (%(value)s)."
 
-#: web/manage_forms.py:366
+#: web/manage_forms.py:367
 msgid "A password is stored. Leave empty to keep it."
 msgstr "Ein Passwort ist gespeichert. Leer lassen, um es zu behalten."
 
-#: web/manage_forms.py:367
-msgid "No password is stored here; the password from the .env file is used."
-msgstr "Hier ist kein Passwort gespeichert; es gilt das Passwort aus der Datei .env."
-
 #: web/manage_forms.py:368
+msgid "No password is stored here; the password from the .env file is used."
+msgstr ""
+"Hier ist kein Passwort gespeichert; es gilt das Passwort aus der Datei .env."
+
+#: web/manage_forms.py:369
 msgid "No password is set yet."
 msgstr "Es ist noch kein Passwort hinterlegt."
 
-#: web/manage_forms.py:374
+#: web/manage_forms.py:375
 msgid "Enter the host name only, e.g. smtp.example.com."
 msgstr "Nur den Servernamen eingeben, z. B. smtp.example.com."
 
-#: web/manage_forms.py:395
+#: web/manage_forms.py:399
 msgid "Enter a time such as 07:00."
 msgstr "Gib eine Uhrzeit wie 07:00 ein."
 
-#: web/manage_forms.py:426
+#: web/manage_forms.py:430
 msgid "Client secret"
 msgstr "Client-Secret"
 
-#: web/manage_forms.py:429
+#: web/manage_forms.py:433
 msgid "Remove the stored client secret"
 msgstr "Gespeichertes Client-Secret entfernen"
 
-#: web/manage_forms.py:452
-msgid "On: a user who signs in for the first time is created automatically, without a local password and never as an administrator."
-msgstr "An: Wer sich zum ersten Mal anmeldet, wird automatisch angelegt, ohne lokales Passwort und nie als Administrator."
-
-#: web/manage_forms.py:466
-msgid "For the Synology SSO Server the address of the NAS, e.g. https://nas.example.com; the endpoints are derived from it. Empty: value from the .env file."
-msgstr "Beim Synology SSO Server die Adresse des NAS, z. B. https://nas.example.com; die Endpunkte ergeben sich daraus. Leer: Wert aus der Datei .env."
+#: web/manage_forms.py:456
+msgid ""
+"On: a user who signs in for the first time is created automatically, without "
+"a local password and never as an administrator."
+msgstr ""
+"An: Wer sich zum ersten Mal anmeldet, wird automatisch angelegt, ohne "
+"lokales Passwort und nie als Administrator."
 
 #: web/manage_forms.py:470
-msgid "Synology: “username”, other providers often “preferred_username”. Empty: value from the .env file."
-msgstr "Synology: „username“, andere Anbieter oft „preferred_username“. Leer: Wert aus der Datei .env."
+msgid ""
+"For the Synology SSO Server the address of the NAS, e.g. https://"
+"nas.example.com; the endpoints are derived from it. Empty: value from "
+"the .env file."
+msgstr ""
+"Beim Synology SSO Server die Adresse des NAS, z. B. https://nas.example.com; "
+"die Endpunkte ergeben sich daraus. Leer: Wert aus der Datei .env."
 
-#: web/manage_forms.py:478
+#: web/manage_forms.py:474
+msgid ""
+"Synology: “username”, other providers often “preferred_username”. Empty: "
+"value from the .env file."
+msgstr ""
+"Synology: „username“, andere Anbieter oft „preferred_username“. Leer: Wert "
+"aus der Datei .env."
+
+#: web/manage_forms.py:482
 msgid "A client secret is stored. Leave empty to keep it."
 msgstr "Ein Client-Secret ist gespeichert. Leer lassen, um es zu behalten."
 
-#: web/manage_forms.py:479
+#: web/manage_forms.py:483
 msgid "No client secret is stored here; the one from the .env file is used."
-msgstr "Hier ist kein Client-Secret gespeichert; es gilt das aus der Datei .env."
+msgstr ""
+"Hier ist kein Client-Secret gespeichert; es gilt das aus der Datei .env."
 
-#: web/manage_forms.py:480
+#: web/manage_forms.py:484
 msgid "No client secret is set yet."
 msgstr "Es ist noch kein Client-Secret hinterlegt."
 
-#: web/manage_forms.py:490
+#: web/manage_forms.py:494
 #, python-format
 msgid "Supported: %(values)s."
 msgstr "Unterstützt: %(values)s."
 
-#: web/manage_forms.py:511
+#: web/manage_forms.py:515
 msgid "address of the SSO server or the endpoints"
 msgstr "Adresse des SSO-Servers oder die Endpunkte"
 
-#: web/manage_forms.py:514 web/models.py:99 web/sso_check.py:37
+#: web/manage_forms.py:518 web/models.py:103 web/sso_check.py:37
 msgid "client ID"
 msgstr "Client-ID"
 
-#: web/manage_forms.py:515 web/models.py:100 web/sso_check.py:38
+#: web/manage_forms.py:519 web/models.py:104 web/sso_check.py:38
 msgid "client secret"
 msgstr "Client-Secret"
 
-#: web/manage_forms.py:520
+#: web/manage_forms.py:524
 #, python-format
-msgid "Single sign-on can only be switched on with complete settings. Missing: %(missing)s."
-msgstr "Single Sign-on lässt sich nur mit vollständigen Angaben einschalten. Es fehlt: %(missing)s."
+msgid ""
+"Single sign-on can only be switched on with complete settings. Missing: "
+"%(missing)s."
+msgstr ""
+"Single Sign-on lässt sich nur mit vollständigen Angaben einschalten. Es "
+"fehlt: %(missing)s."
 
-#: web/manage_forms.py:539
+#: web/manage_forms.py:543
 msgid "Backup file (ZIP)"
 msgstr "Backup-Datei (ZIP)"
 
@@ -1903,48 +1935,69 @@ msgstr "Die Gruppe „%(name)s“ wurde gespeichert."
 msgid "The group “%(name)s” has been deleted."
 msgstr "Die Gruppe „%(name)s“ wurde gelöscht."
 
-#: web/manage_views.py:531 web/manage_views.py:599 web/manage_views.py:667
-#: web/manage_views.py:728
+#: web/manage_views.py:546
+msgid "The update check is switched off."
+msgstr "Die Update-Prüfung ist ausgeschaltet."
+
+#: web/manage_views.py:548
+msgid "The update check is done."
+msgstr "Die Update-Prüfung ist abgeschlossen."
+
+#: web/manage_views.py:550
+msgid "GitHub could not be reached. Please try again later."
+msgstr "GitHub ist nicht erreichbar. Bitte versuche es später noch einmal."
+
+#: web/manage_views.py:554
+msgid "The update check has been switched on."
+msgstr "Die Update-Prüfung wurde eingeschaltet."
+
+#: web/manage_views.py:555
+msgid "The update check has been switched off."
+msgstr "Die Update-Prüfung wurde ausgeschaltet."
+
+#: web/manage_views.py:567 web/manage_views.py:635 web/manage_views.py:703
+#: web/manage_views.py:764
 msgid "The settings have been saved."
 msgstr "Die Einstellungen wurden gespeichert."
 
-#: web/manage_views.py:535 web/manage_views.py:675
+#: web/manage_views.py:571 web/manage_views.py:711
 msgid "Please enter your email address under Settings first."
 msgstr "Bitte trage zuerst unter Einstellungen deine E-Mail-Adresse ein."
 
-#: web/manage_views.py:541 web/manage_views.py:683
+#: web/manage_views.py:577 web/manage_views.py:719
 #, python-format
 msgid "The test email could not be sent: %(error)s"
 msgstr "Die Test-E-Mail konnte nicht verschickt werden: %(error)s"
 
-#: web/manage_views.py:543
+#: web/manage_views.py:579
 #, python-format
 msgid "A test email has been sent to %(email)s."
 msgstr "Eine Test-E-Mail wurde an %(email)s geschickt."
 
-#: web/manage_views.py:591
+#: web/manage_views.py:627
 msgid "The system prompt has been reset to the default."
 msgstr "Der System-Prompt wurde auf den Standard zurückgesetzt."
 
-#: web/manage_views.py:673
+#: web/manage_views.py:709
 msgid "No SMTP server is set, neither here nor in the .env file."
 msgstr "Es ist kein SMTP-Server hinterlegt, weder hier noch in der Datei .env."
 
-#: web/manage_views.py:684
+#: web/manage_views.py:720
 #, python-format
 msgid "A test email has been sent to %(email)s. Nothing was saved."
-msgstr "Eine Test-E-Mail wurde an %(email)s geschickt. Gespeichert wurde nichts."
+msgstr ""
+"Eine Test-E-Mail wurde an %(email)s geschickt. Gespeichert wurde nichts."
 
-#: web/manage_views.py:822
+#: web/manage_views.py:858
 msgid "The uploaded backup is no longer available. Please upload it again."
 msgstr ""
 "Das hochgeladene Backup ist nicht mehr vorhanden. Bitte lade es erneut hoch."
 
-#: web/manage_views.py:826
+#: web/manage_views.py:862
 msgid "The import was cancelled. Nothing has been changed."
 msgstr "Der Import wurde abgebrochen. Es wurde nichts geändert."
 
-#: web/manage_views.py:840
+#: web/manage_views.py:876
 msgid ""
 "The backup has been imported. No user has a password now: choose a new one "
 "via “Forgot password?”."
@@ -1961,8 +2014,9 @@ msgid "user preferences"
 msgstr "Benutzereinstellungen"
 
 #: web/models.py:51 web/models.py:59 web/templates/web/manage/ai.html:20
-#: web/templates/web/manage/sso.html:20 web/templates/web/manage/system.html:80
-#: web/templates/web/manage/system.html:110
+#: web/templates/web/manage/sso.html:20
+#: web/templates/web/manage/system.html:113
+#: web/templates/web/manage/system.html:143
 msgid "On"
 msgstr "An"
 
@@ -1970,8 +2024,9 @@ msgstr "An"
 #: web/templates/web/contracts/_reminder.html:19
 #: web/templates/web/manage/ai.html:20
 #: web/templates/web/manage/reminders.html:40
-#: web/templates/web/manage/sso.html:20 web/templates/web/manage/system.html:80
-#: web/templates/web/manage/system.html:110
+#: web/templates/web/manage/sso.html:20
+#: web/templates/web/manage/system.html:113
+#: web/templates/web/manage/system.html:143
 msgid "Off"
 msgstr "Aus"
 
@@ -1987,104 +2042,120 @@ msgstr "SSL/TLS (meist Port 465)"
 msgid "None (unencrypted)"
 msgstr "Keine (unverschlüsselt)"
 
-#: web/models.py:60
+#: web/models.py:61
 msgid "OpenAI or OpenAI-compatible"
 msgstr "OpenAI oder OpenAI-kompatibel"
 
 #: web/models.py:63
+msgid "Ollama (local models)"
+msgstr "Ollama (lokale Modelle)"
+
+#: web/models.py:67
 msgid "label of the SSO button"
 msgstr "Beschriftung der SSO-Schaltfläche"
 
-#: web/models.py:66
+#: web/models.py:70
 msgid "Shown on the login page. Leave empty for “SSO Login”."
 msgstr "Erscheint auf der Anmeldeseite. Leer lassen für „SSO Login“."
 
-#: web/models.py:71
+#: web/models.py:75
 msgid "default payment methods created"
 msgstr "Standard-Zahlungsmethoden angelegt"
 
-#: web/models.py:78
+#: web/models.py:82
 msgid "model"
 msgstr "Modell"
 
-#: web/models.py:79
+#: web/models.py:83
 msgid "address of the API (base URL)"
 msgstr "Adresse der API (Basis-URL)"
 
-#: web/models.py:86 web/templates/web/manage/email.html:17
-#: web/templates/web/manage/system.html:57
+#: web/models.py:90 web/templates/web/manage/email.html:17
+#: web/templates/web/manage/system.html:90
 msgid "SMTP server"
 msgstr "SMTP-Server"
 
-#: web/models.py:88
+#: web/models.py:92
 msgid "port"
 msgstr "Port"
 
-#: web/models.py:90
+#: web/models.py:94
 msgid "encryption"
 msgstr "Verschlüsselung"
 
-#: web/models.py:91 web/templates/web/manage/system.html:59
+#: web/models.py:95 web/templates/web/manage/system.html:92
 msgid "SMTP user"
 msgstr "SMTP-Benutzer"
 
-#: web/models.py:93
+#: web/models.py:97
 msgid "sender address"
 msgstr "Absenderadresse"
 
-#: web/models.py:94
+#: web/models.py:98
 msgid "address of the app"
 msgstr "Adresse der App"
 
-#: web/models.py:95
+#: web/models.py:99
 msgid "send reminders daily at"
 msgstr "Erinnerungen täglich senden um"
 
-#: web/models.py:97
+#: web/models.py:101
 msgid "single sign-on"
 msgstr "Single Sign-on"
 
-#: web/models.py:98
+#: web/models.py:102
 msgid "address of the SSO server"
 msgstr "Adresse des SSO-Servers"
 
-#: web/models.py:101
+#: web/models.py:105
 msgid "create unknown users"
 msgstr "Unbekannte Benutzer anlegen"
 
-#: web/models.py:102
+#: web/models.py:106
 msgid "claim with the user name"
 msgstr "Claim mit dem Benutzernamen"
 
-#: web/models.py:103
+#: web/models.py:107
 msgid "scopes"
 msgstr "Scopes"
 
-#: web/models.py:104
+#: web/models.py:108
 msgid "signing algorithm"
 msgstr "Signaturverfahren"
 
-#: web/models.py:105 web/sso_check.py:39
+#: web/models.py:109 web/sso_check.py:39
 msgid "authorization endpoint"
 msgstr "Autorisierungs-Endpunkt"
 
-#: web/models.py:106
+#: web/models.py:110
 msgid "token endpoint"
 msgstr "Token-Endpunkt"
 
-#: web/models.py:107
+#: web/models.py:111
 msgid "user info endpoint"
 msgstr "Benutzerdaten-Endpunkt"
 
-#: web/models.py:108
+#: web/models.py:112
 msgid "JWKS endpoint"
 msgstr "JWKS-Endpunkt"
 
-#: web/models.py:111 web/models.py:112
+#: web/models.py:116
+msgid "check for updates"
+msgstr "auf Updates prüfen"
+
+#: web/models.py:117
+msgid "latest known version"
+msgstr "neueste bekannte Version"
+
+#: web/models.py:118
+msgid "last update check"
+msgstr "letzte Update-Prüfung"
+
+#: web/models.py:121 web/models.py:122
 msgid "application settings"
 msgstr "Anwendungseinstellungen"
 
-#: web/models.py:115
+#: web/models.py:125
 msgid "Application settings"
 msgstr "Anwendungseinstellungen"
 
@@ -2237,18 +2308,18 @@ msgid "System"
 msgstr "System"
 
 #: web/templates/web/base.html:118 web/templates/web/manage/ai.html:3
-#: web/templates/web/manage/ai.html:6 web/templates/web/manage/system.html:121
+#: web/templates/web/manage/ai.html:6 web/templates/web/manage/system.html:154
 msgid "AI settings"
 msgstr "KI-Einstellungen"
 
 #: web/templates/web/base.html:122 web/templates/web/manage/email.html:3
 #: web/templates/web/manage/email.html:6
-#: web/templates/web/manage/system.html:71
+#: web/templates/web/manage/system.html:104
 msgid "Email settings"
 msgstr "E-Mail-Einstellungen"
 
 #: web/templates/web/base.html:126 web/templates/web/manage/sso.html:3
-#: web/templates/web/manage/sso.html:6 web/templates/web/manage/system.html:77
+#: web/templates/web/manage/sso.html:6 web/templates/web/manage/system.html:110
 msgid "Single sign-on"
 msgstr "Single Sign-on"
 
@@ -2257,23 +2328,32 @@ msgstr "Single Sign-on"
 msgid "Backup"
 msgstr "Backup"
 
-#: web/templates/web/base.html:143 web/templates/web/preferences.html:3
+#: web/templates/web/base.html:142
+msgid "A newer version is available"
+msgstr "Eine neuere Version ist verfügbar"
+
+#: web/templates/web/base.html:142
+#, python-format
+msgid "Update %(version)s"
+msgstr "Update %(version)s"
+
+#: web/templates/web/base.html:153 web/templates/web/preferences.html:3
 #: web/templates/web/preferences.html:5
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: web/templates/web/base.html:145 web/templates/web/password_change.html:3
+#: web/templates/web/base.html:155 web/templates/web/password_change.html:3
 #: web/templates/web/password_change.html:5
 #: web/templates/web/password_change.html:11
 #: web/templates/web/preferences.html:26
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: web/templates/web/base.html:148 web/templates/web/manage/system.html:11
+#: web/templates/web/base.html:158 web/templates/web/manage/system.html:11
 msgid "Django administration"
 msgstr "Django-Verwaltung"
 
-#: web/templates/web/base.html:154
+#: web/templates/web/base.html:164
 msgid "Log out"
 msgstr "Abmelden"
 
@@ -2454,7 +2534,8 @@ msgstr "Bearbeiten"
 #: web/templates/web/contracts/reminder_form.html:50
 #: web/templates/web/manage/ai.html:53 web/templates/web/manage/email.html:46
 #: web/templates/web/manage/groups/form.html:32
-#: web/templates/web/manage/sso.html:60 web/templates/web/manage/system.html:97
+#: web/templates/web/manage/sso.html:60
+#: web/templates/web/manage/system.html:130
 #: web/templates/web/manage/users/form.html:52
 #: web/templates/web/payment_methods/form.html:36
 #: web/templates/web/preferences.html:15
@@ -3058,7 +3139,7 @@ msgstr "Test läuft …"
 msgid "Who may use the assistant"
 msgstr "Wer den Assistenten nutzen darf"
 
-#: web/templates/web/manage/ai.html:73 web/templates/web/manage/system.html:120
+#: web/templates/web/manage/ai.html:73 web/templates/web/manage/system.html:153
 msgid "Only members of the group “KI” and superusers can use the assistant."
 msgstr ""
 "Nur Mitglieder der Gruppe „KI“ und Superuser können den Assistenten nutzen."
@@ -3220,8 +3301,15 @@ msgid "Replace everything and import"
 msgstr "Alles ersetzen und importieren"
 
 #: web/templates/web/manage/email.html:7
-msgid "SMTP server for reminders, invitations and password reset. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart."
-msgstr "SMTP-Server für Erinnerungen, Einladungen und das Zurücksetzen von Passwörtern. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart."
+msgid ""
+"SMTP server for reminders, invitations and password reset. Values entered "
+"here take precedence over the .env file; an empty field means “value from "
+"the .env file”. Changes apply immediately, without a restart."
+msgstr ""
+"SMTP-Server für Erinnerungen, Einladungen und das Zurücksetzen von "
+"Passwörtern. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein "
+"leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, "
+"ohne Neustart."
 
 #: web/templates/web/manage/email.html:21
 msgid "no user"
@@ -3240,13 +3328,17 @@ msgid "sender"
 msgstr "Absender"
 
 #: web/templates/web/manage/email.html:23
-#: web/templates/web/manage/system.html:54
+#: web/templates/web/manage/system.html:87
 msgid "No SMTP server configured: emails are only written to the log."
 msgstr "Kein SMTP-Server eingerichtet: E-Mails werden nur ins Log geschrieben."
 
 #: web/templates/web/manage/email.html:33
-msgid "The password is stored in the database, is never shown again and is not part of a backup."
-msgstr "Das Passwort wird in der Datenbank gespeichert, nie wieder angezeigt und ist nicht Teil eines Backups."
+msgid ""
+"The password is stored in the database, is never shown again and is not part "
+"of a backup."
+msgstr ""
+"Das Passwort wird in der Datenbank gespeichert, nie wieder angezeigt und ist "
+"nicht Teil eines Backups."
 
 #: web/templates/web/manage/email.html:37
 msgid "Links and reminders"
@@ -3255,16 +3347,22 @@ msgstr "Links und Erinnerungen"
 #: web/templates/web/manage/email.html:42
 #, python-format
 msgid "Reminders are currently sent daily at %(reminder_time)s."
-msgstr "Erinnerungen werden derzeit täglich um %(reminder_time)s Uhr verschickt."
+msgstr ""
+"Erinnerungen werden derzeit täglich um %(reminder_time)s Uhr verschickt."
 
 #: web/templates/web/manage/email.html:42
 msgid "Address of the app not set: links in reminders are incomplete."
-msgstr "Adresse der App nicht gesetzt: Links in Erinnerungen sind unvollständig."
+msgstr ""
+"Adresse der App nicht gesetzt: Links in Erinnerungen sind unvollständig."
 
 #: web/templates/web/manage/email.html:48
 #, python-format
-msgid "“Test” sends an email to %(email)s with the values entered above, without saving them."
-msgstr "„Testen“ schickt mit den oben eingegebenen Werten eine E-Mail an %(email)s, ohne sie zu speichern."
+msgid ""
+"“Test” sends an email to %(email)s with the values entered above, without "
+"saving them."
+msgstr ""
+"„Testen“ schickt mit den oben eingegebenen Werten eine E-Mail an %(email)s, "
+"ohne sie zu speichern."
 
 #: web/templates/web/manage/groups/confirm_delete.html:3
 #: web/templates/web/manage/groups/confirm_delete.html:5
@@ -3338,8 +3436,8 @@ msgid "Reminders of all contracts. Visible to superusers only."
 msgstr "Erinnerungen aller Verträge. Nur für Superuser sichtbar."
 
 #: web/templates/web/manage/reminders.html:23
-#: web/templates/web/manage/system.html:79
-#: web/templates/web/manage/system.html:109
+#: web/templates/web/manage/system.html:112
+#: web/templates/web/manage/system.html:142
 msgid "Status"
 msgstr "Status"
 
@@ -3353,8 +3451,16 @@ msgid "No reminders."
 msgstr "Keine Erinnerungen."
 
 #: web/templates/web/manage/sso.html:7
-msgid "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart. The local login always stays available."
-msgstr "Anmeldung über OpenID Connect, z. B. mit dem Synology SSO Server. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart. Die lokale Anmeldung bleibt immer möglich."
+msgid ""
+"Sign-in with OpenID Connect, e.g. the Synology SSO Server. Values entered "
+"here take precedence over the .env file; an empty field means “value from "
+"the .env file”. Changes apply immediately, without a restart. The local "
+"login always stays available."
+msgstr ""
+"Anmeldung über OpenID Connect, z. B. mit dem Synology SSO Server. Hier "
+"eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld "
+"bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart. "
+"Die lokale Anmeldung bleibt immer möglich."
 
 #: web/templates/web/manage/sso.html:21
 msgid "no client ID"
@@ -3377,32 +3483,54 @@ msgid "Enter this address as redirect URI at the SSO provider."
 msgstr "Trage diese Adresse beim SSO-Anbieter als Redirect-URI ein."
 
 #: web/templates/web/manage/sso.html:32
-msgid "The client secret is stored in the database, is never shown again and is not part of a backup."
-msgstr "Das Client-Secret wird in der Datenbank gespeichert, nie wieder angezeigt und ist nicht Teil eines Backups."
+msgid ""
+"The client secret is stored in the database, is never shown again and is not "
+"part of a backup."
+msgstr ""
+"Das Client-Secret wird in der Datenbank gespeichert, nie wieder angezeigt "
+"und ist nicht Teil eines Backups."
 
 #: web/templates/web/manage/sso.html:36
 msgid "Users and login page"
 msgstr "Benutzer und Anmeldeseite"
 
 #: web/templates/web/manage/sso.html:42
-msgid "A user is matched by the user name from the SSO, ignoring upper and lower case, never by the email address."
-msgstr "Ein Benutzer wird über den Benutzernamen aus dem SSO zugeordnet, ohne Beachtung der Groß- und Kleinschreibung, nie über die E-Mail-Adresse."
+msgid ""
+"A user is matched by the user name from the SSO, ignoring upper and lower "
+"case, never by the email address."
+msgstr ""
+"Ein Benutzer wird über den Benutzernamen aus dem SSO zugeordnet, ohne "
+"Beachtung der Groß- und Kleinschreibung, nie über die E-Mail-Adresse."
 
 #: web/templates/web/manage/sso.html:47
 msgid "Advanced: other providers"
 msgstr "Erweitert: andere Anbieter"
 
 #: web/templates/web/manage/sso.html:48
-msgid "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above, otherwise taken from the .env file; the grey text shows the value from the .env file."
-msgstr "Nur nötig für andere Anbieter als den Synology SSO Server (z. B. Authentik, Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers oben, sonst aus der Datei .env; der graue Text zeigt den Wert aus der Datei .env."
+msgid ""
+"Only needed for providers other than the Synology SSO Server (e.g. "
+"Authentik, Keycloak). An empty endpoint is derived from the address of the "
+"SSO server above, otherwise taken from the .env file; the grey text shows "
+"the value from the .env file."
+msgstr ""
+"Nur nötig für andere Anbieter als den Synology SSO Server (z. B. Authentik, "
+"Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers "
+"oben, sonst aus der Datei .env; der graue Text zeigt den Wert aus der "
+"Datei .env."
 
 #: web/templates/web/manage/sso.html:62
 msgid "“Test” checks the values entered above without saving them."
 msgstr "„Testen“ prüft die oben eingegebenen Werte, ohne sie zu speichern."
 
 #: web/templates/web/manage/sso.html:79
-msgid "Test finished. Nothing was saved. Whether client ID and client secret are correct only shows when a user signs in: after saving, try the SSO button in a private browser window and stay logged in here."
-msgstr "Test abgeschlossen. Gespeichert wurde nichts. Ob Client-ID und Client-Secret stimmen, zeigt erst eine Anmeldung: Probiere nach dem Speichern die SSO-Schaltfläche in einem privaten Browserfenster aus und bleib hier angemeldet."
+msgid ""
+"Test finished. Nothing was saved. Whether client ID and client secret are "
+"correct only shows when a user signs in: after saving, try the SSO button in "
+"a private browser window and stay logged in here."
+msgstr ""
+"Test abgeschlossen. Gespeichert wurde nichts. Ob Client-ID und Client-Secret "
+"stimmen, zeigt erst eine Anmeldung: Probiere nach dem Speichern die SSO-"
+"Schaltfläche in einem privaten Browserfenster aus und bleib hier angemeldet."
 
 #: web/templates/web/manage/system.html:18
 msgid "Active users"
@@ -3412,22 +3540,79 @@ msgstr "Aktive Benutzer"
 msgid "Active reminders"
 msgstr "Aktive Erinnerungen"
 
-#: web/templates/web/manage/system.html:33
+#: web/templates/web/manage/system.html:32
+msgid "Version and updates"
+msgstr "Version und Updates"
+
+#: web/templates/web/manage/system.html:34
+msgid "Installed version"
+msgstr "Installierte Version"
+
+#: web/templates/web/manage/system.html:36
+msgid "Newest version"
+msgstr "Neueste Version"
+
+#: web/templates/web/manage/system.html:38
+msgid "Update check is off."
+msgstr "Die Update-Prüfung ist aus."
+
+#: web/templates/web/manage/system.html:39
+msgid "Not checked yet. The worker checks once a day."
+msgstr "Noch nicht geprüft. Der Worker prüft einmal täglich."
+
+#: web/templates/web/manage/system.html:40
+#, python-format
+msgid "Update available: %(version)s"
+msgstr "Update verfügbar: %(version)s"
+
+#: web/templates/web/manage/system.html:41
+msgid "Release notes"
+msgstr "Versionshinweise"
+
+#: web/templates/web/manage/system.html:42
+msgid "Update with: docker compose pull, then docker compose up -d (create a backup first)."
+msgstr "Aktualisieren mit: docker compose pull, danach docker compose up -d (vorher ein Backup anlegen)."
+
+#: web/templates/web/manage/system.html:43
+msgid "You are up to date."
+msgstr "Du bist auf dem neuesten Stand."
+
+#: web/templates/web/manage/system.html:46
+msgid "Last check"
+msgstr "Letzte Prüfung"
+
+#: web/templates/web/manage/system.html:53
+msgid "Check now"
+msgstr "Jetzt prüfen"
+
+#: web/templates/web/manage/system.html:54
+msgid "Switch off update check"
+msgstr "Update-Prüfung ausschalten"
+
+#: web/templates/web/manage/system.html:56
+msgid "Switch on update check"
+msgstr "Update-Prüfung einschalten"
+
+#: web/templates/web/manage/system.html:59
+msgid "Once a day the worker asks GitHub for the newest release. GitHub sees the IP address of this server, but no data from the app."
+msgstr "Einmal am Tag fragt der Worker bei GitHub nach der neuesten Version. GitHub sieht die IP-Adresse dieses Servers, aber keine Daten aus der App."
+
+#: web/templates/web/manage/system.html:66
 msgid "Background worker"
 msgstr "Hintergrund-Worker"
 
-#: web/templates/web/manage/system.html:35
+#: web/templates/web/manage/system.html:68
 msgid ""
 "No reminder run in the last 26 hours. Is the “worker” container running?"
 msgstr ""
 "In den letzten 26 Stunden lief kein Erinnerungsversand. Läuft der Container "
 "„worker“?"
 
-#: web/templates/web/manage/system.html:38
+#: web/templates/web/manage/system.html:71
 msgid "Last reminder run"
 msgstr "Letzter Erinnerungsversand"
 
-#: web/templates/web/manage/system.html:39
+#: web/templates/web/manage/system.html:72
 #, python-format
 msgid ""
 "%(sent)s emails for %(reminders)s reminders sent, %(failed)s errors, "
@@ -3436,67 +3621,69 @@ msgstr ""
 "%(sent)s E-Mails zu %(reminders)s Erinnerungen verschickt, %(failed)s "
 "Fehler, %(completed)s erledigt"
 
-#: web/templates/web/manage/system.html:40
+#: web/templates/web/manage/system.html:73
 msgid "Next reminder run"
 msgstr "Nächster Erinnerungsversand"
 
-#: web/templates/web/manage/system.html:42
+#: web/templates/web/manage/system.html:75
 msgid "Daily at"
 msgstr "Täglich um"
 
-#: web/templates/web/manage/system.html:44
+#: web/templates/web/manage/system.html:77
 msgid "Failed tasks (7 days)"
 msgstr "Fehlgeschlagene Aufgaben (7 Tage)"
 
-#: web/templates/web/manage/system.html:61
+#: web/templates/web/manage/system.html:94
 msgid "Sender"
 msgstr "Absender"
 
-#: web/templates/web/manage/system.html:63
+#: web/templates/web/manage/system.html:96
 msgid "Address of the app"
 msgstr "Adresse der App"
 
-#: web/templates/web/manage/system.html:64
+#: web/templates/web/manage/system.html:97
 msgid "Not set: links in reminders are incomplete."
 msgstr "Nicht gesetzt: Links in Erinnerungen sind unvollständig."
 
-#: web/templates/web/manage/system.html:68
+#: web/templates/web/manage/system.html:101
 msgid "Send test email to me"
 msgstr "Test-E-Mail an mich senden"
 
-#: web/templates/web/manage/system.html:82
+#: web/templates/web/manage/system.html:115
 msgid "SSO server"
 msgstr "SSO-Server"
 
-#: web/templates/web/manage/system.html:84
+#: web/templates/web/manage/system.html:117
 msgid "Create unknown users"
 msgstr "Unbekannte Benutzer anlegen"
 
-#: web/templates/web/manage/system.html:85
+#: web/templates/web/manage/system.html:118
 msgid "Yes"
 msgstr "Ja"
 
-#: web/templates/web/manage/system.html:85
+#: web/templates/web/manage/system.html:118
 msgid "No"
 msgstr "Nein"
 
-#: web/templates/web/manage/system.html:88
+#: web/templates/web/manage/system.html:121
 msgid "Single sign-on settings"
 msgstr "Einstellungen für Single Sign-on"
 
-#: web/templates/web/manage/system.html:89
-msgid "A superuser changes these settings under Administration › Single sign-on."
-msgstr "Ein Superuser ändert diese Einstellungen unter Verwaltung › Single Sign-on."
+#: web/templates/web/manage/system.html:122
+msgid ""
+"A superuser changes these settings under Administration › Single sign-on."
+msgstr ""
+"Ein Superuser ändert diese Einstellungen unter Verwaltung › Single Sign-on."
 
-#: web/templates/web/manage/system.html:112
+#: web/templates/web/manage/system.html:145
 msgid "Provider"
 msgstr "Anbieter"
 
-#: web/templates/web/manage/system.html:114
+#: web/templates/web/manage/system.html:147
 msgid "Model"
 msgstr "Modell"
 
-#: web/templates/web/manage/system.html:116
+#: web/templates/web/manage/system.html:149
 msgid "Members of “KI”"
 msgstr "Mitglieder von „KI“"
 

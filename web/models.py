@@ -57,7 +57,11 @@ class SiteSettings(models.Model):
     AI_ON = "on"
     AI_OFF = "off"
     AI_ENABLED_CHOICES = [(AI_ON, _("On")), (AI_OFF, _("Off"))]
-    AI_PROVIDER_CHOICES = [("openai", _("OpenAI or OpenAI-compatible")), ("anthropic", "Anthropic (Claude)")]
+    AI_PROVIDER_CHOICES = [
+        ("openai", _("OpenAI or OpenAI-compatible")),
+        ("anthropic", "Anthropic (Claude)"),
+        ("ollama", _("Ollama (local models)")),
+    ]
 
     sso_login_label = models.CharField(
         _("label of the SSO button"),
@@ -106,6 +110,12 @@ class SiteSettings(models.Model):
     sso_token_endpoint = models.CharField(_("token endpoint"), max_length=500, blank=True)
     sso_user_endpoint = models.CharField(_("user info endpoint"), max_length=500, blank=True)
     sso_jwks_endpoint = models.CharField(_("JWKS endpoint"), max_length=500, blank=True)
+
+    # Version 0.5.0: Hinweis auf neue Versionen (web.update_check). Der Worker
+    # fragt täglich GitHub; das Ergebnis steht hier, Seiten fragen nie selbst.
+    update_check = models.BooleanField(_("check for updates"), default=True)
+    latest_version = models.CharField(_("latest known version"), max_length=20, blank=True, editable=False)
+    update_checked_at = models.DateTimeField(_("last update check"), null=True, blank=True, editable=False)
 
     class Meta:
         verbose_name = _("application settings")

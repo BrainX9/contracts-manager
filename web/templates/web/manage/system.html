@@ -27,6 +27,39 @@
   </div></div></div>
 </div>
 
+{% if update %}
+<div class="card mb-4"><div class="card-body">
+  <h2 class="h5 card-title mb-3"><i class="bi bi-arrow-up-circle me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Version and updates" %}</h2>
+  <dl class="row mb-3">
+    <dt class="col-sm-3">{% translate "Installed version" %}</dt>
+    <dd class="col-sm-9">{{ update.installed }}</dd>
+    <dt class="col-sm-3">{% translate "Newest version" %}</dt>
+    <dd class="col-sm-9">
+      {% if not update.enabled %}<span class="text-body-secondary">{% translate "Update check is off." %}</span>
+      {% elif not update.latest %}<span class="text-body-secondary">{% translate "Not checked yet. The worker checks once a day." %}</span>
+      {% elif update.available %}<span class="badge text-bg-warning">{% blocktranslate with version=update.latest %}Update available: {{ version }}{% endblocktranslate %}</span>
+        <a class="ms-2" href="{{ update.release_url }}" target="_blank" rel="noopener noreferrer">{% translate "Release notes" %}</a>
+        <div class="small text-body-secondary mt-1">{% translate "Update with: docker compose pull, then docker compose up -d (create a backup first)." %}</div>
+      {% else %}{{ update.latest }} <span class="text-success"><i class="bi bi-check-circle" aria-hidden="true"></i> {% translate "You are up to date." %}</span>{% endif %}
+    </dd>
+    {% if update.checked_at %}
+    <dt class="col-sm-3">{% translate "Last check" %}</dt>
+    <dd class="col-sm-9">{{ update.checked_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
+    {% endif %}
+  </dl>
+  <form method="post" action="{% url 'manage_system' %}" class="d-flex flex-wrap gap-2">
+    {% csrf_token %}
+    {% if update.enabled %}
+    <button type="submit" name="action" value="update_check_now" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{% translate "Check now" %}</button>
+    <button type="submit" name="action" value="update_check_off" class="btn btn-sm btn-outline-secondary">{% translate "Switch off update check" %}</button>
+    {% else %}
+    <button type="submit" name="action" value="update_check_on" class="btn btn-sm btn-outline-primary">{% translate "Switch on update check" %}</button>
+    {% endif %}
+  </form>
+  <p class="small text-body-secondary mt-3 mb-0">{% translate "Once a day the worker asks GitHub for the newest release. GitHub sees the IP address of this server, but no data from the app." %}</p>
+</div></div>
+{% endif %}
+
 <div class="row g-4">
   <div class="col-lg-6">
     <div class="card h-100"><div class="card-body">

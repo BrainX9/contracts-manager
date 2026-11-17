@@ -6,6 +6,8 @@ Commands assume the app lives in `/volume1/docker/contracts-manager` on a Synolo
 
 ## Update
 
+Superusers see a hint in the sidebar when a newer version exists (see [Version and updates](configuration.md#version-and-updates)).
+
 Create a backup first (run the task `contracts-backup` once, see [Daily backups](#daily-backups)), then download the new image and restart:
 
 ```bash

@@ -919,3 +919,84 @@ class SelfTestTest(TestCase):
             )
         self.assertEqual(result.status, "failed")
         self.assertEqual(selftest.STEPS, ("connection", "tools", "local", "file"))
+
+
+class OllamaTest(TestCase):
+    """Ollama als KI-Anbieter (Version 0.5.0)"""
+
+    def site(self, **values):
+        from web.models import SiteSettings
+
+        site = SiteSettings.load()
+        for name, value in values.items():
+            setattr(site, name, value)
+        site.save()
+
+    @override_settings(**AI_SETTINGS)
+    def test_default_address_is_the_docker_host(self):
+        from .config import OLLAMA_DEFAULT_URL, current
+
+        self.site(ai_provider="ollama", ai_model="qwen3")
+        config = current()
+        self.assertEqual((config.provider, config.base_url), ("ollama", OLLAMA_DEFAULT_URL))
+        self.assertEqual(OLLAMA_DEFAULT_URL, "http://host.docker.internal:11434/v1")
+
+    @override_settings(**AI_SETTINGS)
+    def test_own_address_for_another_computer(self):
+        from .config import current
+
+        self.site(ai_provider="ollama", ai_model="qwen3", ai_base_url="http://192.168.1.20:11434/v1")
+        self.assertEqual(current().base_url, "http://192.168.1.20:11434/v1")
+
+    @override_settings(**AI_SETTINGS)
+    def test_address_of_the_env_file_belongs_to_its_provider(self):
+        # Die .env nennt einen anderen Anbieter samt Adresse: nicht für Ollama übernehmen
+        from .config import OLLAMA_DEFAULT_URL, current
+
+        self.site(ai_provider="ollama")
+        self.assertEqual(current().base_url, OLLAMA_DEFAULT_URL)
+
+    @override_settings(**{**AI_SETTINGS, "AI_PROVIDER": "ollama", "AI_BASE_URL": "", "AI_API_KEY": ""})
+    def test_from_env_file(self):
+        from .config import OLLAMA_DEFAULT_URL, current
+
+        self.assertEqual(current().base_url, OLLAMA_DEFAULT_URL)
+
+    @override_settings(**AI_SETTINGS)
+    def test_uses_the_openai_interface_without_api_key(self):
+        from .providers import OpenAIProvider, get_provider
+
+        self.site(ai_provider="ollama", ai_model="qwen3", ai_api_key="")
+        with override_settings(AI_API_KEY=""):
+            provider = get_provider()
+        self.assertIsInstance(provider, OpenAIProvider)
+        self.assertEqual(provider.client.api_key, "none")
+        self.assertEqual(str(provider.client.base_url).rstrip("/"), "http://host.docker.internal:11434/v1")
+
+    def test_provider_is_selectable(self):
+        from web.models import SiteSettings
+
+        self.assertIn("ollama", dict(SiteSettings.AI_PROVIDER_CHOICES))
+
+    def test_error_gets_a_hint_and_files_are_skipped(self):
+        from . import selftest
+        from .config import AIConfig
+
+        config = AIConfig(enabled=True, provider="ollama", model="qwen3",
+                          base_url="http://192.168.1.20:11434/v1", api_key="")
+        with patch("assistant.selftest.get_provider", return_value=FakeProvider([ProviderError("Connection error.")])):
+            result = selftest.run_step("connection", config)
+        self.assertEqual(result.status, "failed")
+        self.assertIn("Connection error.", result.detail)
+        self.assertIn("OLLAMA_HOST", result.detail)
+        self.assertIn("http://192.168.1.20:11434/v1", result.detail)
+        self.assertEqual(selftest.run_step("file", config).status, "skipped")
+
+    def test_no_hint_for_other_providers(self):
+        from . import selftest
+        from .config import AIConfig
+
+        config = AIConfig(enabled=True, provider="openai", model="m", base_url="", api_key="k")
+        with patch("assistant.selftest.get_provider", return_value=FakeProvider([ProviderError("401: wrong key")])):
+            result = selftest.run_step("connection", config)
+        self.assertEqual(result.detail, "401: wrong key")
