@@ -11,6 +11,10 @@ Text aus Dateien im Chat lesen (Version 0.8b), ausschließlich lokal.
 
 Erst wenn lokal kein Text erkannt wird, kann der Assistent die Datei
 direkt an das Modell geben (assistant.agent, nur Claude).
+
+Version 0.6.0: Ist eine Dokument-KI eingerichtet (``reader``, siehe
+assistant.vision), liest sie Dateien ohne Text (Scans, Fotos) statt
+Tesseract. Fällt sie aus oder findet nichts, folgt Tesseract wie bisher.
 """
 
 import email
@@ -25,6 +29,8 @@ from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
 
 from contracts.documents import MAX_UPLOAD_SIZE, extension
+
+from . import vision
 
 logger = logging.getLogger(__name__)
 
@@ -52,24 +58,26 @@ def validate_upload(upload):
     return None
 
 
-def extract(path, name):
+def extract(path, name, reader=None):
     """
     Liest den Text einer Datei. Gibt (Text, Verfahren) zurück; das
-    Verfahren entspricht Attachment.Method.
+    Verfahren entspricht Attachment.Method. ``reader`` ist die Dokument-KI
+    (assistant.config.ReaderConfig) oder None für nur lokale Erkennung.
     """
     ext = extension(name)
     try:
         if ext == "pdf":
             with open(path, "rb") as file:
-                text, method = pdf_text(file.read())
+                text, method = pdf_text(file.read(), reader)
         elif ext in IMAGE_EXTENSIONS:
-            text, method = ocr_image(path), "ocr"
+            text = ai_text(lambda: vision.read_image(path, reader), reader, name)
+            text, method = (text, "vision") if text else (ocr_image(path), "ocr")
         elif ext == "txt":
             with open(path, "rb") as file:
                 text, method = decode(file.read()), "text"
         elif ext == "eml":
             with open(path, "rb") as file:
-                text, method = email_text(file.read()), "email"
+                text, method = email_text(file.read(), reader), "email"
         else:
             text, method = "", "none"
     except Exception:  # Defekte Dateien dürfen den Worker nicht anhalten
@@ -86,9 +94,24 @@ def decode(data):
         return data.decode("latin-1")
 
 
-def pdf_text(data):
+def ai_text(read, reader, name):
     """
-    Text eines PDFs; bei Scans Texterkennung. Gibt (Text, Verfahren) zurück.
+    Text von der Dokument-KI oder "" (keine eingerichtet, Fehler, nichts
+    gefunden). Fehler werden nur protokolliert; die lokale Erkennung folgt.
+    """
+    if reader is None:
+        return ""
+    try:
+        return read().strip()
+    except Exception as error:  # Anbieter, Netz, defekte Datei: nie den Worker anhalten
+        logger.warning("Dokument-KI konnte %s nicht lesen: %s", name, error)
+        return ""
+
+
+def pdf_text(data, reader=None):
+    """
+    Text eines PDFs; bei Scans die Dokument-KI, sonst Texterkennung. Gibt
+    (Text, Verfahren) zurück.
     """
     from pypdf import PdfReader
 
@@ -101,6 +124,9 @@ def pdf_text(data):
     text = "\n\n".join(page.strip() for page in pages).strip()
     if pages and len(text) >= MIN_CHARS_PER_PAGE * len(pages):
         return text, "pdf_text"
+    ai = ai_text(lambda: vision.read_pdf(data, reader), reader, "PDF")
+    if ai:
+        return ai, "vision"
     ocr = ocr_pdf(data)
     if len(ocr) > len(text):
         return ocr, "ocr"
@@ -142,7 +168,7 @@ def ocr_image(path):
         return decode(result.stdout).strip()
 
 
-def email_text(data):
+def email_text(data, reader=None):
     """
     Kopfzeilen und Text einer E-Mail, dazu der Text angehängter PDFs.
     """
@@ -161,7 +187,7 @@ def email_text(data):
     for part in message.iter_attachments():
         filename = part.get_filename() or ""
         if part.get_content_type() == "application/pdf" or filename.lower().endswith(".pdf"):
-            text, _method = pdf_text(part.get_payload(decode=True) or b"")
+            text, _method = pdf_text(part.get_payload(decode=True) or b"", reader)
             if text:
                 parts += ["", f"--- Attachment: {filename} ---", text]
         elif filename:

@@ -2,11 +2,13 @@
 Test der KI-Einstellungen (Version 0.3.0), aufgerufen unter Verwaltung ›
 KI-Assistent mit den eingegebenen, noch nicht gespeicherten Werten.
 
-Vier Schritte, jeder als eigene kurze Anfrage (``run_step``):
+Fünf Schritte, jeder als eigene kurze Anfrage (``run_step``):
 
 - ``connection``: Das Modell antwortet.
 - ``tools``: Das Modell ruft ein Werkzeug auf (ohne geht der Assistent nicht).
 - ``local``: Texterkennung im Container (PDF mit pypdf, Bild mit Tesseract).
+- ``reader``: Die Dokument-KI liest ein Testbild (Version 0.6.0, nur wenn
+  eingerichtet).
 - ``file``: Datei-Upload an das Modell, auf demselben Weg wie im Chat
   (Werkzeug-Ergebnis mit Datei). Das gibt es nur bei Claude.
 
@@ -23,13 +25,13 @@ from pathlib import Path
 
 from django.utils.translation import gettext as _
 
-from . import extraction
+from . import extraction, vision
 from .config import OLLAMA
 from .providers import ProviderError, RefusalError, get_provider
 
 logger = logging.getLogger(__name__)
 
-STEPS = ("connection", "tools", "local", "file")
+STEPS = ("connection", "tools", "local", "reader", "file")
 OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
 # Kürzer als die Zeitgrenze des Webservers (gunicorn, 60 Sekunden); der
@@ -69,13 +71,15 @@ def step_label(step):
         "connection": _("Connection and answer"),
         "tools": _("Tool call"),
         "local": _("Local text recognition"),
+        "reader": _("Document AI (scans and photos)"),
         "file": _("File upload to the model"),
     }[step]
 
 
 def test_config(config, timeout=TEST_TIMEOUT):
     """Gleiche Konfiguration mit kurzer Zeitgrenze und ohne Wiederholungen."""
-    return dataclasses.replace(config, timeout=timeout, max_retries=0)
+    reader = dataclasses.replace(config.reader, timeout=timeout, max_retries=0) if config.reader else None
+    return dataclasses.replace(config, timeout=timeout, max_retries=0, reader=reader)
 
 
 def new_code():
@@ -171,6 +175,25 @@ def check_local(config=None):
     return StepResult("local", FAILED if failed else OK, ", ".join(str(part) for part in parts))
 
 
+def check_reader(config):
+    """
+    Die Dokument-KI liest ein erzeugtes Bild mit einer Zahl (Version 0.6.0).
+    Ohne eingerichtete Dokument-KI wird der Schritt übersprungen.
+    """
+    reader = config.reader
+    if reader is None:
+        return StepResult("reader", SKIPPED, _(
+            "No document AI is set up. Scans and photos are read with the local text recognition."
+        ))
+    code = new_code()
+    found = vision.read_pages([vision.prepare_image(png_bytes(f"Test code {code}"))], reader)
+    if code in found.replace(" ", ""):
+        return StepResult("reader", OK, _("The model “%(model)s” read the test image.") % {"model": reader.model})
+    return StepResult("reader", FAILED, _(
+        "The model did not read the test image correctly. Answer: %(answer)s"
+    ) % {"answer": _short(found) or "–"})
+
+
 def check_file(config):
     if config.provider != "anthropic":
         return StepResult("file", SKIPPED, _(
@@ -215,7 +238,10 @@ def ollama_hint(config):
     ) % {"url": config.base_url or "–", "model": config.model}
 
 
-CHECKS = {"connection": check_connection, "tools": check_tools, "local": check_local, "file": check_file}
+CHECKS = {
+    "connection": check_connection, "tools": check_tools, "local": check_local,
+    "reader": check_reader, "file": check_file,
+}
 
 
 def run_step(step, config, timeout=TEST_TIMEOUT):

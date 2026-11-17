@@ -185,8 +185,15 @@ def read_pending_attachments(conversation):
     """
     Text neuer Anhänge lokal erkennen (vor der Antwort, im Worker).
     """
-    for attachment in conversation.attachments.filter(method=Attachment.Method.PENDING):
-        attachment.text, attachment.method = extraction.extract(attachment.file.path, attachment.original_name)
+    pending = list(conversation.attachments.filter(method=Attachment.Method.PENDING))
+    if not pending:
+        return
+    # Dokument-KI für Scans und Fotos (Version 0.6.0), falls eingerichtet
+    reader = config.current().reader
+    for attachment in pending:
+        attachment.text, attachment.method = extraction.extract(
+            attachment.file.path, attachment.original_name, reader,
+        )
         attachment.save(update_fields=["text", "method"])
 
 

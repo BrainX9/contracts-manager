@@ -115,6 +115,7 @@ class Attachment(models.Model):
         TEXT = "text", _("text")
         PDF_TEXT = "pdf_text", _("PDF text")
         OCR = "ocr", _("text recognition")
+        VISION = "vision", _("document AI")
         EMAIL = "email", _("email")
         NONE = "none", _("no text found")
 

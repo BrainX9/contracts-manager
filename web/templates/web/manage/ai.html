@@ -37,6 +37,31 @@
   </div></div>
 
   <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-1"><i class="bi bi-file-earmark-image me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Scans and photos (document AI)" %}</h2>
+    <p class="small text-body-secondary">{% translate "Optional. Files without text (scans, photos) are read with the local text recognition (Tesseract). A model that can see images reads them better: the pages are sent to it as images and come back as text. This can be another model than the one above, for example an OCR or vision model at IONOS with the same key, or a vision model in Ollama." %}</p>
+    <dl class="row small mb-3">
+      <dt class="col-sm-4">{% translate "Currently in use" %}</dt>
+      <dd class="col-sm-8 mb-0">{% if current.reader %}<span class="badge text-bg-success">{% translate "On" %}</span>
+        {{ current.reader.provider }} · {{ current.reader.model }}{% if current.reader.base_url %} · <span class="text-break">{{ current.reader.base_url }}</span>{% endif %}
+        · {% if current.reader.api_key %}{% translate "API key set" %}{% else %}{% translate "no API key" %}{% endif %}
+        {% else %}<span class="badge text-bg-secondary">{% translate "Off" %}</span> {% translate "local text recognition only" %}{% endif %}</dd>
+    </dl>
+    <div class="row">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.reader_model %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.reader_kind %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.reader_provider %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.reader_base_url %}</div>
+      <div class="col-md-6">
+        {% include "web/includes/field.html" with field=form.reader_key %}
+        {% if form.clear_reader_key %}
+        <div class="form-check mt-n2 mb-3">{{ form.clear_reader_key }}<label class="form-check-label" for="{{ form.clear_reader_key.id_for_label }}">{{ form.clear_reader_key.label }}</label></div>
+        {% endif %}
+      </div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% translate "Only the pages of such files are sent to this model (at most 8 per file). Choose a provider you trust with your documents. The key is stored like the one above." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
     <h2 class="h5 card-title mb-1"><i class="bi bi-chat-square-text me-2 text-body-secondary" aria-hidden="true"></i>{% translate "System prompt" %}
       {% if custom_prompt %}<span class="badge text-bg-primary ms-1">{% translate "Customised" %}</span>{% else %}<span class="badge text-bg-light border ms-1">{% translate "Default" %}</span>{% endif %}</h2>
     <p class="small text-body-secondary">{% translate "Tells the assistant who it is and how it should answer. A changed prompt applies to new conversations; existing conversations keep theirs." %}</p>
@@ -63,7 +88,7 @@
 
 <div class="card mb-3" style="max-width: 56rem"><div class="card-body">
   <h2 class="h5 card-title mb-1"><i class="bi bi-clipboard-check me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Test" %}</h2>
-  <p class="small text-body-secondary">{% translate "“Test” checks the values entered above without saving them: connection and answer, tool call, local text recognition and the file upload to the model. It sends a few short requests to the provider." %}</p>
+  <p class="small text-body-secondary">{% translate "“Test” checks the values entered above without saving them: connection and answer, tool call, local text recognition, the document AI and the file upload to the model. It sends a few short requests to the provider." %}</p>
   <div id="ai-test-running" class="htmx-indicator small text-body-secondary"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{% translate "Test is running …" %}</div>
   <div id="ai-test">{% if results %}{% include "web/manage/_ai_test.html" with done=True %}{% endif %}</div>
 </div></div>

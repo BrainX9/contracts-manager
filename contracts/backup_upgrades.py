@@ -120,6 +120,17 @@ VERSIONS = (
             "web": ["0006_update_check_ollama"],
             "assistant": ["0003_repair_columns_from_0_8a"],
         },
+        # 0.5.0 -> 0.6.0: nur neue Felder mit Standardwert in web.SiteSettings
+        # (Dokument-KI) und ein weiteres Verfahren am Anhang
+        no_changes,
+    ),
+    BackupVersion(
+        "0.6.0",
+        {
+            "contracts": ["0015_payment_method"],
+            "web": ["0007_document_ai"],
+            "assistant": ["0004_document_ai"],
+        },
     ),
 )
 

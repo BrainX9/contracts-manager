@@ -261,7 +261,32 @@ Things to check:
 - **Ollama must listen on the network.** By default it only accepts connections from its own computer. Set `OLLAMA_HOST=0.0.0.0` where Ollama runs (see the Ollama documentation) and allow port `11434` only for your local network. Ollama has no login of its own; never expose it to the internet.
 - **Use a model that supports tools** (function calling), for example `qwen3` or `llama3.1`; the assistant does not work without. The **Test** button shows whether the model calls the test tool.
 - **Pull the model first** (`ollama pull <model>`). A model that is not loaded yet makes the first answer slow; raise `AI_TIMEOUT` in `.env` if the first request times out.
-- Small models answer more simply and make more mistakes with documents than Claude or GPT. Uploaded files are never sent to Ollama; the assistant uses the text recognised locally in the container.
+- Small models answer more simply and make more mistakes with documents than Claude or GPT. Uploaded files are not sent to the main model; the assistant uses the recognised text. For scans and photos you can let a vision model in Ollama read them, see [Scans and photos](#scans-and-photos-document-ai).
+
+### Scans and photos (document AI)
+
+Files without a text layer – scanned PDFs, photos of letters or invoices – are read with the local text recognition (Tesseract) by default. That works for clean prints, but often fails on photos, tables or skewed pages. A model that can see images reads them much better. Under **Administration › AI settings › Scans and photos (document AI)** you can set up such a model in addition to the main model:
+
+| Field | Meaning |
+|---|---|
+| Model | The model that reads the pages. Empty: no document AI, only local text recognition. |
+| Type of model | **Vision model**: gets an instruction with each page (most models). **OCR model**: gets only the image (e.g. LightOnOCR). |
+| Provider | OpenAI-compatible (e.g. IONOS) or Ollama. Empty: same as the main model. |
+| Address of the API, API key | Empty: the address and key of the main model, if it uses the same provider. The key is stored like the main key (never shown, never in a backup). |
+
+How it works: when an uploaded file has no text, the worker turns its pages into images (at most 8 pages, 200 dpi, scaled down to 2400 pixels), sends each page to the document AI and stores the returned text with the file. The assistant then reads that text like any other. PDFs with a text layer, text files and emails are read locally as before and cost nothing. If the document AI fails (not reachable, model cannot read images), the local text recognition takes over.
+
+**IONOS AI Model Hub** – the main model stays as it is (e.g. a Llama model for tool calls); the same key works for the document AI:
+
+- `lightonai/LightOnOCR-2-1B` with type **OCR model** – a model made for reading documents; it returns Markdown.
+- Or a model whose model card lists **image input**, with type **Vision model**. IONOS rejects images for other models with error 400.
+- IONOS does not accept PDF files, only images; Contracts Manager converts the pages. Limits per request: 12 MiB per image, 16 MiB in total – the scaled pages stay well below.
+
+**Ollama** – pull a vision model, e.g. `ollama pull qwen3-vl:8b`, and enter it with type **Vision model**. Ollama only accepts images embedded in the request (base64), which Contracts Manager does. On a computer without a graphics card, reading a page can take a minute or more; reading stops after about four minutes and notes which pages were read.
+
+**Test** has a step *Document AI*: it sends a generated image with a number and checks whether the model reads it.
+
+**Privacy:** only the pages of files without text are sent to the document AI, nothing else. Choose a provider you trust with your documents – IONOS processes data in Germany, Ollama on your own hardware.
 
 ### Settings in the app
 
@@ -277,6 +302,7 @@ Under **Administration › AI settings** – without a restart:
 | Connection and answer | address, API key and model: the model answers |
 | Tool call | the model can call tools (function calling); the assistant does not work without it |
 | Local text recognition | reading a PDF and an image inside the container (pypdf, Tesseract) |
+| Document AI | the document AI reads a generated test image (only if set up) |
 | File upload to the model | a PDF is sent to the model and read – only with Claude; other providers always work with the locally recognised text |
 
 Only the fine tuning stays in `.env` (restart with `sudo docker compose up -d` after a change):
@@ -292,16 +318,16 @@ Only the fine tuning stays in `.env` (restart with `sudo docker compose up -d` a
 
 **New contracts from documents (0.8b):** attach a file in the chat (paper clip; PDF, JPG, PNG, WebP, TXT or EML, up to 20 MB). The assistant
 
-1. reads the text **locally** – PDF text layer, otherwise text recognition with Tesseract (German and English) for scans and photos; for emails the subject, sender, text and attached PDFs;
+1. reads the text – PDF text layer, otherwise for scans and photos the [document AI](#scans-and-photos-document-ai) if set up, or the local text recognition with Tesseract (German and English); for emails the subject, sender, text and attached PDFs;
 2. stores the relevant facts it found (partner, numbers, dates, amount, term …) with the file in your database;
 3. checks whether a matching contract or contract partner already exists and tells you;
 4. proposes what to do: attach the document to the existing contract, or create the missing partner, category or consumer and then the new contract with its first cost entry and the document.
 
 Every proposal appears as a card listing **all values** that would be stored, with **Approve** and **Reject**. Nothing is saved before you approve; the values are checked again at that moment, with your permissions, and you become the owner of new objects. The assistant has no tools to delete anything.
 
-Only if no text can be recognised locally is the file itself sent to the model (Claude only, PDF and images up to 10 MB). The file stays in the conversation until you delete it; once attached to a contract, a copy is stored as a regular contract document. The assistant cannot search the internet; it tells you when data such as the partner's address is missing.
+Only if no text can be recognised at all is the file itself sent to the main model (Claude only, PDF and images up to 10 MB). The file stays in the conversation until you delete it; once attached to a contract, a copy is stored as a regular contract document. The assistant cannot search the internet; it tells you when data such as the partner's address is missing.
 
-**Privacy:** the question and the contract data needed for the answer are sent to the configured provider. Conversations are stored in your own database; each user sees only their own and can delete them. If you want to keep data in Germany or on your own hardware, use a provider hosted there (e.g. IONOS) or a local model (Ollama).
+**Privacy:** the question and the contract data needed for the answer are sent to the configured provider. Conversations are stored in your own database; each user sees only their own and can delete them. If you want to keep data in Germany or on your own hardware, use a provider hosted there (e.g. IONOS) or a local model (Ollama) – for the main model and the document AI.
 
 Answers are generated by the background worker, so the `worker` container must be running.
 
