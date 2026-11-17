@@ -436,6 +436,19 @@ Keine neuen Abhängigkeiten. Die Werkzeuge des KI-Assistenten (`assistant/tools.
 - Backup: Eintrag `0.5.0` in `backup_upgrades.VERSIONS`, Schritt von 0.4.0 ist `no_changes`.
 - `APP_VERSION` ist `0.5.0`; Tag `v0.5.0`, Push und GitHub-Release nur auf Anweisung.
 
+### Version 0.6.0: Dokument-KI für Scans und Fotos
+Keine neuen Abhängigkeiten (OpenAI-SDK, Pillow und poppler sind vorhanden). Die Werkzeuge des KI-Assistenten (`assistant/tools.py`) sind unverändert.
+
+**Ziel (Auftrag des Maintainers, Fokus IONOS):** Bilderkennung für OpenAI-kompatible Anbieter und Ollama. Umgesetzt als zusätzliche „Dokument-KI“, weil bei IONOS die Modelle für Werkzeugaufrufe und die für Bilder/OCR verschiedene sind und die OpenAI-Schnittstelle Bilder nur in Benutzer-Nachrichten erlaubt (nicht in Werkzeug-Ergebnissen wie bei Claude).
+
+- `web.SiteSettings` (Migration `web/0007`): `reader_provider` (leer = wie Hauptmodell, `openai`, `ollama`), `reader_model` (leer = aus), `reader_base_url`, `reader_api_key` (in `SECRET_FIELDS`), `reader_kind` (`vision`: Bild mit Anweisung; `ocr`: nur das Bild, z. B. `lightonai/LightOnOCR-2-1B`). Keine `.env`-Variablen.
+- `assistant.config.ReaderConfig` und `merge_reader`; `AIConfig.reader` (None = nur lokal). Adresse und Schlüssel des Hauptmodells gelten nur bei gleichem Anbieter; Claude als Hauptmodell braucht einen eigenen Anbieter für die Dokument-KI.
+- `assistant.vision`: Seiten mit `pdftoppm` (200 dpi, höchstens 8) in JPEG umwandeln, mit Pillow auf 2400 px verkleinern (Transparenz auf Weiß, EXIF-Drehung), je Seite eine Anfrage (`image_url` als Base64, `max_tokens` 4096, `temperature` 0), Zeitbudget 240 s (Worker-Timeout 300 s), Fehler als `ProviderError` ohne Schlüssel.
+- `assistant.extraction.extract(path, name, reader=None)`: Die Dokument-KI liest nur Dateien ohne Text (Scans, Fotos, gescannte PDFs auch in E-Mails), statt Tesseract; bei Fehler oder leerem Ergebnis Tesseract wie bisher. Neues Verfahren `Attachment.Method.VISION` (Migration `assistant/0004`). `agent.read_pending_attachments` holt die Konfiguration einmal.
+- KI-Test: neuer Schritt `reader` (erzeugtes Bild mit Zahl, ohne Dokument-KI „nicht verfügbar“); `local` prüft weiter nur Tesseract.
+- Backup: Eintrag `0.6.0` in `backup_upgrades.VERSIONS`, Schritt von 0.5.0 ist `no_changes`.
+- `APP_VERSION` ist `0.6.0`; Tag `v0.6.0`, Push und GitHub-Release nur auf Anweisung. GitHub-Themen um `ai-assistant`, `ollama`, `ocr` ergänzt (Freigabe des Maintainers).
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

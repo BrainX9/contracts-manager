@@ -1,9 +1,12 @@
 """Tests für den KI-Assistenten (Version 0.8a), ohne Aufrufe beim Anbieter."""
 
 import json
+import tempfile
 from decimal import Decimal
+from io import BytesIO
+from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase, override_settings
@@ -882,7 +885,7 @@ class SelfTestTest(TestCase):
     def test_local_recognition(self):
         from . import extraction, selftest
 
-        def fake_extract(path, name):
+        def fake_extract(path, name, reader=None):
             if not name.endswith(".pdf"):
                 return "", "none"
             with open(path, "rb") as handle:
@@ -918,7 +921,7 @@ class SelfTestTest(TestCase):
                 "file", [Reply(tool_calls=[call]), Reply(text="Keine Zahl gefunden")], provider="anthropic",
             )
         self.assertEqual(result.status, "failed")
-        self.assertEqual(selftest.STEPS, ("connection", "tools", "local", "file"))
+        self.assertEqual(selftest.STEPS, ("connection", "tools", "local", "reader", "file"))
 
 
 class OllamaTest(TestCase):
@@ -1000,3 +1003,198 @@ class OllamaTest(TestCase):
         with patch("assistant.selftest.get_provider", return_value=FakeProvider([ProviderError("401: wrong key")])):
             result = selftest.run_step("connection", config)
         self.assertEqual(result.detail, "401: wrong key")
+
+
+class DocumentAITest(TestCase):
+    """Dokument-KI für Scans und Fotos (Version 0.6.0), ohne echte Anfragen"""
+
+    def site(self, **values):
+        from web.models import SiteSettings
+
+        site = SiteSettings.load()
+        for name, value in values.items():
+            setattr(site, name, value)
+        site.save()
+
+    @override_settings(**AI_SETTINGS)
+    def test_off_without_model(self):
+        from .config import current
+
+        self.assertIsNone(current().reader)
+
+    @override_settings(**AI_SETTINGS)
+    def test_same_provider_shares_address_and_key(self):
+        # IONOS: derselbe Schlüssel, ein anderes Modell
+        from .config import current
+
+        self.site(ai_base_url="https://openai.inference.de-txl.ionos.com/v1", ai_api_key="sk-ionos",
+                  reader_model="lightonai/LightOnOCR-2-1B", reader_kind="ocr")
+        reader = current().reader
+        self.assertEqual(
+            (reader.provider, reader.model, reader.base_url, reader.api_key, reader.kind),
+            ("openai", "lightonai/LightOnOCR-2-1B", "https://openai.inference.de-txl.ionos.com/v1", "sk-ionos", "ocr"),
+        )
+
+    @override_settings(**AI_SETTINGS)
+    def test_other_provider_gets_neither_address_nor_key(self):
+        from .config import OLLAMA_DEFAULT_URL, current
+
+        self.site(ai_provider="anthropic", ai_api_key="sk-claude", reader_provider="ollama", reader_model="qwen3-vl:8b")
+        reader = current().reader
+        self.assertEqual((reader.provider, reader.base_url, reader.api_key), ("ollama", OLLAMA_DEFAULT_URL, ""))
+        self.site(reader_base_url="http://192.168.1.20:11434/v1")
+        self.assertEqual(current().reader.base_url, "http://192.168.1.20:11434/v1")
+
+    @override_settings(**AI_SETTINGS)
+    def test_claude_as_main_needs_an_own_provider(self):
+        # Die Dokument-KI nutzt die OpenAI-Schnittstelle; "wie Hauptmodell" geht bei Claude nicht
+        from .config import current
+
+        self.site(ai_provider="anthropic", reader_model="some-model")
+        self.assertIsNone(current().reader)
+
+    def reader(self, kind="vision"):
+        from .config import ReaderConfig
+
+        return ReaderConfig(provider="openai", model="vision-model", base_url="http://127.0.0.1:9",
+                            api_key="sk-reader", kind=kind)
+
+    def fake_client(self, answers):
+        client = MagicMock()
+        client.chat.completions.create.side_effect = [
+            SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=text))]) for text in answers
+        ]
+        return client
+
+    def test_prepare_image_limits_size_and_flattens_transparency(self):
+        from PIL import Image
+
+        from . import vision
+
+        buffer = BytesIO()
+        Image.new("RGBA", (5000, 1000), (0, 0, 0, 0)).save(buffer, format="PNG")
+        with Image.open(BytesIO(vision.prepare_image(buffer.getvalue()))) as image:
+            self.assertEqual((image.format, max(image.size)), ("JPEG", vision.MAX_EDGE))
+            self.assertEqual(image.getpixel((10, 10)), (255, 255, 255))
+
+    def test_request_format(self):
+        from . import vision
+
+        client = self.fake_client(["Rechnung Nr. 42"])
+        with patch("openai.OpenAI", return_value=client) as openai_class:
+            self.assertEqual(vision.transcribe(b"jpeg", self.reader()), "Rechnung Nr. 42")
+        self.assertEqual(openai_class.call_args.kwargs["base_url"], "http://127.0.0.1:9")
+        request = client.chat.completions.create.call_args.kwargs
+        content = request["messages"][0]["content"]
+        self.assertEqual(request["messages"][0]["role"], "user")
+        self.assertEqual([part["type"] for part in content], ["text", "image_url"])
+        self.assertTrue(content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,"))
+
+    def test_ocr_model_gets_only_the_image(self):
+        from . import vision
+
+        client = self.fake_client(["Text"])
+        with patch("openai.OpenAI", return_value=client):
+            vision.transcribe(b"jpeg", self.reader(kind="ocr"))
+        content = client.chat.completions.create.call_args.kwargs["messages"][0]["content"]
+        self.assertEqual([part["type"] for part in content], ["image_url"])
+
+    def test_several_pages_and_time_budget(self):
+        from . import vision
+
+        client = self.fake_client(["Seite eins", "", "Seite drei"])
+        with patch("openai.OpenAI", return_value=client):
+            text = vision.read_pages([b"1", b"2", b"3"], self.reader())
+        self.assertEqual(text, "--- Page 1 ---\nSeite eins\n\n--- Page 3 ---\nSeite drei")
+        client = self.fake_client(["Seite eins", "Seite zwei"])
+        with patch("openai.OpenAI", return_value=client), patch("assistant.vision.time.monotonic", side_effect=[0, 999]):
+            text = vision.read_pages([b"1", b"2"], self.reader())
+        self.assertIn("Only the first 1 of 2 pages", text)
+
+    def test_provider_error_hides_the_key(self):
+        import openai
+
+        from . import vision
+
+        error = openai.APIStatusError(
+            "model does not support images (sk-reader)", response=MagicMock(status_code=400), body=None,
+        )
+        client = MagicMock()
+        client.chat.completions.create.side_effect = error
+        with patch("openai.OpenAI", return_value=client):
+            with self.assertRaises(ProviderError) as raised:
+                vision.transcribe(b"jpeg", self.reader())
+        self.assertIn("400", str(raised.exception))
+        self.assertNotIn("sk-reader", str(raised.exception))
+
+    def test_photo_is_read_by_the_document_ai(self):
+        from . import extraction
+
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "foto.png"
+            path.write_bytes(selftest_png("Hallo"))
+            with patch("assistant.vision.read_image", return_value="Vertrag 4711") as read_image:
+                self.assertEqual(extraction.extract(str(path), "foto.png", self.reader()), ("Vertrag 4711", "vision"))
+            read_image.assert_called_once()
+            # Ohne Dokument-KI wie bisher nur lokal
+            with patch("assistant.vision.read_image") as read_image:
+                extraction.extract(str(path), "foto.png")
+            read_image.assert_not_called()
+
+    def test_falls_back_to_tesseract(self):
+        from . import extraction
+
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "foto.png"
+            path.write_bytes(selftest_png("Hallo"))
+            with patch("assistant.vision.read_image", side_effect=ProviderError("400: no images")), \
+                    patch("assistant.extraction.ocr_image", return_value="lokal erkannt"):
+                self.assertEqual(extraction.extract(str(path), "foto.png", self.reader()), ("lokal erkannt", "ocr"))
+
+    def test_pdf_with_text_does_not_use_the_document_ai(self):
+        from . import extraction, selftest
+
+        data = selftest.pdf_bytes("Contracts Manager test document with enough text on this page")
+        with patch("assistant.vision.read_pdf") as read_pdf:
+            text, method = extraction.pdf_text(data, self.reader())
+        read_pdf.assert_not_called()
+        self.assertEqual(method, "pdf_text")
+
+    def test_scanned_pdf_uses_the_document_ai(self):
+        from . import extraction
+
+        with patch("assistant.vision.read_pdf", return_value="Gescannter Vertrag") as read_pdf, \
+                patch("assistant.extraction.ocr_pdf") as ocr_pdf:
+            self.assertEqual(extraction.pdf_text(b"%PDF-1.4 broken", self.reader()), ("Gescannter Vertrag", "vision"))
+        read_pdf.assert_called_once()
+        ocr_pdf.assert_not_called()
+
+    def test_selftest_step(self):
+        from . import selftest
+        from .config import AIConfig
+
+        config = AIConfig(enabled=True, provider="openai", model="m", base_url="", api_key="k")
+        self.assertEqual(selftest.run_step("reader", config).status, "skipped")
+        config = AIConfig(enabled=True, provider="openai", model="m", base_url="", api_key="k", reader=self.reader())
+        seen = {}
+
+        def fake_read(images, reader):
+            seen["timeout"] = (reader.timeout, reader.max_retries)
+            return "Test code 123456"
+
+        with patch("assistant.selftest.new_code", return_value="123456"), \
+                patch("assistant.vision.read_pages", side_effect=fake_read):
+            result = selftest.run_step("reader", config)
+        self.assertEqual(result.status, "ok")
+        self.assertEqual(seen["timeout"], (selftest.TEST_TIMEOUT, 0))
+        with patch("assistant.vision.read_pages", return_value="nichts"):
+            self.assertEqual(selftest.run_step("reader", config).status, "failed")
+        with patch("assistant.vision.read_pages", side_effect=ProviderError("400: no image input")):
+            result = selftest.run_step("reader", config)
+        self.assertEqual((result.status, result.detail), ("failed", "400: no image input"))
+
+
+def selftest_png(text):
+    from . import selftest
+
+    return selftest.png_bytes(text)

@@ -41,11 +41,12 @@ class SiteSettings(models.Model):
     System ändern (Version 0.7 beta). Es gibt genau einen Datensatz
     (SiteSettings.load). Zugangsdaten stehen in der .env oder hier
     (``SECRET_FIELDS``: API-Schlüssel des KI-Assistenten seit 0.3.0,
-    SMTP-Passwort und Client-Secret des SSO seit 0.4.0); sie werden nie
+    SMTP-Passwort und Client-Secret des SSO seit 0.4.0, Schlüssel der
+    Dokument-KI seit 0.6.0); sie werden nie
     angezeigt und nie ins Backup geschrieben.
     """
     # Zugangsdaten: nie anzeigen, nie exportieren, bei einem Import behalten
-    SECRET_FIELDS = ("ai_api_key", "email_password", "sso_client_secret")
+    SECRET_FIELDS = ("ai_api_key", "email_password", "sso_client_secret", "reader_api_key")
     ON = "on"
     OFF = "off"
     SWITCH_CHOICES = [(ON, _("On")), (OFF, _("Off"))]
@@ -61,6 +62,16 @@ class SiteSettings(models.Model):
         ("openai", _("OpenAI or OpenAI-compatible")),
         ("anthropic", "Anthropic (Claude)"),
         ("ollama", _("Ollama (local models)")),
+    ]
+
+    # Dokument-KI (Version 0.6.0): Anbieter mit OpenAI-Schnittstelle
+    READER_PROVIDER_CHOICES = [
+        ("openai", _("OpenAI-compatible (e.g. IONOS)")),
+        ("ollama", _("Ollama (local models)")),
+    ]
+    READER_KIND_CHOICES = [
+        ("vision", _("Vision model (receives an instruction with the image)")),
+        ("ocr", _("OCR model (receives only the image)")),
     ]
 
     sso_login_label = models.CharField(
@@ -83,6 +94,14 @@ class SiteSettings(models.Model):
     ai_base_url = models.CharField(_("address of the API (base URL)"), max_length=500, blank=True)
     ai_api_key = models.CharField(_("API key"), max_length=500, blank=True)
     ai_system_prompt = models.TextField(_("system prompt"), blank=True)
+
+    # Version 0.6.0: Dokument-KI, die Scans und Fotos liest (assistant.vision).
+    # Ohne Modell aus; leere Felder bedeuten "wie beim Hauptmodell".
+    reader_provider = models.CharField(_("provider"), max_length=20, blank=True, choices=READER_PROVIDER_CHOICES)
+    reader_model = models.CharField(_("model"), max_length=200, blank=True)
+    reader_base_url = models.CharField(_("address of the API (base URL)"), max_length=500, blank=True)
+    reader_api_key = models.CharField(_("API key"), max_length=500, blank=True)
+    reader_kind = models.CharField(_("type of model"), max_length=10, choices=READER_KIND_CHOICES, default="vision")
 
     # Version 0.4.0: E-Mail, Erinnerungsversand und Single Sign-on. Auch hier
     # bedeutet ein leeres Feld "Wert aus der .env"; ausgewertet wird das nur

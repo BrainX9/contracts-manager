@@ -187,10 +187,19 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
     clear_api_key = forms.BooleanField(label=_("Remove the stored API key"), required=False)
+    # Dokument-KI (Version 0.6.0): eigener Schlüssel, ebenfalls nie angezeigt
+    reader_key = forms.CharField(
+        label=_("API key"), required=False, max_length=500,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+    clear_reader_key = forms.BooleanField(label=_("Remove the stored API key"), required=False)
 
     class Meta:
         model = SiteSettings
-        fields = ["ai_enabled", "ai_provider", "ai_model", "ai_base_url", "ai_system_prompt"]
+        fields = [
+            "ai_enabled", "ai_provider", "ai_model", "ai_base_url", "ai_system_prompt",
+            "reader_provider", "reader_model", "reader_base_url", "reader_kind",
+        ]
         widgets = {"ai_system_prompt": forms.Textarea(attrs={"rows": 20, "spellcheck": "false"})}
 
     def __init__(self, *args, **kwargs):
@@ -216,6 +225,21 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
             "http://192.168.1.20:11434/v1 for Ollama on another computer. For Ollama, empty means "
             "the Docker host (host.docker.internal). Otherwise empty: value from the .env file."
         )
+        # Dokument-KI: leere Felder gelten wie beim Hauptmodell
+        self.fields["reader_kind"].required = False
+        self.fields["reader_provider"].choices = [("", _("Same as the main model")), *SiteSettings.READER_PROVIDER_CHOICES]
+        self.fields["reader_model"].help_text = _(
+            "Empty: no document AI, scans and photos are read with the local text recognition. "
+            "Example IONOS: lightonai/LightOnOCR-2-1B (OCR model) or a model whose model card lists image input."
+        )
+        self.fields["reader_base_url"].help_text = _(
+            "Empty: the address of the main model (Ollama: the Docker host)."
+        )
+        if self.instance.reader_api_key:
+            self.fields["reader_key"].help_text = _("A key is stored. Leave empty to keep it.")
+        else:
+            del self.fields["clear_reader_key"]
+            self.fields["reader_key"].help_text = _("Empty: the key of the main model (same provider).")
         if self.instance.ai_api_key:
             self.fields["api_key"].help_text = _("A key is stored. Leave empty to keep it.")
         else:
@@ -230,6 +254,15 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
 
     def clean_ai_base_url(self):
         value = self.cleaned_data["ai_base_url"].strip()
+        if value:
+            URLValidator(schemes=["http", "https"])(value)
+        return value
+
+    def clean_reader_kind(self):
+        return self.cleaned_data.get("reader_kind") or "vision"
+
+    def clean_reader_base_url(self):
+        value = self.cleaned_data["reader_base_url"].strip()
         if value:
             URLValidator(schemes=["http", "https"])(value)
         return value
@@ -250,6 +283,14 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
             return ""
         return self.instance.ai_api_key
 
+    def chosen_reader_key(self):
+        """Schlüssel der Dokument-KI nach dem Speichern: neu, entfernt oder wie bisher."""
+        if self.cleaned_data.get("reader_key"):
+            return self.cleaned_data["reader_key"]
+        if self.cleaned_data.get("clear_reader_key"):
+            return ""
+        return self.instance.reader_api_key
+
     def candidate(self):
         """Konfiguration aus den eingegebenen Werten (für den Test, ungespeichert)."""
         from types import SimpleNamespace
@@ -261,10 +302,14 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
             ai_enabled=data["ai_enabled"], ai_provider=data["ai_provider"], ai_model=data["ai_model"],
             ai_base_url=data["ai_base_url"], ai_api_key=self.chosen_api_key(),
             ai_system_prompt=data["ai_system_prompt"],
+            reader_provider=data["reader_provider"], reader_model=data["reader_model"],
+            reader_base_url=data["reader_base_url"], reader_api_key=self.chosen_reader_key(),
+            reader_kind=data["reader_kind"],
         ), self.env)
 
     def save(self, commit=True):
         self.instance.ai_api_key = self.chosen_api_key()
+        self.instance.reader_api_key = self.chosen_reader_key()
         return super().save(commit)
 
 

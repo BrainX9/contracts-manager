@@ -446,3 +446,65 @@ class MarkdownTest(TestCase):
                 self.assertContains(page, "<strong>wichtig</strong>")
                 self.assertNotContains(page, "<script>alert(1)</script>")
         self.assertContains(self.client.get(reverse("contract_edit", args=[contract.pk])), "Markdown")
+
+
+class ManageDocumentAITest(SuperuserMixin, TestCase):
+    """Dokument-KI unter Verwaltung › KI-Einstellungen (Version 0.6.0)"""
+
+    url = reverse_lazy("manage_ai")
+
+    def data(self, **values):
+        from assistant.agent import DEFAULT_PROMPT
+
+        data = {"ai_enabled": "", "ai_provider": "", "ai_model": "", "ai_base_url": "", "api_key": "",
+                "ai_system_prompt": DEFAULT_PROMPT, "reader_provider": "", "reader_model": "",
+                "reader_base_url": "", "reader_kind": "", "reader_key": "", "action": "save"}
+        data.update(values)
+        return data
+
+    def test_save_and_key_is_never_shown(self):
+        self.client.force_login(self.superuser)
+        response = self.client.post(self.url, self.data(
+            reader_model="lightonai/LightOnOCR-2-1B", reader_kind="ocr", reader_key="sk-reader-geheim",
+        ))
+        self.assertRedirects(response, self.url)
+        stored = SiteSettings.load()
+        self.assertEqual((stored.reader_model, stored.reader_kind, stored.reader_api_key),
+                         ("lightonai/LightOnOCR-2-1B", "ocr", "sk-reader-geheim"))
+        page = self.client.get(self.url)
+        self.assertNotContains(page, "sk-reader-geheim")
+        self.assertContains(page, "lightonai/LightOnOCR-2-1B")
+        # Leer lassen behält den Schlüssel, das Kästchen entfernt ihn
+        self.client.post(self.url, self.data(reader_model="anderes-modell"))
+        self.assertEqual(SiteSettings.load().reader_api_key, "sk-reader-geheim")
+        self.client.post(self.url, self.data(reader_model="anderes-modell", clear_reader_key="on"))
+        self.assertEqual(SiteSettings.load().reader_api_key, "")
+        # Ohne Angabe gilt das Vision-Modell
+        self.assertEqual(SiteSettings.load().reader_kind, "vision")
+
+    def test_invalid_address(self):
+        self.client.force_login(self.superuser)
+        response = self.client.post(self.url, self.data(reader_model="m", reader_base_url="ftp://example.test"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(SiteSettings.load().reader_model, "")
+
+    def test_key_is_a_secret(self):
+        self.assertIn("reader_api_key", SiteSettings.SECRET_FIELDS)
+
+    def test_test_uses_the_entered_document_ai(self):
+        from assistant import selftest
+
+        self.client.force_login(self.superuser)
+        seen = []
+
+        def fake_run_step(step, config, timeout=None):
+            seen.append((step, config.reader and (config.reader.model, config.reader.api_key)))
+            return selftest.StepResult(step, selftest.OK, "")
+
+        with patch("assistant.selftest.run_step", side_effect=fake_run_step):
+            self.client.post(self.url, self.data(
+                action="test", step="reader", ai_provider="openai", ai_model="m", api_key="sk-main",
+                reader_model="vision-model",
+            ), HTTP_HX_REQUEST="true")
+        self.assertEqual(seen, [("reader", ("vision-model", "sk-main"))])
+        self.assertEqual(SiteSettings.load().reader_model, "")
