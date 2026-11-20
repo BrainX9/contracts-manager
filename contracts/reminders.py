@@ -89,7 +89,12 @@ def send_due_reminders(today=None):
     """
     today = today or timezone.localdate()
     result = Result()
-    candidates = Reminder.objects.filter(enabled=True, remind_on__isnull=False).values_list("pk", flat=True)
+    # Version 0.7.0: archivierte Verträge ruhen, ihre Erinnerungen werden nicht verschickt
+    candidates = (
+        Reminder.objects.filter(enabled=True, remind_on__isnull=False)
+        .exclude(contract__status="archived")
+        .values_list("pk", flat=True)
+    )
     for pk in list(candidates):
         # Jede Erinnerung einzeln sperren, damit ein paralleler Lauf
         # (Worker und Befehl) nicht doppelt verschickt
@@ -98,6 +103,7 @@ def send_due_reminders(today=None):
                 Reminder.objects.select_for_update(skip_locked=True, of=("self",))
                 .select_related("contract__provider")
                 .filter(pk=pk, enabled=True)
+                .exclude(contract__status="archived")
                 .first()
             )
             if reminder is None:

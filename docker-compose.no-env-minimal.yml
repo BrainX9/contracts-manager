@@ -1,0 +1,93 @@
+# Contracts Manager – Docker Compose WITHOUT a .env file, minimal version
+#
+# Only the values needed to start and to log in. Replace every CHANGE_ME,
+# create the folders db and media next to this file
+# (Linux: sudo chown -R 1000:1000 media), then:
+#   docker compose -f docker-compose.no-env-minimal.yml up -d
+#
+# Keep this file private, it contains passwords. A "$" in a value must be
+# written as "$$". More settings: docker-compose.no-env.yml and the README.
+
+x-app-settings: &app-settings
+  SECRET_KEY: "CHANGE_ME"                         # e.g. from: openssl rand -hex 32
+  ALLOWED_HOSTS: "contracts.example.com"          # host name, without http://
+  CSRF_TRUSTED_ORIGINS: "https://contracts.example.com"
+  USE_HTTPS: "True"                               # False for http:// in the home network
+  POSTGRES_DB: &db-name "contracts_db"
+  POSTGRES_USER: &db-user "contracts_user"
+  POSTGRES_PASSWORD: &db-password "CHANGE_ME"
+  ADMIN_USERNAME: "admin"                         # first administrator (first start only)
+  ADMIN_PASSWORD: "CHANGE_ME"                     # remove after the first login
+  MEDIA_ROOT: /app/media
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: contracts-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: *db-name
+      POSTGRES_USER: *db-user
+      POSTGRES_PASSWORD: *db-password
+    volumes:
+      - type: bind
+        source: ./db
+        target: /var/lib/postgresql/data
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: brainx9/contracts-manager:latest
+    container_name: contracts-manager-app
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *app-settings
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ./media
+        target: /app/media
+        bind:
+          create_host_path: false
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/localhost/8000
+          && printf 'GET /health/ HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3
+          && read -r -t 5 line <&3
+          && case "$$line" in *" 200 "*) exit 0;; *) exit 1;; esac
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    image: brainx9/contracts-manager:latest
+    container_name: contracts-manager-worker
+    restart: unless-stopped
+    user: "1000:1000"
+    command: ["python", "manage.py", "qcluster"]
+    environment:
+      <<: *app-settings
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ./media
+        target: /app/media
+        bind:
+          create_host_path: false

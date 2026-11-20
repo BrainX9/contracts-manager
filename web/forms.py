@@ -188,14 +188,19 @@ class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Contract
         fields = [
-            "name", "short_description", "provider", "category", "consumer", "payment_method",
-            "start_date", "term_value", "term_unit", "contract_number", "notes",
+            "name", "short_description", "status", "cancelled_as_of", "provider", "category", "consumer",
+            "payment_method", "start_date", "term_value", "term_unit", "contract_number", "notes",
         ]
         widgets = {
             "start_date": DateInput(),
+            "cancelled_as_of": DateInput(),
             "notes": forms.Textarea(attrs={"rows": 4}),
         }
-        help_texts = {"notes": MARKDOWN_HELP}
+        help_texts = {
+            "notes": MARKDOWN_HELP,
+            "status": _("Archived contracts are not counted in totals and send no reminders."),
+            "cancelled_as_of": _("The date on which the cancellation takes effect."),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -204,6 +209,11 @@ class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
             ("payment_method", PaymentMethod),
         ):
             self.limit_to_visible(name, model)
+        # Ohne Angabe bleibt der Status, wie er ist (neu: aktiv)
+        self.fields["status"].required = False
+
+    def clean_status(self):
+        return self.cleaned_data.get("status") or self.instance.status or Contract.Status.ACTIVE
 
 
 class ProviderForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):

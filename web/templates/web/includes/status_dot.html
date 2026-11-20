@@ -1,0 +1,1 @@
+{% load i18n %}{# Ampel für den Status eines Vertrags (Version 0.7.0); der Text ist für Screenreader und als Tooltip da #}<span class="status-dot status-{{ contract.status }}" title="{{ contract.get_status_display }}" role="img" aria-label="{% translate 'Status' %}: {{ contract.get_status_display }}"></span>

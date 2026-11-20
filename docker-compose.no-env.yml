@@ -1,0 +1,144 @@
+# Contracts Manager – Docker Compose WITHOUT a .env file (all settings here)
+#
+# Use this file instead of docker-compose.yml + .env, for example when you
+# paste it into the Synology Container Manager (Project > Create). Every
+# setting is written directly below. Required values are marked REQUIRED;
+# everything else is optional and commented out.
+#
+# Before the first start:
+#   1. Replace every CHANGE_ME (search for it).
+#   2. Create the folders db and media next to this file
+#      (Linux: sudo chown -R 1000:1000 media).
+#   3. docker compose -f docker-compose.no-env.yml up -d
+#
+# This file then contains passwords: keep it private (e.g. chmod 600).
+# A "$" in a value must be written as "$$".
+#
+# Email, single sign-on and the AI assistant are set up in the app under
+# Administration – no variables needed. Full list of variables: README,
+# section "Configuration".
+
+# Settings shared by app and worker (YAML anchor, used below with <<: *app-settings)
+x-app-settings: &app-settings
+  # --- REQUIRED ------------------------------------------------------------
+  # Random key, e.g. from: openssl rand -hex 32
+  SECRET_KEY: "CHANGE_ME"
+  # Host name(s) the app is reached at, comma separated, without http://
+  ALLOWED_HOSTS: "contracts.example.com"
+  # Full address(es) incl. http:// or https://, comma separated
+  CSRF_TRUSTED_ORIGINS: "https://contracts.example.com"
+  # Database: the db service below uses the same values (YAML anchors)
+  POSTGRES_DB: &db-name "contracts_db"
+  POSTGRES_USER: &db-user "contracts_user"
+  POSTGRES_PASSWORD: &db-password "CHANGE_ME"
+  MEDIA_ROOT: /app/media
+
+  # --- Optional ------------------------------------------------------------
+  # True behind a reverse proxy with HTTPS, False for http:// in the home network
+  USE_HTTPS: "True"
+  # Always False in production
+  DEBUG: "False"
+  # First administrator, created on the first start if there is no superuser.
+  # After the first login change the password in the app and remove ADMIN_PASSWORD.
+  # ADMIN_USERNAME: "admin"
+  # ADMIN_PASSWORD: "CHANGE_ME"
+  # ADMIN_EMAIL: "admin@example.com"
+  # Links to Paperless-ngx, without trailing slash
+  # PAPERLESS_URL: "https://paperless.example.com"
+  # AI assistant fine tuning (the connection is set in the app)
+  # AI_EFFORT: "medium"
+  # AI_MAX_TOKENS: "16000"
+  # AI_MAX_TOOL_ROUNDS: "8"
+  # AI_TIMEOUT: "120"
+  # Login lockout after failed attempts
+  # AXES_FAILURE_LIMIT: "5"
+  # AXES_COOLOFF_MINUTES: "15"
+  # HSTS in seconds (only with USE_HTTPS), e.g. 31536000 = 1 year
+  # SECURE_HSTS_SECONDS: "0"
+  # Log level of Django: DEBUG, INFO, WARNING, ERROR
+  # DJANGO_LOG_LEVEL: "WARNING"
+  # Replace the gunicorn options of the image
+  # GUNICORN_CMD_ARGS: "--bind 0.0.0.0:8000 --workers 2 --timeout 60 --no-control-socket"
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: contracts-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: *db-name
+      POSTGRES_USER: *db-user
+      POSTGRES_PASSWORD: *db-password
+    volumes:
+      # create_host_path: false – do not start (instead of creating an empty
+      # database) if the folder is missing, e.g. a locked encrypted folder
+      - type: bind
+        source: ./db
+        target: /var/lib/postgresql/data
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    # Optional: a fixed version instead of latest, e.g. brainx9/contracts-manager:0.7.0
+    image: brainx9/contracts-manager:latest
+    container_name: contracts-manager-app
+    restart: unless-stopped
+    # Optional: user and group that own the media folder (default 1000:1000)
+    user: "1000:1000"
+    ports:
+      # Optional: change the left number if port 8000 is taken on the host
+      - "8000:8000"
+    environment:
+      <<: *app-settings
+    depends_on:
+      db:
+        condition: service_healthy
+    # Lets the app reach Ollama on the Docker host (host.docker.internal)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - type: bind
+        source: ./media
+        target: /app/media
+        bind:
+          create_host_path: false
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/localhost/8000
+          && printf 'GET /health/ HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3
+          && read -r -t 5 line <&3
+          && case "$$line" in *" 200 "*) exit 0;; *) exit 1;; esac
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Background worker: reminders, update check, AI assistant
+  worker:
+    image: brainx9/contracts-manager:latest
+    container_name: contracts-manager-worker
+    restart: unless-stopped
+    user: "1000:1000"
+    command: ["python", "manage.py", "qcluster"]
+    environment:
+      <<: *app-settings
+    depends_on:
+      app:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - type: bind
+        source: ./media
+        target: /app/media
+        bind:
+          create_host_path: false

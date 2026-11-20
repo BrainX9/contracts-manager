@@ -753,3 +753,28 @@ main h1.h3 {
   border: 1px solid var(--bs-border-color);
   padding: 0.25rem 0.5rem;
 }
+
+/* Version 0.7.0: Status eines Vertrags als Ampel */
+.status-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  vertical-align: middle;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.status-active { background-color: #22a447; }
+.status-notice_sent { background-color: #f08c00; }
+.status-cancelled { background-color: #d63939; }
+.status-archived { background-color: #9aa0a6; }
+
+.status-col {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.contract-archived td {
+  color: var(--bs-secondary-color);
+}

@@ -210,6 +210,9 @@ Du solltest `docker-compose.yml`, `.env` und die Ordner `db`, `media` und
 
 ## Schritt 5: Einstellungen in `.env` eintragen
 
+> [!TIP]
+> **Ohne `.env`-Datei:** Statt `docker-compose.yml` und `.env` geht auch eine einzige Datei mit allen Einstellungen: [`docker-compose.no-env.yml`](../docker-compose.no-env.yml) oder [`docker-compose.no-env-minimal.yml`](../docker-compose.no-env-minimal.yml) (nur Pflichtwerte). Das passt zum Container Manager (*Projekt › Erstellen › docker-compose.yml erstellen*, Datei einfügen, jedes `CHANGE_ME` ersetzen). Die Ordner `db` und `media` aus Schritt 4 brauchst du trotzdem. In der Datei stehen dann Passwörter; ein `$` in einem Wert schreibst du als `$$`. Diese Anleitung geht mit `.env` weiter.
+
 ### 5.1 Geheimnisse automatisch eintragen
 
 Diese Befehle erzeugen einen zufälligen `SECRET_KEY` und ein zufälliges

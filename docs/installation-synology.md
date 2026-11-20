@@ -45,6 +45,9 @@ sudo chown -R 1000:1000 /volume1/docker/contracts-manager/media
 
 ## 2. Download the Compose file and `.env`
 
+> [!TIP]
+> **Without a `.env` file:** instead of the two files below you can use a single Compose file with all settings inside – [`docker-compose.no-env.yml`](../docker-compose.no-env.yml), or [`docker-compose.no-env-minimal.yml`](../docker-compose.no-env-minimal.yml) with only the required values. That suits the Container Manager (*Project › Create › Create docker-compose.yml*, paste the file, replace every `CHANGE_ME`). The folders `db` and `media` from step 1 are still needed. The file then contains passwords; write a `$` in a value as `$$`. This guide continues with `.env`.
+
 ```bash
 cd /volume1/docker/contracts-manager
 ```

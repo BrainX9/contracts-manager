@@ -23,6 +23,7 @@
   <table class="table table-hover align-middle">
     <thead>
       <tr>
+        <th scope="col" class="status-col">{% include "web/includes/sort_link.html" with key="status" label=_("Status") %}</th>
         <th scope="col" class="d-none d-sm-table-cell">{% include "web/includes/sort_link.html" with key="reference" label=_("Reference") %}</th>
         <th scope="col">{% include "web/includes/sort_link.html" with key="name" label=_("Contract") %}</th>
         <th scope="col">{% include "web/includes/sort_link.html" with key="provider" label=_("Contract partner") %}</th>
@@ -34,7 +35,8 @@
     </thead>
     <tbody>
       {% for row in rows %}
-      <tr>
+      <tr{% if row.contract.is_archived %} class="contract-archived"{% endif %}>
+        <td class="status-col">{% include "web/includes/status_dot.html" with contract=row.contract %}</td>
         <td class="text-body-secondary d-none d-sm-table-cell">{{ row.contract.reference }}</td>
         <td><a href="{% url 'contract_detail' row.contract.pk %}" class="fw-medium">{{ row.contract.name }}</a>
           {% if row.contract.short_description %}<div class="small text-body-secondary">{{ row.contract.short_description }}</div>{% endif %}</td>
@@ -51,6 +53,6 @@
 </div>
 {% else %}
 <div class="alert alert-info">
-  {% if is_filtered %}{% translate "No contracts match the filters." %}{% else %}{% translate "There are no contracts yet that you are allowed to see." %}{% endif %}
+  {% if is_filtered %}{% translate "No contracts match the filters." %}{% elif archived_count %}{% translate "All contracts you can see are archived. Choose “Archived” in the status filter to show them." %}{% else %}{% translate "There are no contracts yet that you are allowed to see." %}{% endif %}
 </div>
 {% endif %}

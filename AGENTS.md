@@ -449,6 +449,27 @@ Keine neuen Abhängigkeiten (OpenAI-SDK, Pillow und poppler sind vorhanden). Die
 - Backup: Eintrag `0.6.0` in `backup_upgrades.VERSIONS`, Schritt von 0.5.0 ist `no_changes`.
 - `APP_VERSION` ist `0.6.0`; Tag `v0.6.0`, Push und GitHub-Release nur auf Anweisung. GitHub-Themen um `ai-assistant`, `ollama`, `ocr` ergänzt (Freigabe des Maintainers).
 
+### Version 0.7.0: Vertragsstatus, Compose ohne .env, Variablentabelle
+Keine neuen Abhängigkeiten.
+
+**Status und „Gekündigt zum“ (`contracts.Contract`, Migration `0016`)**
+- `Contract.Status`: `active` (grün, „Aktiv“), `notice_sent` (orange, „Kündigung verschickt“), `cancelled` (rot, „Gekündigt“), `archived` (grau, „Archiviert“); Standard `active`. `cancelled_as_of`: Datum, zu dem die Kündigung wirkt (optional). Namen vom Maintainer bestätigt.
+- Anzeige als Ampel-Punkt (`web/includes/status_dot.html`, CSS `.status-dot.status-<wert>`, Text als Tooltip und für Screenreader): erste Spalte der Vertragsliste (sortierbar), Vertragstabellen der Stammdaten, Vertragsseite. Formular: Status optional (ohne Angabe bleibt er), Django-Admin mit Filter.
+- **Archivierte Verträge ruhen** (Entscheidung des Maintainers): nicht in der Übersicht, standardmäßig nicht in der Vertragsliste (Statusfilter: leer = alle außer archivierten, ein Status, `all`), nie in Summen (`total_current_costs`, Monatssummen der Stammdatenlisten), keine Erinnerungen (`reminders.send_due_reminders`). Gekündigte, nicht archivierte Verträge zählen weiter.
+- KI-Werkzeuge: `_contract_summary` liefert `status` und `cancelled_as_of` (nur lesend, keine neuen Werkzeuge).
+
+**Compose-Dateien**
+- `docker-compose.yml` (mit `.env`, unverändert), `docker-compose.no-env.yml` (alle Werte in der Datei, optionale auskommentiert), `docker-compose.no-env-minimal.yml` (nur Pflichtwerte und erster Administrator). Die beiden `no-env`-Dateien sind wie `.env.example` englisch kommentiert, nutzen YAML-Anker (`x-app-settings`, Datenbankwerte einmal) und reichen `$$` an den Container weiter; `config/tests.py` (`NoEnvComposeTest`) prüft Pflichtwerte und dass nichts aus einer `.env` ersetzt wird.
+- `config/settings.py`: Ohne `DATABASE_URL` wird die Adresse aus `POSTGRES_DB`/`POSTGRES_USER`/`POSTGRES_PASSWORD` gebildet (Server `db`, Passwort URL-kodiert, Sonderzeichen erlaubt). Neue Variablen in einer `no-env`-Datei ergänzen.
+
+**Doku**
+- README: Tabelle 1 „Variables in `.env`“ mit Spalte Pflicht/optional (zuerst Pflicht) und Standardwert; Tabelle 2 „Settings that moved to the app“ unverändert. Schnellstart mit den drei Compose-Dateien.
+- `docs/docker-hub.md`: Text für die Docker-Hub-Übersicht (Maintainer kopiert ihn nach jedem Release; absolute Links). Bei Änderungen an Funktionen oder Variablen mitpflegen.
+
+**Weiteres**
+- Backup: Eintrag `0.7.0` in `backup_upgrades.VERSIONS`, Schritt von 0.6.0 ist `no_changes`.
+- `APP_VERSION` ist `0.7.0`; Tag `v0.7.0`, Push und GitHub-Release nur auf Anweisung.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

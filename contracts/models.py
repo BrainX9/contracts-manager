@@ -236,6 +236,14 @@ class Contract(OwnedModel):
     """
     Vertrag
     """
+
+    class Status(models.TextChoices):
+        # Version 0.7.0: Ampel in der Vertragsliste (grün, orange, rot, grau)
+        ACTIVE = "active", _("Active")
+        NOTICE_SENT = "notice_sent", _("Notice sent")
+        CANCELLED = "cancelled", _("Cancelled")
+        ARCHIVED = "archived", _("Archived")
+
     name = models.CharField(_("name"), max_length=200)
     # PROTECT: Stammdaten mit Verträgen können nicht gelöscht werden
     provider = models.ForeignKey(Provider, on_delete=models.PROTECT, verbose_name=_("contract partner"))
@@ -272,8 +280,17 @@ class Contract(OwnedModel):
         null=True, blank=True
     )
 
+    # Version 0.7.0: Status und Datum, zu dem gekündigt ist. Archivierte
+    # Verträge ruhen: keine Summen, keine Erinnerungen (siehe ACTIVE_STATUSES).
+    status = models.CharField(_("status"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    cancelled_as_of = models.DateField(_("cancelled as of"), null=True, blank=True)
+
     def __str__(self):
         return self.name
+
+    @property
+    def is_archived(self):
+        return self.status == self.Status.ARCHIVED
 
     @property
     def current_cost_entry(self):
@@ -706,13 +723,15 @@ def total_current_costs(contracts):
     Summiert die aktuellen Kosten der übergebenen Verträge.
 
     Grundlage ist der auf einen Monat umgerechnete Betrag jedes Vertrags.
-    Verträge ohne aktuell gültigen Kosteneintrag zählen nicht mit.
-    Gibt ein Dict mit 'monthly', 'yearly' (beide auf 2 Nachkommastellen
+    Verträge ohne aktuell gültigen Kosteneintrag und archivierte Verträge
+    (Version 0.7.0) zählen nicht mit. Gibt ein Dict mit 'monthly', 'yearly' (beide auf 2 Nachkommastellen
     gerundet) und 'count' (Anzahl der Verträge mit Kosten) zurück.
     """
     monthly_sum = Decimal('0')
     count = 0
     for contract in contracts:
+        if contract.is_archived:
+            continue
         monthly = contract.current_monthly_cost
         if monthly is not None:
             monthly_sum += monthly
