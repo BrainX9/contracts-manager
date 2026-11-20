@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from datetime import timedelta
+import os
 from pathlib import Path
 
 import environ
@@ -138,6 +139,18 @@ if DEBUG:
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
+# Version 0.7.0: Ohne DATABASE_URL (Compose-Dateien ohne .env) wird die
+# Adresse aus POSTGRES_DB, POSTGRES_USER und POSTGRES_PASSWORD gebildet;
+# der Datenbank-Server ist dann der Compose-Dienst "db". Das Passwort wird
+# dabei für die URL kodiert, darf also auch Sonderzeichen enthalten.
+if not os.environ.get("DATABASE_URL") and env("POSTGRES_PASSWORD", default=""):
+    from urllib.parse import quote
+
+    os.environ["DATABASE_URL"] = "postgres://{}:{}@db:5432/{}".format(
+        quote(env("POSTGRES_USER", default="contracts"), safe=""),
+        quote(env("POSTGRES_PASSWORD"), safe=""),
+        quote(env("POSTGRES_DB", default="contracts"), safe=""),
+    )
 DATABASES = {
     "default": env.db(),  # Verwendet DATABASE_URL Umgebungsvariable
 }
@@ -304,7 +317,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.6.0"
+APP_VERSION = "0.7.0"
 
 # --- Fehlversuche bei der Anmeldung (django-axes) ----------------------------
 # Nach 5 falschen Passwörtern für denselben Benutzernamen von derselben

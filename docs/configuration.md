@@ -14,6 +14,7 @@ Email, single sign-on and the AI assistant could formerly only be set with varia
 - [Administration in the web interface](#administration-in-the-web-interface)
 - [Email and reminders](#email-and-reminders)
 - [Single sign-on with the Synology SSO Server](#single-sign-on-with-the-synology-sso-server)
+- [Contract status](#contract-status)
 - [Notes with Markdown](#notes-with-markdown)
 - [Documents](#documents)
 - [Paperless-ngx links](#paperless-ngx-links)
@@ -189,6 +190,28 @@ A contract can have a **payment method** (optional), for example PayPal or direc
 - **Contract list:** the filter “Payment method” appears as soon as a visible contract has one.
 
 **Defaults.** *PayPal*, *American Express*, *Visa* and *Lastschrift* (direct debit) are created once, as soon as there is a superuser: on the first start of a new installation, after the update from 0.1.0, and after importing a backup that has no payment methods yet. They are ordinary records: the first superuser owns them and the group “Alle” may read them, so every user can select them. Superusers can rename them, replace the icon or delete them like any other value; a deleted default is not created again. The icons are simple tiles drawn for this project, not the logos of the companies.
+
+## Contract status
+
+Every contract has a **status**, shown as a coloured dot in the contract lists (like a traffic light) and next to the name on the contract page:
+
+| Dot | Status | Meaning |
+|---|---|---|
+| 🟢 | Active | The contract runs (default) |
+| 🟠 | Notice sent | You have sent the cancellation and wait for the confirmation |
+| 🔴 | Cancelled | The cancellation is confirmed; the contract ends on the date in *Cancelled as of* |
+| ⚪ | Archived | The contract has ended and is only kept for reference |
+
+**Cancelled as of** is the date on which the cancellation takes effect. Set it together with the status in the contract form.
+
+Archived contracts are at rest:
+
+- the **overview** does not show them and does not count them;
+- the **contract list** hides them by default – choose *Archived* or *All, including archived* in the status filter;
+- **totals** (contract list, contract partners, categories, consumers) never include them, even when they are shown;
+- **reminders** of archived contracts are not sent. Set the status back to *Active* and they are sent again.
+
+Contracts that are cancelled but not yet archived still count, because you usually pay until the end. Archive them once they have ended.
 
 ## Notes with Markdown
 

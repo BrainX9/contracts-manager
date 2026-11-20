@@ -507,9 +507,10 @@ class PaymentMethodAdmin(OwnedAdmin):
 
 @admin.register(Contract)
 class ContractAdmin(OwnedAdmin):
-    list_display = ['reference', 'name', 'provider', 'category', 'consumer', 'current_cost_display']
+    list_display = ['reference', 'name', 'status', 'provider', 'category', 'consumer', 'current_cost_display']
     # RelatedOnly: Filter zeigen nur Werte der sichtbaren Verträge
     list_filter = [
+        'status',
         MainCategoryFilter,
         ('category', admin.RelatedOnlyFieldListFilter),
         ('consumer', admin.RelatedOnlyFieldListFilter),
@@ -528,7 +529,7 @@ class ContractAdmin(OwnedAdmin):
             'fields': ('reference', 'name', 'provider', 'category', 'consumer', 'payment_method')
         }),
         (_('Term'), {
-            'fields': ('start_date', 'term_value', 'term_unit')
+            'fields': ('status', 'start_date', 'term_value', 'term_unit', 'cancelled_as_of')
         }),
         (_('Information'), {
             'fields': ('contract_number', 'short_description', 'notes', 'provider_paperless_link')

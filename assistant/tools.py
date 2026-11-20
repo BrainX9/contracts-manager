@@ -37,6 +37,9 @@ def _contract_summary(contract):
         "id": contract.pk,
         "reference": contract.reference,
         "name": contract.name,
+        # Version 0.7.0: archivierte Verträge zählen in Summen nicht mit
+        "status": contract.status,
+        "cancelled_as_of": contract.cancelled_as_of.isoformat() if contract.cancelled_as_of else None,
         "provider": contract.provider.name,
         "category": str(contract.category),
         "consumer": contract.consumer.name if contract.consumer_id else None,

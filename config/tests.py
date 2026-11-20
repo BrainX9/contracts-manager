@@ -80,3 +80,33 @@ class ConfigurationDocsTest(SimpleTestCase):
         # Jede dieser Variablen wird noch gelesen, steht aber nicht mehr in der Vorlage
         self.assertEqual(sorted(MOVED_TO_APP - settings_variables()), [])
         self.assertEqual(sorted(MOVED_TO_APP & self.documented(BASE_DIR / ".env.example")), [])
+
+
+class NoEnvComposeTest(SimpleTestCase):
+    """
+    Version 0.7.0: Compose-Dateien ohne .env enthalten alle Pflichtwerte
+    selbst und lesen nichts aus einer .env.
+    """
+    REQUIRED = ("SECRET_KEY", "ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD")
+
+    def check(self, name):
+        path = BASE_DIR / name
+        if not path.exists():
+            self.skipTest(f"{name} fehlt (im Docker-Image nicht enthalten)")
+        text = path.read_text(encoding="utf-8")
+        self.assertNotIn("env_file", text)
+        # Kein Ersetzen durch Compose: nur $$ (an den Container weitergereicht)
+        self.assertEqual(re.findall(r"(?<!\$)\$\{", text), [])
+        for variable in self.REQUIRED:
+            self.assertRegex(text, rf"\n  {variable}: ")
+        return text
+
+    def test_no_env(self):
+        text = self.check("docker-compose.no-env.yml")
+        # Die optionalen Variablen der .env stehen auskommentiert darin
+        for variable in ("PAPERLESS_URL", "AI_TIMEOUT", "AXES_FAILURE_LIMIT", "DJANGO_LOG_LEVEL", "ADMIN_PASSWORD"):
+            self.assertIn(variable, text)
+
+    def test_no_env_minimal(self):
+        text = self.check("docker-compose.no-env-minimal.yml")
+        self.assertIn("ADMIN_PASSWORD", text)

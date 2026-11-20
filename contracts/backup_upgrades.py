@@ -131,6 +131,17 @@ VERSIONS = (
             "web": ["0007_document_ai"],
             "assistant": ["0004_document_ai"],
         },
+        # 0.6.0 -> 0.7.0: Status und "Gekündigt zum" am Vertrag; beim Laden
+        # gilt der Standard "aktiv" bzw. leer
+        no_changes,
+    ),
+    BackupVersion(
+        "0.7.0",
+        {
+            "contracts": ["0016_contract_status"],
+            "web": ["0007_document_ai"],
+            "assistant": ["0004_document_ai"],
+        },
     ),
 )
 

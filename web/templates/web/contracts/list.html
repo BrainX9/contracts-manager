@@ -48,6 +48,16 @@
         {% endfor %}
       </select>
     </div>
+    <div class="col-6 col-md-3 col-xxl-2">
+      <label class="visually-hidden" for="filter-status">{% translate "Status" %}</label>
+      <select id="filter-status" name="status" class="form-select">
+        <option value="">{% translate "All except archived" %}</option>
+        {% for value, label in statuses %}
+        <option value="{{ value }}"{% if value == filters.status %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+        <option value="all"{% if filters.status == "all" %} selected{% endif %}>{% translate "All, including archived" %}</option>
+      </select>
+    </div>
     {% if payment_methods %}
     <div class="col-6 col-md-3 col-xxl-2">
       <label class="visually-hidden" for="filter-payment-method">{% translate "Payment method" %}</label>

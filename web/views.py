@@ -46,8 +46,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Version 0.7.0: archivierte Verträge erscheinen nicht in der Übersicht
         contracts = list(
-            visible_to(self.request.user, Contract.objects.all())
+            visible_to(self.request.user, Contract.objects.exclude(status=Contract.Status.ARCHIVED))
             .select_related("category__parent", "provider", "consumer")
             .prefetch_related("costs")
         )
@@ -328,7 +329,18 @@ CONTRACT_SORTS = {
     "reference": lambda row: row["contract"].reference or "",
     "provider": lambda row: row["contract"].provider.name.lower(),
     "monthly": lambda row: row["monthly"] if row["monthly"] is not None else Decimal("-1"),
+    # Version 0.7.0: Reihenfolge wie die Ampel (aktiv, Kündigung verschickt, gekündigt, archiviert)
+    "status": lambda row: Contract.Status.values.index(row["contract"].status),
 }
+
+
+STATUS_ALL = "all"
+
+
+def _selected_status(request):
+    """Status aus den URL-Parametern; unbekannte Werte gelten als leer."""
+    value = request.GET.get("status", "")
+    return value if value == STATUS_ALL or value in Contract.Status.values else ""
 
 
 def _selected_id(request, name):
@@ -360,6 +372,8 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             "consumer": _selected_id(request, "consumer"),
             "provider": _selected_id(request, "provider"),
             "payment_method": _selected_id(request, "payment_method"),
+            # Version 0.7.0: leer = alle außer archivierten, "all" = alle
+            "status": _selected_status(request),
         }
         sort = get_sort(request, CONTRACT_SORTS)
 
@@ -378,6 +392,10 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
         for name in ("category", "consumer", "provider", "payment_method"):
             if filters[name]:
                 contracts = contracts.filter(**{f"{name}_id": filters[name]})
+        if not filters["status"]:
+            contracts = contracts.exclude(status=Contract.Status.ARCHIVED)
+        elif filters["status"] != STATUS_ALL:
+            contracts = contracts.filter(status=filters["status"])
 
         rows = contract_rows(contracts, self.request.user)
         rows.sort(key=CONTRACT_SORTS[sort.lstrip("-")], reverse=sort.startswith("-"))
@@ -394,6 +412,8 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             "list_url": reverse("contract_list"),
             "is_filtered": any(filters.values()),
             "visible_count": visible.count(),
+            "statuses": Contract.Status.choices,
+            "archived_count": visible.filter(status=Contract.Status.ARCHIVED).count(),
             "main_categories": Category.objects.filter(
                 Q(parent__isnull=True, pk__in=visible.values("category"))
                 | Q(pk__in=visible.values("category__parent"))
@@ -734,7 +754,8 @@ class MasterDataListView(LoginRequiredMixin, MasterDataMixin, HtmxResultsMixin, 
         for contract in contracts:
             entry = stats[getattr(contract, field_id)]
             entry["count"] += 1
-            entry["monthly"] += contract.current_monthly_cost or Decimal("0")
+            if not contract.is_archived:
+                entry["monthly"] += contract.current_monthly_cost or Decimal("0")
         return stats
 
     def get_rows(self, objects):
@@ -1094,7 +1115,7 @@ class CategoryListView(CategoryMixin, MasterDataListView):
             Q(category__in=objects) | Q(category__parent__in=objects)
         ).select_related("category")
         for contract in contracts:
-            monthly = contract.current_monthly_cost or Decimal("0")
+            monthly = Decimal("0") if contract.is_archived else contract.current_monthly_cost or Decimal("0")
             for pk in (contract.category_id, contract.category.parent_id):
                 if pk in stats:
                     stats[pk]["count"] += 1

@@ -6,7 +6,8 @@
       <h2 class="h5 card-title mb-0">{% translate "Contracts" %}</h2>
       {% if rows %}
       <span class="stat-label">{% translate "Total per month" %} <span class="fw-semibold amount text-body">{{ totals.monthly|euro }}</span>
-        · {% translate "Total per year" %} <span class="fw-semibold amount text-body">{{ totals.yearly|euro }}</span></span>
+        · {% translate "Total per year" %} <span class="fw-semibold amount text-body">{{ totals.yearly|euro }}</span>
+        <span class="d-block small">{% translate "Without archived contracts" %}</span></span>
       {% endif %}
     </div>
     {% if rows %}
@@ -14,6 +15,7 @@
       <table class="table table-sm table-hover align-middle mb-0">
         <thead>
           <tr>
+            <th scope="col" class="status-col"><span class="visually-hidden">{% translate "Status" %}</span></th>
             <th scope="col">{% translate "Contract" %}</th>
             {% if hide != "provider" %}<th scope="col" class="d-none d-xl-table-cell">{% translate "Contract partner" %}</th>{% endif %}
             {% if hide != "category" %}<th scope="col" class="d-none d-md-table-cell">{% translate "Category" %}</th>{% endif %}
@@ -23,7 +25,8 @@
         </thead>
         <tbody>
           {% for row in rows %}
-          <tr>
+          <tr{% if row.contract.is_archived %} class="contract-archived"{% endif %}>
+            <td class="status-col">{% include "web/includes/status_dot.html" with contract=row.contract %}</td>
             <td><a href="{% url 'contract_detail' row.contract.pk %}">{{ row.contract.name }}</a>
               <div class="small text-body-secondary">{{ row.contract.reference }}</div></td>
             {% if hide != "provider" %}<td class="d-none d-xl-table-cell"><span class="d-inline-flex align-items-center gap-2">{% if row.provider_visible %}{% include "web/includes/provider_logo.html" with provider=row.contract.provider size="sm" %}<a href="{% url 'provider_detail' row.contract.provider.pk %}" class="link-body-emphasis">{{ row.contract.provider.name }}</a>{% else %}{{ row.contract.provider.name }}{% endif %}</span></td>{% endif %}

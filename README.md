@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.6.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.7.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -41,6 +41,7 @@ The user interface is available in **English and German** (per user).
 
 ### 📄 Contracts and costs
 - Contracts with partner, category, consumer, **payment method**, start date, term, contract number and notes with **Markdown** (headings, lists, links, tables)
+- **Status as a traffic light**: active, notice sent, cancelled, archived – plus the date the cancellation takes effect; archived contracts leave the overview and the totals
 - Automatic reference numbers per year (e.g. `20260001`)
 - Cost history with payment interval (weekly, monthly, quarterly, yearly); the current amount is picked by date
 - **Documents** per contract: upload files (PDF, images, Office, up to 20 MB) or link Paperless-ngx documents, and attach them to cost entries
@@ -145,7 +146,17 @@ The user interface is available in **English and German** (per user).
 
 ## Quick start
 
-You need Docker with Docker Compose. Everything runs from one folder with two files; nothing is cloned or built:
+You need Docker with Docker Compose. There are three Compose files to choose from:
+
+| File | Settings | For |
+|---|---|---|
+| [`docker-compose.yml`](docker-compose.yml) | in a separate `.env` file | the usual setup, described below |
+| [`docker-compose.no-env.yml`](docker-compose.no-env.yml) | **no `.env`**: all settings in the file, optional ones commented out | one file to paste, e.g. into the Synology Container Manager |
+| [`docker-compose.no-env-minimal.yml`](docker-compose.no-env-minimal.yml) | **no `.env`**: only the required values | the quickest start |
+
+With one of the `no-env` files, download it, replace every `CHANGE_ME`, create the folders `db` and `media`, and start with `docker compose -f <file> up -d`. That file then contains passwords – keep it private, and write a `$` in a value as `$$`.
+
+The usual setup runs from one folder with two files; nothing is cloned or built:
 
 ```bash
 mkdir contracts-manager && cd contracts-manager
@@ -215,23 +226,30 @@ There are two places for settings:
 
 ### Variables in `.env`
 
-| Variable | Purpose |
-|---|---|
-| `SECRET_KEY`, `DEBUG` | Django basics |
-| `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `USE_HTTPS` | Host names and HTTPS behind a reverse proxy |
-| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Database |
-| `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL` | First administrator, created on the first start if there is no superuser yet |
-| `DATA_PATH`, `APP_PORT` | Where data lives on the host, published port |
-| `APP_IMAGE_TAG` | Version of the Docker image (default `latest`, e.g. `0.3.0` to stay on one version) |
-| `APP_UID`, `APP_GID` | User and group the containers run as (default `1000`, not root) |
-| `GUNICORN_CMD_ARGS` | Replaces the gunicorn options of the image (bind address, workers, timeout) |
-| `PAPERLESS_URL` | Base address of Paperless-ngx for links |
-| `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT` | AI assistant: thinking depth (Claude), length of an answer, tool rounds per answer, timeout in seconds |
-| `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_MINUTES`, `SECURE_HSTS_SECONDS` | Login lockout after failed attempts, optional HSTS |
-| `DJANGO_LOG_LEVEL` | Log level of Django (default `WARNING`) |
-| `BACKUP_DIR`, `BACKUP_RETENTION_DAYS` | Only for `scripts/backup.sh`: target folder and days to keep database dumps |
+**Required** variables must be set, otherwise the app does not start or cannot be reached. All others are **optional** and have a sensible default.
 
-Set by `docker-compose.yml` itself, not in `.env`: `DATABASE_URL` (built from the `POSTGRES_*` values) and `MEDIA_ROOT` (`/app/media` in the container).
+| | Variable | Default | Purpose |
+|---|---|---|---|
+| **Required** | `SECRET_KEY` | – | Secret key of Django, e.g. from `openssl rand -hex 32` |
+| **Required** | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | – | Database name, user and password |
+| **Required** | `ALLOWED_HOSTS` | only `localhost` | Host names the app is reached at, comma separated |
+| **Required** | `CSRF_TRUSTED_ORIGINS` | – | Full addresses incl. `http://` or `https://`; without it, forms only work on `localhost` |
+| Optional | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
+| Optional | `DEBUG` | `False` | Only for development |
+| Optional | `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL` | – | First administrator, created on the first start if there is no superuser yet |
+| Optional | `APP_PORT` | `8000` | Published port on the host |
+| Optional | `APP_IMAGE_TAG` | `latest` | Version of the Docker image, e.g. `0.7.0` to stay on one version |
+| Optional | `APP_UID`, `APP_GID` | `1000` | User and group the containers run as (not root) |
+| Optional | `DATA_PATH` | folder of the Compose file | Where `db` and `media` live on the host (older installations) |
+| Optional | `PAPERLESS_URL` | – | Base address of Paperless-ngx for links |
+| Optional | `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT` | model default, `16000`, `8`, `120` | AI assistant: thinking depth (Claude), length of an answer, tool rounds per answer, timeout in seconds |
+| Optional | `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_MINUTES` | `5`, `15` | Login lockout after failed attempts |
+| Optional | `SECURE_HSTS_SECONDS` | `0` | HSTS in seconds, only with `USE_HTTPS` |
+| Optional | `DJANGO_LOG_LEVEL` | `WARNING` | Log level of Django |
+| Optional | `GUNICORN_CMD_ARGS` | see image | Replaces the gunicorn options of the image (bind address, workers, timeout) |
+| Optional | `BACKUP_DIR`, `BACKUP_RETENTION_DAYS` | – | Only for `scripts/backup.sh`: target folder and days to keep database dumps |
+
+Set by the Compose file itself, not in `.env`: `DATABASE_URL` (built from the `POSTGRES_*` values) and `MEDIA_ROOT` (`/app/media` in the container).
 
 [`.env.example`](.env.example) lists these variables with comments. Details: [configuration guide](docs/configuration.md).
 
