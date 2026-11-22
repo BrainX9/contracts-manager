@@ -40,6 +40,36 @@
     </div>
   </div></div>
 
+  {# Version 0.8.0: Status und "Gekündigt zum" (fehlten in 0.7.0 im Formular) #}
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-3">{% translate "Status" %}</h2>
+    <div class="row g-2">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.status %}</div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.cancelled_as_of %}</div>
+    </div>
+  </div></div>
+
+  {# Version 0.8.0: Vorgänger und Nachfolger mit Suchfeld (HTMX filtert die Auswahlliste) #}
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h6 card-title mb-1">{% translate "Predecessor and successor" %}</h2>
+    <p class="small text-body-secondary">{% translate "Link the contract this one replaces, or the one that replaces it. The other contract shows the link as well. Only contracts you can edit can be chosen." %}</p>
+    <div class="row g-3">
+      {% for field in link_fields %}
+      <div class="col-md-6">
+        {% if not field.field.disabled %}
+        <label class="form-label small text-body-secondary" for="{{ field.auto_id }}-search">{% translate "Search" %}: {{ field.label|capfirst }}</label>
+        <input type="search" id="{{ field.auto_id }}-search" name="q" class="form-control form-control-sm mb-2" form="link-search-{{ field.name }}"
+               placeholder="{% translate 'Name, reference or contract partner' %}" autocomplete="off"
+               hx-get="{% url 'contract_link_options' %}" hx-trigger="input changed delay:300ms, search"
+               hx-target="#{{ field.auto_id }}" hx-swap="innerHTML"
+               hx-vals='{"field": "{{ field.name }}"{% if object %}, "contract": "{{ object.pk }}"{% endif %}}' hx-include="#{{ field.auto_id }}">
+        {% endif %}
+        {% include "web/includes/field.html" with field=field %}
+      </div>
+      {% endfor %}
+    </div>
+  </div></div>
+
   <div class="card mb-3"><div class="card-body">
     <h2 class="h6 card-title mb-3">{% translate "Information" %}</h2>
     {% include "web/includes/field.html" with field=form.contract_number %}

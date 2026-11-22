@@ -1,0 +1,18 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Create administrator" %}{% endblock %}
+{% block auth_content %}
+{# Version 0.8.0: erste Anlage des Administrators, nur solange es keinen gibt #}
+<div class="auth-card card">
+  <div class="card-body">
+    {% include "web/includes/auth_brand.html" %}
+    <h1 class="h4 mb-1">{% translate "Create administrator" %}</h1>
+    <p class="text-body-secondary mb-4">{% translate "Welcome to Contracts Manager. This installation has no administrator yet. The account you create now gets all rights; this page then disappears." %}</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "web/includes/form_fields.html" %}
+      <button type="submit" class="btn btn-primary w-100">{% translate "Create administrator and log in" %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

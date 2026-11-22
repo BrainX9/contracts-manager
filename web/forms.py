@@ -4,9 +4,12 @@ import unicodedata
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import (
+    AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm, UserCreationForm,
+)
 from django.contrib.auth.models import Group
 from django.template.defaultfilters import filesizeformat
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
@@ -14,7 +17,7 @@ from django.utils.translation import ngettext
 from contracts import documents
 from contracts.backup import PASSWORD_RESET_MARKER
 from contracts import permissions as perms
-from contracts.mail import build_mail, user_language
+from contracts.mail import build_mail, link_url, user_language
 from contracts.models import (
     Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider, Reminder,
     category_tree_order,
@@ -89,12 +92,38 @@ class WebPasswordResetForm(BootstrapFormMixin, PasswordResetForm):
     def send_mail(self, subject_template_name, email_template_name, context, from_email,
                   to_email, html_email_template_name=None):
         reset_path = reverse("password_reset_confirm", kwargs={"uidb64": context["uid"], "token": context["token"]})
-        context = {**context, "reset_url": f"{context['protocol']}://{context['domain']}{reset_path}"}
+        context = {**context, "reset_url": link_url(reset_path, f"{context['protocol']}://{context['domain']}")}
         build_mail("password_reset", context, [to_email], user_language(context["user"])).send()
 
 
 class WebSetPasswordForm(BootstrapFormMixin, SetPasswordForm):
     pass
+
+
+class FirstAdminForm(BootstrapFormMixin, UserCreationForm):
+    """
+    Ersten Administrator im Browser anlegen (Version 0.8.0), solange es noch
+    keinen Superuser gibt. Passwortregeln wie überall; E-Mail optional.
+    """
+    email = forms.EmailField(label=_("Email address"), required=False,
+                             help_text=_("Optional; needed for a forgotten password and for reminders."))
+
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ("username", "email")
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "").strip()
+        if email and get_user_model().objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(_("This email address is already used by another account."))
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.is_superuser = user.is_staff = True
+        if commit:
+            user.save()
+        return user
 
 
 class PreferencesForm(BootstrapFormMixin, forms.ModelForm):
@@ -178,19 +207,63 @@ class OwnedModelFormMixin:
         return exclude
 
 
+LINK_FIELDS = ("predecessor", "successor")
+LINK_RESULTS = 50
+
+
+def contract_link_label(contract):
+    """Eintrag in den Auswahllisten für Vorgänger und Nachfolger."""
+    return f"{contract.reference} · {contract.name} ({contract.provider.name})"
+
+
+def link_candidates(user, contract, field, query=""):
+    """
+    Wählbare Verträge für Vorgänger oder Nachfolger (Version 0.8.0): nur
+    solche, die der Benutzer bearbeiten darf (die Verknüpfung ändert beide
+    Seiten), nie der Vertrag selbst, und nur freie: als Vorgänger einer ohne
+    Nachfolger, als Nachfolger einer ohne Vorgänger. Der aktuelle Wert bleibt
+    wählbar. ``query`` sucht in Name, Referenz und Vertragspartner.
+    """
+    queryset = perms.editable_by(user, Contract.objects.select_related("provider"))
+    current = None
+    if contract is not None and contract.pk:
+        queryset = queryset.exclude(pk=contract.pk)
+        current = contract.predecessor_id if field == "predecessor" else getattr(contract.successor_contract, "pk", None)
+    free = Q(successor__isnull=True) if field == "predecessor" else Q(predecessor__isnull=True)
+    queryset = queryset.filter(free | Q(pk=current)) if current else queryset.filter(free)
+    if query:
+        queryset = queryset.filter(
+            Q(name__icontains=query) | Q(reference__icontains=query) | Q(provider__name__icontains=query)
+        )
+    return queryset.order_by("-reference")
+
+
+class ContractLinkField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return contract_link_label(obj)
+
+
 class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
     """
     Vertrag anlegen und bearbeiten. Auswahllisten zeigen nur lesbare
     Stammdaten (plus den aktuellen Wert). Neue Verträge gehören dem
     angemeldeten Benutzer.
+
+    Seit 0.8.0 Vorgänger und Nachfolger: Der Nachfolger ist kein Feld am
+    Vertrag, sondern der Vorgänger des anderen Vertrags; ``save`` setzt ihn
+    dort. Ist ein verknüpfter Vertrag nicht bearbeitbar, bleibt das Feld
+    gesperrt.
     """
+    successor = ContractLinkField(queryset=Contract.objects.none(), required=False, label=_("successor contract"))
 
     class Meta:
         model = Contract
         fields = [
             "name", "short_description", "status", "cancelled_as_of", "provider", "category", "consumer",
             "payment_method", "start_date", "term_value", "term_unit", "contract_number", "notes",
+            "predecessor",
         ]
+        field_classes = {"predecessor": ContractLinkField}
         widgets = {
             "start_date": DateInput(),
             "cancelled_as_of": DateInput(),
@@ -211,9 +284,58 @@ class ContractForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):
             self.limit_to_visible(name, model)
         # Ohne Angabe bleibt der Status, wie er ist (neu: aktiv)
         self.fields["status"].required = False
+        # Vorgänger und Nachfolger: nur bearbeitbare, freie Verträge
+        self.initial_successor = self.instance.successor_contract if self.instance.pk else None
+        if self.initial_successor:
+            self.initial.setdefault("successor", self.initial_successor.pk)
+        editable = perms.editable_by(self.user, Contract.objects.all())
+        for name in LINK_FIELDS:
+            field = self.fields[name]
+            field.queryset = link_candidates(self.user, self.instance, name)
+            field.empty_label = _("– none –")
+            current = self.instance.predecessor if name == "predecessor" else self.initial_successor
+            if current is not None and not editable.filter(pk=current.pk).exists():
+                # Verknüpft mit einem Vertrag, den der Benutzer nicht ändern darf
+                field.queryset = Contract.objects.filter(pk=current.pk)
+                field.disabled = True
+                field.help_text = _("Linked to a contract you cannot edit; it stays as it is.")
 
     def clean_status(self):
         return self.cleaned_data.get("status") or self.instance.status or Contract.Status.ACTIVE
+
+    def clean(self):
+        cleaned = super().clean()
+        predecessor, successor = cleaned.get("predecessor"), cleaned.get("successor")
+        if successor is not None:
+            if predecessor is not None and successor.pk == predecessor.pk:
+                self.add_error("successor", _("The successor cannot also be the predecessor."))
+            else:
+                # Der Nachfolger darf nicht schon vor diesem Vertrag in der Kette stehen
+                current, seen = predecessor, set()
+                while current is not None and current.pk not in seen:
+                    if current.pk == successor.pk:
+                        self.add_error("successor", _("A contract cannot follow itself, not even indirectly."))
+                        break
+                    seen.add(current.pk)
+                    current = current.predecessor
+        return cleaned
+
+    def save(self, commit=True):
+        from django.db import transaction
+
+        with transaction.atomic():
+            contract = super().save(commit)
+            if commit and not self.fields["successor"].disabled:
+                new = self.cleaned_data.get("successor")
+                old = self.initial_successor
+                if getattr(old, "pk", None) != getattr(new, "pk", None):
+                    if old is not None:
+                        old.predecessor = None
+                        old.save(update_fields=["predecessor"])
+                    if new is not None:
+                        new.predecessor = contract
+                        new.save(update_fields=["predecessor"])
+        return contract
 
 
 class ProviderForm(OwnedModelFormMixin, BootstrapFormMixin, forms.ModelForm):

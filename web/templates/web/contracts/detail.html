@@ -35,6 +35,10 @@
           <dt class="col-sm-4">{% translate "Cancelled as of" %}</dt>
           <dd class="col-sm-8">{{ contract.cancelled_as_of|date:"SHORT_DATE_FORMAT" }}</dd>
           {% endif %}
+          {% for label, linked in linked_contracts %}
+          <dt class="col-sm-4">{{ label }}</dt>
+          <dd class="col-sm-8"><span class="d-inline-flex align-items-center gap-2">{% include "web/includes/status_dot.html" with contract=linked %}<a href="{% url 'contract_detail' linked.pk %}">{{ linked.name }}</a> <span class="small text-body-secondary">{{ linked.reference }}</span></span></dd>
+          {% endfor %}
           <dt class="col-sm-4">{% translate "Contract partner" %}</dt>
           <dd class="col-sm-8">{% if provider_visible %}<span class="d-inline-flex align-items-center gap-2">{% include "web/includes/provider_logo.html" with provider=contract.provider size="sm" %}<a href="{% url 'provider_detail' contract.provider.pk %}">{{ contract.provider.name }}</a></span>{% else %}{{ contract.provider.name }}{% endif %}
             {% if provider_visible and contract.provider.paperless_correspondent_url %}

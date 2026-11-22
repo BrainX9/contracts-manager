@@ -62,16 +62,20 @@ class SiteSettings(models.Model):
         ("openai", _("OpenAI or OpenAI-compatible")),
         ("anthropic", "Anthropic (Claude)"),
         ("ollama", _("Ollama (local models)")),
+        ("mistral", "Mistral AI"),
     ]
 
     # Dokument-KI (Version 0.6.0): Anbieter mit OpenAI-Schnittstelle
     READER_PROVIDER_CHOICES = [
+        ("mistral", "Mistral AI"),
         ("openai", _("OpenAI-compatible (e.g. IONOS)")),
         ("ollama", _("Ollama (local models)")),
     ]
     READER_KIND_CHOICES = [
         ("vision", _("Vision model (receives an instruction with the image)")),
         ("ocr", _("OCR model (receives only the image)")),
+        # Version 0.8.0: eigener OCR-Dienst von Mistral, liest PDFs direkt
+        ("mistral_ocr", _("Mistral OCR (reads PDFs directly, e.g. mistral-ocr-latest)")),
     ]
 
     sso_login_label = models.CharField(
@@ -101,7 +105,7 @@ class SiteSettings(models.Model):
     reader_model = models.CharField(_("model"), max_length=200, blank=True)
     reader_base_url = models.CharField(_("address of the API (base URL)"), max_length=500, blank=True)
     reader_api_key = models.CharField(_("API key"), max_length=500, blank=True)
-    reader_kind = models.CharField(_("type of model"), max_length=10, choices=READER_KIND_CHOICES, default="vision")
+    reader_kind = models.CharField(_("type of model"), max_length=20, choices=READER_KIND_CHOICES, default="vision")
 
     # Version 0.4.0: E-Mail, Erinnerungsversand und Single Sign-on. Auch hier
     # bedeutet ein leeres Feld "Wert aus der .env"; ausgewertet wird das nur

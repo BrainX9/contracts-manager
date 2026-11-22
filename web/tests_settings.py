@@ -269,6 +269,10 @@ class SSOConfigTest(TestCase):
 class SSOFromSettingsTest(TestCase):
     """Anmeldung mit Werten aus der Verwaltung, ohne Neustart"""
 
+    def setUp(self):
+        # Seit 0.8.0 leitet die Anmeldeseite ohne einen einzigen Benutzer zur Erstanlage
+        User.objects.get_or_create(username="vorhanden")
+
     def enable(self, **values):
         site(sso_enabled="on", sso_base_url="https://nas.db.test", sso_client_id="db-client",
              sso_client_secret="db-secret", **values)

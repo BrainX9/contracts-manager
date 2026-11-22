@@ -37,6 +37,18 @@ def absolute_url(path):
     return f"{base_url}{path}" if base_url else path
 
 
+def link_url(path, fallback_base):
+    """
+    Link mit Zugang zum Konto (Einladung, Passwort-Reset): immer die Adresse
+    der App, wenn sie gesetzt ist (Version 0.8.0). Erst ohne sie die Adresse
+    der Anfrage (``fallback_base``, z. B. "https://host"). Seit
+    ALLOWED_HOSTS optional ist, darf ein gefälschter Host-Header nicht in
+    solche Links gelangen.
+    """
+    base_url = mail_config().base_url
+    return f"{base_url or fallback_base.rstrip('/')}{path}"
+
+
 def build_mail(name, context, to, language=None, config=None, connection=None):
     """
     Erzeugt eine E-Mail aus den Vorlagen ``emails/<name>*`` in der

@@ -227,17 +227,8 @@ sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(openssl rand -hex 32)|" .env
 sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
 ```
 
-Auch dein **erster Administrator** kommt aus der `.env`. Name und E-Mail
-trägst du selbst ein (ersetze die Werte), das Passwort erzeugt der dritte
-Befehl zufällig:
-
-```bash
-sed -i "s|^# ADMIN_USERNAME=.*|ADMIN_USERNAME=admin|; s|^# ADMIN_EMAIL=.*|ADMIN_EMAIL=du@example.com|" .env
-```
-
-```bash
-sed -i "s|^# ADMIN_PASSWORD=.*|ADMIN_PASSWORD=$(openssl rand -base64 18 | tr -d '/+=')|" .env
-```
+Deinen **ersten Administrator** legst du später im Browser an (Schritt 7),
+dafür ist in der `.env` nichts nötig.
 
 ### 5.2 Adresse der App eintragen
 
@@ -252,7 +243,9 @@ Kurzanleitung für `vi`: Mit den Pfeiltasten zur Zeile gehen, `i` drücken
 (speichern und beenden). Ohne Speichern beenden: `Esc`, `:q!` + Enter.
 
 Ändere die Zeilen `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` und `USE_HTTPS`
-je nach Variante:
+je nach Variante. `ALLOWED_HOSTS` und `CSRF_TRUSTED_ORIGINS` sind seit
+Version 0.8.0 optional, aber empfohlen: Ohne sie nimmt die App jede Adresse
+an.
 
 **Variante A – nur zum ersten Test im Heimnetz, ohne HTTPS**
 
@@ -299,9 +292,7 @@ grep -v '^#' .env | grep -v '^$'
 ```
 
 Es dürfen **kein** `CHANGE_ME` und **keine** Zeile `COMPOSE_FILE=` oder
-`DATA_PATH=` vorkommen. Die Zeilen `ADMIN_USERNAME`, `ADMIN_PASSWORD` und
-`ADMIN_EMAIL` müssen dagegen vorkommen. Das Passwort steht hier im
-Klartext: Merke es dir für die erste Anmeldung (`grep ADMIN_PASSWORD .env`).
+`DATA_PATH=` vorkommen.
 
 ---
 
@@ -357,39 +348,32 @@ selbst siehst du nach der Anmeldung unter **Verwaltung › System**.
 
 ---
 
-## Schritt 7: Als Administrator anmelden
+## Schritt 7: Ersten Administrator anlegen
 
-Die App hat kein voreingestelltes Konto. Beim ersten Start legt sie den
-Administrator aus `ADMIN_USERNAME` und `ADMIN_PASSWORD` in der `.env` an
-(Schritt 5), aber nur, wenn noch keiner existiert. Prüfen:
+Die App hat kein voreingestelltes Konto. Öffne sie direkt nach dem ersten
+Start im Browser:
 
-```bash
-sudo docker compose logs app | grep -i administrator
+```
+http://192.168.1.10:8000/
 ```
 
-Die Ausgabe `Administrator '…' wurde angelegt.` zeigt, dass es geklappt
-hat. Das ist dein Login für die App, unabhängig von DSM. Das Passwort
-liest du so aus:
+(statt `192.168.1.10` die IP-Adresse deiner Synology). Eine neue
+Installation zeigt die Seite **Administrator anlegen**. Wähle Benutzername,
+E-Mail-Adresse und ein starkes Passwort, z. B. erzeugt mit:
 
 ```bash
-grep ADMIN_PASSWORD .env
+openssl rand -base64 18 | tr -d '/+='
 ```
 
-Nach der ersten Anmeldung:
+Danach bist du angemeldet, und die Seite verschwindet für immer. Das ist
+dein Login für die App, unabhängig von DSM.
 
-1. Passwort in der App ändern (Benutzermenü › Einstellungen › Passwort).
-2. Die Zeile mit dem Passwort aus der `.env` löschen:
+> **Wichtig:** Lege den Administrator an, bevor du die App über den Reverse
+> Proxy aus dem Internet erreichbar machst (Schritt 9). Bis dahin wird
+> Administrator, wer die Seite zuerst öffnet.
 
-```bash
-sed -i '/^ADMIN_PASSWORD=/d' .env
-```
-
-Weitere Benutzer legst du später in der App unter **Verwaltung** an.
-
-**Steht stattdessen ein Hinweis, dass das Passwort ungültig ist** (zu kurz,
-zu häufig, nur Ziffern), korrigiere es in der `.env` und starte mit
-`sudo docker compose up -d` neu. Ohne die Variablen legst du das Konto von
-Hand an:
+Weitere Benutzer legst du später in der App unter **Verwaltung** an. Über
+die Kommandozeile geht es auch:
 
 ```bash
 sudo docker compose exec app python manage.py createsuperuser
@@ -736,7 +720,7 @@ Dann den neuen Ordner ebenfalls in einem verschlüsselten Ordner anlegen
 | `app` bleibt `unhealthy` | Datenbank nicht erreichbar oder Fehler beim Start | `sudo docker compose logs app` lesen |
 | `curl: (22) ... 404` oder `Not Found` beim Holen der Dateien | Die Adresse ist falsch geschrieben, oder der Tag darin existiert nicht | Adresse aus Schritt 4 neu kopieren |
 | `manifest unknown` / `not found` beim Laden des Images | die Version in `APP_IMAGE_TAG` gibt es nicht (Tippfehler, ohne `v`) | Schreibweise prüfen, z. B. `0.3.0`, oder die Zeile entfernen für `latest` |
-| Anmeldung nicht möglich, kein Benutzer vorhanden | `ADMIN_USERNAME`/`ADMIN_PASSWORD` fehlen in der `.env`, oder es gab schon einen Administrator (dann werden sie ignoriert), oder das Passwort war ungültig | `sudo docker compose logs app \| grep -i administrator` lesen; Werte korrigieren und `sudo docker compose up -d`, oder `createsuperuser` (Schritt 7) |
+| Kein Administrator, die Seite „Administrator anlegen“ erscheint nicht | Es gibt schon einen Benutzer (z. B. nach einem Import) | `sudo docker compose exec app python manage.py createsuperuser` (Schritt 7) |
 | Aufgabe `contracts-backup` meldet „Sicherung fehlgeschlagen“ | Container `contracts-manager-db` läuft nicht oder heißt anders (alte Compose-Datei) | `sudo docker ps` prüfen; ggf. Compose-Datei erneuern (siehe „Updates einspielen“) |
 
 Änderungen an `.env` wirken erst nach `sudo docker compose up -d`.

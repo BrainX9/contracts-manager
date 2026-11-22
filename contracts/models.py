@@ -284,6 +284,12 @@ class Contract(OwnedModel):
     # Verträge ruhen: keine Summen, keine Erinnerungen (siehe ACTIVE_STATUSES).
     status = models.CharField(_("status"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
     cancelled_as_of = models.DateField(_("cancelled as of"), null=True, blank=True)
+    # Version 0.8.0: Vorgängervertrag. Der Nachfolger ist die Gegenrichtung
+    # (contract.successor_contract), damit beide Seiten nie auseinanderlaufen.
+    predecessor = models.OneToOneField(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="successor",
+        verbose_name=_("predecessor contract"),
+    )
 
     def __str__(self):
         return self.name
@@ -291,6 +297,14 @@ class Contract(OwnedModel):
     @property
     def is_archived(self):
         return self.status == self.Status.ARCHIVED
+
+    @property
+    def successor_contract(self):
+        """Nachfolgevertrag oder None (Gegenrichtung von predecessor)."""
+        try:
+            return self.successor
+        except Contract.DoesNotExist:
+            return None
 
     @property
     def current_cost_entry(self):
@@ -329,6 +343,15 @@ class Contract(OwnedModel):
         return entry.monthly_amount() if entry else None
 
     def clean(self):
+        # Vorgänger (Version 0.8.0): nicht der Vertrag selbst, keine Schleife
+        if self.predecessor_id:
+            seen = {self.pk} if self.pk else set()
+            current = self.predecessor
+            while current is not None:
+                if current.pk in seen:
+                    raise ValidationError({"predecessor": _("A contract cannot follow itself, not even indirectly.")})
+                seen.add(current.pk)
+                current = current.predecessor
         # Validierung: term_value und term_unit müssen zusammen gesetzt oder leer sein
         if (self.term_value is not None and self.term_unit is None) or \
            (self.term_value is None and self.term_unit is not None):
