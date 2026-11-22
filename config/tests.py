@@ -12,9 +12,9 @@ README = BASE_DIR / "README.md"
 SET_BY_COMPOSE = {"DATABASE_URL", "MEDIA_ROOT"}
 
 # Variablen, die nicht in config/settings.py oder docker-compose.yml gelesen
-# werden: ensure_admin, Dockerfile (gunicorn) und scripts/backup.sh
+# werden: Dockerfile (gunicorn) und scripts/backup.sh. ADMIN_* gibt es seit
+# 0.8.0 nicht mehr (erster Administrator im Browser).
 OTHER_VARIABLES = {
-    "ADMIN_USERNAME", "ADMIN_PASSWORD", "ADMIN_EMAIL",
     "GUNICORN_CMD_ARGS",
     "BACKUP_DIR", "BACKUP_RETENTION_DAYS",
 }
@@ -87,7 +87,7 @@ class NoEnvComposeTest(SimpleTestCase):
     Version 0.7.0: Compose-Dateien ohne .env enthalten alle Pflichtwerte
     selbst und lesen nichts aus einer .env.
     """
-    REQUIRED = ("SECRET_KEY", "ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD")
+    REQUIRED = ("SECRET_KEY", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD")
 
     def check(self, name):
         path = BASE_DIR / name
@@ -104,9 +104,11 @@ class NoEnvComposeTest(SimpleTestCase):
     def test_no_env(self):
         text = self.check("docker-compose.no-env.yml")
         # Die optionalen Variablen der .env stehen auskommentiert darin
-        for variable in ("PAPERLESS_URL", "AI_TIMEOUT", "AXES_FAILURE_LIMIT", "DJANGO_LOG_LEVEL", "ADMIN_PASSWORD"):
+        for variable in ("ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "PAPERLESS_URL", "AI_TIMEOUT",
+                         "AXES_FAILURE_LIMIT", "DJANGO_LOG_LEVEL"):
             self.assertIn(variable, text)
+        self.assertNotIn("ADMIN_", text)
 
     def test_no_env_minimal(self):
         text = self.check("docker-compose.no-env-minimal.yml")
-        self.assertIn("ADMIN_PASSWORD", text)
+        self.assertNotIn("ADMIN_", text)

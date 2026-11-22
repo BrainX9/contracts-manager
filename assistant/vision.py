@@ -19,14 +19,21 @@ Eigenheiten der Anbieter:
   Bilder nur als Base64 (keine Adressen). Jede Seite geht deshalb als eigene
   Anfrage, auf 2400 Pixel Kantenlänge verkleinert und als JPEG.
 - Ein Modell ohne Bildeingabe antwortet bei IONOS mit Fehler 400.
+- Version 0.8.0: Art "mistral_ocr" nutzt den OCR-Dienst von Mistral
+  (``POST <adresse>/ocr``, Modell z. B. ``mistral-ocr-latest``). Er nimmt
+  PDFs direkt an (Base64), ohne Umwandlung in Bilder, und gibt je Seite
+  Markdown zurück; Fotos gehen als Bild an denselben Dienst.
 """
 
 import base64
+import json
 import logging
 import os
 import subprocess
 import tempfile
 import time
+import urllib.error
+import urllib.request
 from io import BytesIO
 
 from .providers import ProviderError, _error_text
@@ -91,12 +98,58 @@ def pdf_page_images(data):
         return images
 
 
+MISTRAL_OCR = "mistral_ocr"
+# Antwort des OCR-Dienstes höchstens (Bytes)
+MAX_OCR_RESPONSE = 20_000_000
+
+
+def mistral_ocr(document, reader, pages=None):
+    """
+    Text über den OCR-Dienst von Mistral. ``document`` ist z. B.
+    {"type": "document_url", "document_url": "data:application/pdf;base64,…"}
+    oder {"type": "image_url", "image_url": "data:image/jpeg;base64,…"}.
+    Gibt das Markdown aller Seiten zurück; Fehler werden zu ProviderError
+    ohne den Schlüssel.
+    """
+    body = {"model": reader.model, "document": document}
+    if pages is not None:
+        body["pages"] = list(pages)
+    request = urllib.request.Request(
+        reader.base_url.rstrip("/") + "/ocr",
+        data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {reader.api_key}", "Content-Type": "application/json",
+                 "Accept": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=reader.timeout) as response:  # noqa: S310 (Adresse aus der Verwaltung)
+            data = json.loads(response.read(MAX_OCR_RESPONSE))
+    except urllib.error.HTTPError as error:
+        detail = error.read(2000).decode("utf-8", "replace")
+        raise ProviderError(f"{error.code}: {detail}".replace(reader.api_key, "***") if reader.api_key
+                            else f"{error.code}: {detail}") from error
+    except (urllib.error.URLError, TimeoutError, ValueError) as error:
+        raise ProviderError(str(error)) from error
+    texts = [(page.get("markdown") or "").strip() for page in data.get("pages", []) if isinstance(page, dict)]
+    texts = [text for text in texts if text]
+    if len(texts) <= 1:
+        return texts[0] if texts else ""
+    return "\n\n".join(f"--- Page {number} ---\n{text}" for number, text in enumerate(texts, start=1))
+
+
+def data_uri(media_type, data):
+    return f"data:{media_type};base64," + base64.b64encode(data).decode()
+
+
 def transcribe(image, reader):
     """
     Text einer Seite (JPEG-Bytes). Fehler des Anbieters werden zu
     ProviderError, ohne den Schlüssel in der Meldung.
     """
     import openai
+
+    if reader.kind == MISTRAL_OCR:
+        return mistral_ocr({"type": "image_url", "image_url": data_uri("image/jpeg", image)}, reader)
 
     client = openai.OpenAI(
         api_key=reader.api_key or "none", base_url=reader.base_url or None,
@@ -134,6 +187,10 @@ def read_pages(images, reader):
 
 
 def read_pdf(data, reader):
+    if reader.kind == MISTRAL_OCR:
+        # Mistral liest das PDF selbst; nur die ersten MAX_PAGES Seiten
+        return mistral_ocr({"type": "document_url", "document_url": data_uri("application/pdf", data)},
+                           reader, pages=range(MAX_PAGES))
     return read_pages(pdf_page_images(data), reader)
 
 

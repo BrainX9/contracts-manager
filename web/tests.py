@@ -29,6 +29,10 @@ def make_contract(owner, name, amount, interval="monthly", category=None):
 
 
 class LoginTest(TestCase):
+    def setUp(self):
+        # Seit 0.8.0 leitet die Anmeldeseite ohne einen einzigen Benutzer zur Erstanlage
+        User.objects.get_or_create(username="vorhanden")
+
     def test_pages_require_login(self):
         for name in ("dashboard", "preferences", "password_change"):
             with self.subTest(page=name):
@@ -1370,6 +1374,10 @@ class ProviderLogoPagesTest(TestCase):
 class LayoutTest(TestCase):
     """Gerüst mit Seitenleiste und lokalen Icons (0.4 beta)"""
 
+    def setUp(self):
+        # Seit 0.8.0 leitet die Anmeldeseite ohne einen einzigen Benutzer zur Erstanlage
+        User.objects.get_or_create(username="vorhanden")
+
     def test_sidebar_and_local_assets(self):
         user = User.objects.create_user("anna")
         self.client.force_login(user)
@@ -1418,6 +1426,10 @@ SSO_SETTINGS = {
 
 class SSOTest(TestCase):
     """Single Sign-on über OpenID Connect, z. B. Synology SSO Server (0.4 beta)"""
+
+    def setUp(self):
+        # Seit 0.8.0 leitet die Anmeldeseite ohne einen einzigen Benutzer zur Erstanlage
+        User.objects.get_or_create(username="vorhanden")
 
     def backend(self):
         from .oidc import SSOBackend
@@ -1552,6 +1564,7 @@ class SSOTest(TestCase):
         self.assertRedirects(self.client.get(reverse("password_change")), reverse("preferences"))
 
 
+@override_settings(APP_BASE_URL="")
 class PasswordResetTest(TestCase):
     """Passwort zurücksetzen per E-Mail (0.5 beta)"""
 
@@ -1769,6 +1782,7 @@ class ManageAccessTest(ManageTestMixin, TestCase):
                              fetch_redirect_response=False)
 
 
+@override_settings(APP_BASE_URL="")
 class ManageUserTest(ManageTestMixin, TestCase):
     def create(self, actor, **data):
         self.client.force_login(actor)

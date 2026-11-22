@@ -80,8 +80,17 @@ def get_contract(user, contract_id=None, reference=None):
         return {"error": "No visible contract found."}
     # Fehlt die Erinnerung, löst der Zugriff RelatedObjectDoesNotExist aus (AttributeError)
     reminder = getattr(contract, "reminder", None)
+    # Version 0.8.0: Vorgänger und Nachfolger, nur wenn für den Benutzer sichtbar
+    links = {}
+    for key, linked in (("predecessor", contract.predecessor), ("successor", contract.successor_contract)):
+        if linked is not None and contracts.filter(pk=linked.pk).exists():
+            links[key] = {"id": linked.pk, "reference": linked.reference, "name": linked.name, "status": linked.status}
+        else:
+            links[key] = None
     data = _contract_summary(contract)
     data.update({
+        "predecessor": links["predecessor"],
+        "successor": links["successor"],
         "contract_number": contract.contract_number,
         "short_description": contract.short_description,
         "notes": contract.notes,

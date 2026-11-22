@@ -142,6 +142,17 @@ VERSIONS = (
             "web": ["0007_document_ai"],
             "assistant": ["0004_document_ai"],
         },
+        # 0.7.0 -> 0.8.0: Vorgängervertrag (leer) und weitere Auswahlwerte
+        # in web.SiteSettings (Mistral)
+        no_changes,
+    ),
+    BackupVersion(
+        "0.8.0",
+        {
+            "contracts": ["0017_contract_predecessor"],
+            "web": ["0008_mistral"],
+            "assistant": ["0004_document_ai"],
+        },
     ),
 )
 

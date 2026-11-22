@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.7.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.8.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -42,6 +42,7 @@ The user interface is available in **English and German** (per user).
 ### 📄 Contracts and costs
 - Contracts with partner, category, consumer, **payment method**, start date, term, contract number and notes with **Markdown** (headings, lists, links, tables)
 - **Status as a traffic light**: active, notice sent, cancelled, archived – plus the date the cancellation takes effect; archived contracts leave the overview and the totals
+- **Predecessor and successor**: link a contract to the one it replaces – both sides show the link
 - Automatic reference numbers per year (e.g. `20260001`)
 - Cost history with payment interval (weekly, monthly, quarterly, yearly); the current amount is picked by date
 - **Documents** per contract: upload files (PDF, images, Office, up to 20 MB) or link Paperless-ngx documents, and attach them to cost entries
@@ -94,7 +95,7 @@ The user interface is available in **English and German** (per user).
 <td valign="top">
 
 ### 🔗 Integrations, AI and design
-- **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, OpenAI, an OpenAI-compatible provider or **Ollama** with local models, configured in the app (with a connection test and an editable system prompt); scans and photos are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. at IONOS or in Ollama
+- **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, **Mistral AI**, OpenAI, an OpenAI-compatible provider or **Ollama** with local models, configured in the app (with a connection test and an editable system prompt); scans and photos are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. **Mistral OCR**, a model at IONOS or in Ollama
 - **Backup and import** of all data and files as a single ZIP file (without passwords), in the app or on the command line; backups of older versions (0.1.0 and later) can be imported
 - **Single sign-on** with the Synology SSO Server (OpenID Connect), local login stays available
 - **Paperless-ngx** links to documents and correspondents (links only, no access to Paperless)
@@ -154,7 +155,7 @@ You need Docker with Docker Compose. There are three Compose files to choose fro
 | [`docker-compose.no-env.yml`](docker-compose.no-env.yml) | **no `.env`**: all settings in the file, optional ones commented out | one file to paste, e.g. into the Synology Container Manager |
 | [`docker-compose.no-env-minimal.yml`](docker-compose.no-env-minimal.yml) | **no `.env`**: only the required values | the quickest start |
 
-With one of the `no-env` files, download it, replace every `CHANGE_ME`, create the folders `db` and `media`, and start with `docker compose -f <file> up -d`. That file then contains passwords – keep it private, and write a `$` in a value as `$$`.
+With one of the `no-env` files, download it, replace every `CHANGE_ME`, create the folders `db` and `media`, start with `docker compose -f <file> up -d` and create the administrator in the browser. That file then contains passwords – keep it private, and write a `$` in a value as `$$`.
 
 The usual setup runs from one folder with two files; nothing is cloned or built:
 
@@ -164,7 +165,7 @@ curl -fsSLO https://raw.githubusercontent.com/BrainX9/contracts-manager/main/doc
 curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/.env.example -o .env
 ```
 
-Edit `.env`: set `SECRET_KEY` and `POSTGRES_PASSWORD`, your first administrator (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, optionally `ADMIN_EMAIL`), and for a local test also
+Edit `.env`: set `SECRET_KEY` and `POSTGRES_PASSWORD`, and for a local test also
 
 ```dotenv
 DEBUG=True
@@ -173,7 +174,7 @@ CSRF_TRUSTED_ORIGINS=http://localhost:8000
 USE_HTTPS=False
 ```
 
-Create the data folders and start the stack. On the first start the administrator is created from `.env` ([details](docs/configuration.md#first-administrator)):
+Create the data folders and start the stack:
 
 ```bash
 mkdir db media backups
@@ -181,8 +182,6 @@ mkdir db media backups
 sudo chown -R 1000:1000 media
 docker compose up -d
 ```
-
-Prefer to create the account by hand? Leave the `ADMIN_*` variables out and run `docker compose exec app python manage.py createsuperuser`.
 
 The folder then looks like this; database and uploads stay outside the containers:
 
@@ -197,7 +196,7 @@ contracts-manager/
 
 Three containers run: `contracts-manager-db`, `contracts-manager-app` and `contracts-manager-worker` (the Compose services are called `db`, `app` and `worker`). Docker downloads the ready-made image, see [Docker image](#docker-image) below.
 
-Open <http://localhost:8000/> and log in with the administrator from `.env`; then change the password in the app and remove `ADMIN_PASSWORD` from `.env`. Migrations and translations are applied automatically on every start.
+Open <http://localhost:8000/>. On the first visit in the browser a new installation shows **Create administrator**: choose user name, email address (optional) and password. That account gets all rights, and the page disappears for good. ([details](docs/configuration.md#first-administrator)). Migrations and translations are applied automatically on every start.
 
 For a production setup on a Synology NAS (project folder, reverse proxy with HTTPS, daily backups) see the [installation guide](docs/installation-synology.md).
 
@@ -226,17 +225,16 @@ There are two places for settings:
 
 ### Variables in `.env`
 
-**Required** variables must be set, otherwise the app does not start or cannot be reached. All others are **optional** and have a sensible default.
+**Required** variables must be set, otherwise the app does not start. All others are **optional** and have a sensible default; *recommended* ones should be set for a production setup.
 
 | | Variable | Default | Purpose |
 |---|---|---|---|
 | **Required** | `SECRET_KEY` | – | Secret key of Django, e.g. from `openssl rand -hex 32` |
 | **Required** | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | – | Database name, user and password |
-| **Required** | `ALLOWED_HOSTS` | only `localhost` | Host names the app is reached at, comma separated |
-| **Required** | `CSRF_TRUSTED_ORIGINS` | – | Full addresses incl. `http://` or `https://`; without it, forms only work on `localhost` |
+| Optional, *recommended* | `ALLOWED_HOSTS` | every address | Host names the app is reached at, comma separated. Without it the app accepts every address; links in emails then use the address of the app from the email settings |
+| Optional | `CSRF_TRUSTED_ORIGINS` | – | Full addresses incl. `http://` or `https://`; only needed if the reverse proxy changes the address or the scheme |
 | Optional | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
 | Optional | `DEBUG` | `False` | Only for development |
-| Optional | `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL` | – | First administrator, created on the first start if there is no superuser yet |
 | Optional | `APP_PORT` | `8000` | Published port on the host |
 | Optional | `APP_IMAGE_TAG` | `latest` | Version of the Docker image, e.g. `0.7.0` to stay on one version |
 | Optional | `APP_UID`, `APP_GID` | `1000` | User and group the containers run as (not root) |

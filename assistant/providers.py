@@ -78,11 +78,16 @@ class OpenAIProvider:
         self.model = config.model
 
     @staticmethod
-    def convert_messages(system, messages):
+    def convert_messages(system, messages, mistral=False):
+        """
+        Anbieterneutrale Nachrichten im OpenAI-Format. Mistral (0.8.0) möchte
+        bei Werkzeug-Ergebnissen den Namen des Werkzeugs und bei Antworten
+        mit Werkzeugaufrufen einen Text statt null.
+        """
         result = [{"role": "system", "content": system}]
         for message in messages:
             if message["role"] == "assistant":
-                entry = {"role": "assistant", "content": message.get("content") or None}
+                entry = {"role": "assistant", "content": message.get("content") or ("" if mistral else None)}
                 if message.get("tool_calls"):
                     entry["tool_calls"] = [
                         {
@@ -94,7 +99,10 @@ class OpenAIProvider:
                     ]
                 result.append(entry)
             elif message["role"] == "tool":
-                result.append({"role": "tool", "tool_call_id": message["tool_call_id"], "content": message["content"]})
+                entry = {"role": "tool", "tool_call_id": message["tool_call_id"], "content": message["content"]}
+                if mistral and message.get("name"):
+                    entry["name"] = message["name"]
+                result.append(entry)
             else:
                 result.append({"role": "user", "content": message["content"]})
         return result
@@ -106,7 +114,10 @@ class OpenAIProvider:
     def complete(self, system, messages, tools, allow_tools=True):
         import openai
 
-        kwargs = {"model": self.model, "messages": self.convert_messages(system, messages)}
+        kwargs = {
+            "model": self.model,
+            "messages": self.convert_messages(system, messages, mistral=self.config.provider == "mistral"),
+        }
         if tools:
             kwargs["tools"] = self.convert_tools(tools)
             if not allow_tools:
@@ -257,6 +268,8 @@ PROVIDERS = {
     # Ollama spricht die OpenAI-Schnittstelle (Version 0.5.0); ein
     # API-Schlüssel ist nicht nötig
     "ollama": OpenAIProvider,
+    # Mistral (Version 0.8.0): ebenfalls die OpenAI-Schnittstelle
+    "mistral": OpenAIProvider,
     "anthropic": AnthropicProvider,
 }
 

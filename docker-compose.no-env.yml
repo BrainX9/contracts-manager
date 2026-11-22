@@ -10,6 +10,7 @@
 #   2. Create the folders db and media next to this file
 #      (Linux: sudo chown -R 1000:1000 media).
 #   3. docker compose -f docker-compose.no-env.yml up -d
+#   4. Open the app in the browser and create the first administrator.
 #
 # This file then contains passwords: keep it private (e.g. chmod 600).
 # A "$" in a value must be written as "$$".
@@ -23,10 +24,6 @@ x-app-settings: &app-settings
   # --- REQUIRED ------------------------------------------------------------
   # Random key, e.g. from: openssl rand -hex 32
   SECRET_KEY: "CHANGE_ME"
-  # Host name(s) the app is reached at, comma separated, without http://
-  ALLOWED_HOSTS: "contracts.example.com"
-  # Full address(es) incl. http:// or https://, comma separated
-  CSRF_TRUSTED_ORIGINS: "https://contracts.example.com"
   # Database: the db service below uses the same values (YAML anchors)
   POSTGRES_DB: &db-name "contracts_db"
   POSTGRES_USER: &db-user "contracts_user"
@@ -34,15 +31,16 @@ x-app-settings: &app-settings
   MEDIA_ROOT: /app/media
 
   # --- Optional ------------------------------------------------------------
+  # Recommended: host name(s) the app is reached at, comma separated, without
+  # http://. Without it the app accepts every address.
+  ALLOWED_HOSTS: "contracts.example.com"
+  # Only if the reverse proxy changes the address or the scheme: full
+  # address(es) incl. http:// or https://, comma separated
+  # CSRF_TRUSTED_ORIGINS: "https://contracts.example.com"
   # True behind a reverse proxy with HTTPS, False for http:// in the home network
   USE_HTTPS: "True"
   # Always False in production
   DEBUG: "False"
-  # First administrator, created on the first start if there is no superuser.
-  # After the first login change the password in the app and remove ADMIN_PASSWORD.
-  # ADMIN_USERNAME: "admin"
-  # ADMIN_PASSWORD: "CHANGE_ME"
-  # ADMIN_EMAIL: "admin@example.com"
   # Links to Paperless-ngx, without trailing slash
   # PAPERLESS_URL: "https://paperless.example.com"
   # AI assistant fine tuning (the connection is set in the app)

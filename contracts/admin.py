@@ -523,13 +523,13 @@ class ContractAdmin(OwnedAdmin):
     inlines = [DocumentInline, CostEntryInline, ReminderInline]
     # reference ist editable=False und darf nur schreibgeschützt angezeigt werden
     readonly_fields = ['reference', 'provider_paperless_link']
-    visible_fk_fields = ('provider', 'category', 'consumer', 'payment_method')
+    visible_fk_fields = ('provider', 'category', 'consumer', 'payment_method', 'predecessor')
     content_fieldsets = (
         (_('Master data'), {
             'fields': ('reference', 'name', 'provider', 'category', 'consumer', 'payment_method')
         }),
         (_('Term'), {
-            'fields': ('status', 'start_date', 'term_value', 'term_unit', 'cancelled_as_of')
+            'fields': ('status', 'start_date', 'term_value', 'term_unit', 'cancelled_as_of', 'predecessor')
         }),
         (_('Information'), {
             'fields': ('contract_number', 'short_description', 'notes', 'provider_paperless_link')

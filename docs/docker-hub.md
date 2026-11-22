@@ -18,11 +18,12 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 - See **what you pay per month and per year**, and where the money goes.
 - Record **price changes over time**; the current amount is picked by date.
 - Keep track of every contract with a **status traffic light** – active, notice sent, cancelled, archived – and the date a cancellation takes effect. Archived contracts leave the overview and the totals.
+- Link **predecessor and successor** contracts, e.g. when you change tariff or insurer.
 - Get an **email reminder** before a notice period ends.
 - Attach **documents** to contracts (upload or link to Paperless-ngx).
 - **Share** contracts with family members – read-only or with edit rights.
-- Optional **AI assistant** (Claude, OpenAI, an OpenAI-compatible provider such as IONOS, or **Ollama** with local models): ask questions about your contracts or let it propose a new contract from an uploaded document. Changes only after your approval.
-- **Scans and photos** are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. at IONOS or in Ollama.
+- Optional **AI assistant** (Claude, **Mistral AI**, OpenAI, an OpenAI-compatible provider such as IONOS, or **Ollama** with local models): ask questions about your contracts or let it propose a new contract from an uploaded document. Changes only after your approval.
+- **Scans and photos** are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. **Mistral OCR**, a model at IONOS or in Ollama.
 - **Notes with Markdown** on contracts, contract partners and consumers.
 - **Email, single sign-on (OpenID Connect, e.g. Synology SSO Server) and the AI assistant are set up in the app**, with a test button and without a restart.
 - **Backup and import** of all data and files as a single ZIP file.
@@ -35,7 +36,7 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 | Tag | Meaning |
 |---|---|
 | `latest` | newest release |
-| `0.7.0`, `0.6.0`, … | one tag per version |
+| `0.8.0`, `0.7.0`, … | one tag per version |
 
 Platforms: `linux/amd64` and `linux/arm64`. The image is built by GitHub Actions on every version tag, after the tests passed. The same image is also available as `ghcr.io/brainx9/contracts-manager`.
 
@@ -56,7 +57,7 @@ mkdir contracts-manager && cd contracts-manager
 curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.no-env-minimal.yml -o docker-compose.yml
 ```
 
-Open `docker-compose.yml` and replace every `CHANGE_ME` (secret key, database password, administrator password) and the host names. For a local test use `localhost`, `http://localhost:8000` and `USE_HTTPS: "False"`. A `$` in a value must be written as `$$`. Then:
+Open `docker-compose.yml` and replace every `CHANGE_ME` (secret key, database password). For HTTPS behind a reverse proxy set `USE_HTTPS: "True"`. A `$` in a value must be written as `$$`. Then:
 
 ```bash
 mkdir db media
@@ -73,7 +74,7 @@ curl -fsSLO https://raw.githubusercontent.com/BrainX9/contracts-manager/main/doc
 curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/.env.example -o .env
 ```
 
-Edit `.env`: set `SECRET_KEY` and `POSTGRES_PASSWORD`, your first administrator (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, optionally `ADMIN_EMAIL`), and for a local test also
+Edit `.env`: set `SECRET_KEY` and `POSTGRES_PASSWORD`, and for a local test also
 
 ```dotenv
 DEBUG=True
@@ -84,7 +85,7 @@ USE_HTTPS=False
 
 Then create the folders and start as above (`mkdir db media`, `docker compose up -d`).
 
-Open <http://localhost:8000/> and log in with your administrator. Then change the password in the app and remove `ADMIN_PASSWORD` from the Compose file or `.env`.
+Open <http://localhost:8000/>. A new installation asks for the **first administrator** in the browser – create it right away, before the app is reachable from the internet.
 
 ## What runs
 
@@ -116,17 +117,16 @@ There are two places for settings:
 |---|---|
 | `SECRET_KEY` | secret key of Django, e.g. from `openssl rand -hex 32` |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | database |
-| `ALLOWED_HOSTS` | host names the app is reached at, comma separated |
-| `CSRF_TRUSTED_ORIGINS` | full addresses incl. `http://` or `https://` |
 
 ### Optional variables (selection)
 
 | Variable | Default | Purpose |
 |---|---|---|
+| `ALLOWED_HOSTS` | every address | recommended: host names the app is reached at, comma separated |
+| `CSRF_TRUSTED_ORIGINS` | – | only if the reverse proxy changes the address or the scheme |
 | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
-| `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL` | – | first administrator, created on the first start |
 | `APP_PORT` | `8000` | published port (`.env` setup) |
-| `APP_IMAGE_TAG` | `latest` | image version, e.g. `0.7.0` to stay on one version |
+| `APP_IMAGE_TAG` | `latest` | image version, e.g. `0.8.0` to stay on one version |
 | `APP_UID`, `APP_GID` | `1000` | user and group the containers run as |
 | `PAPERLESS_URL` | – | links to Paperless-ngx |
 
@@ -141,7 +141,7 @@ docker compose pull
 docker compose up -d
 ```
 
-To stay on one version, use a fixed tag such as `brainx9/contracts-manager:0.7.0`. Superusers see a hint in the app when a new version is out. Release notes: [GitHub releases](https://github.com/BrainX9/contracts-manager/releases).
+To stay on one version, use a fixed tag such as `brainx9/contracts-manager:0.8.0`. Superusers see a hint in the app when a new version is out. Release notes: [GitHub releases](https://github.com/BrainX9/contracts-manager/releases).
 
 ## Documentation
 

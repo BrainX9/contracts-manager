@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -26,7 +27,8 @@ from contracts.models import (
 from contracts.permissions import visible_to
 
 from .forms import (
-    CategoryForm, ConsumerForm, ContractForm, CostEntryForm, LoginForm, PaymentMethodForm, PreferencesForm,
+    CategoryForm, ConsumerForm, ContractForm, CostEntryForm, FirstAdminForm, LoginForm, PaymentMethodForm,
+    PreferencesForm,
     ProviderForm, ReminderForm,
     SharingForm, WebPasswordChangeForm, WebPasswordResetForm, WebSetPasswordForm,
 )
@@ -87,14 +89,64 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
+def needs_first_admin():
+    """
+    Neue Installation (Version 0.8.0): es gibt noch gar keinen Benutzer.
+    Bestehende Installationen (auch mit Administrator aus ADMIN_*) sehen
+    die Erstanlage nie; fehlt dort ein Superuser, hilft createsuperuser.
+    """
+    return not get_user_model().objects.exists()
+
+
+class FirstAdminView(View):
+    """
+    Ersten Administrator im Browser anlegen (Version 0.8.0). Nur solange es
+    noch keinen Benutzer gibt, danach 404. Ersetzt das Anlegen über ADMIN_* in
+    der .env. Zwei gleichzeitige Anfragen werden über eine Sperre auf
+    web.SiteSettings nacheinander geprüft, damit nur einer Administrator
+    wird.
+    """
+    template_name = "registration/first_admin.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not needs_first_admin():
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        return render(request, self.template_name, {"form": FirstAdminForm()})
+
+    def post(self, request):
+        from django.db import transaction
+
+        form = FirstAdminForm(request.POST)
+        with transaction.atomic():
+            SiteSettings.load()
+            SiteSettings.objects.select_for_update().get(pk=1)
+            if not needs_first_admin():
+                raise Http404
+            if not form.is_valid():
+                return render(request, self.template_name, {"form": form})
+            user = form.save()
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        messages.success(request, _("Welcome! You are the administrator of this installation."))
+        return redirect("dashboard")
+
+
 class WebLoginView(auth_views.LoginView):
     """
     Lokale Anmeldung; ist SSO eingeschaltet, zusätzlich die Schaltfläche
-    zur Anmeldung über den SSO-Anbieter (web.oidc).
+    zur Anmeldung über den SSO-Anbieter (web.oidc). Gibt es noch keinen
+    Administrator (neue Installation), geht es zur Erstanlage.
     """
     template_name = "registration/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = True
+
+    def dispatch(self, request, *args, **kwargs):
+        if needs_first_admin():
+            return redirect("first_admin")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -450,6 +502,12 @@ class ContractDetailView(LoginRequiredMixin, OwnedObjectMixin, DetailView):
         can_share = perms.can_share(user, contract)
         context.update(cost_context(contract, user))
         context.update(document_context(contract, user))
+        # Version 0.8.0: Vorgänger und Nachfolger, nur wenn sichtbar
+        linked = [(_("Predecessor contract"), contract.predecessor), (_("Successor contract"), contract.successor_contract)]
+        visible = set(visible_to(user, Contract.objects.filter(
+            pk__in=[item.pk for _label, item in linked if item is not None]
+        )).values_list("pk", flat=True))
+        context["linked_contracts"] = [(label, item) for label, item in linked if item is not None and item.pk in visible]
         context.update({
             "can_delete": perms.can_delete(user, contract),
             "can_share": can_share,
@@ -519,6 +577,7 @@ class ContractFormLinksMixin:
             (form["payment_method"], user.has_perm("contracts.add_paymentmethod"),
              reverse("payment_method_create"), _("New payment method")),
         ]
+        context["link_fields"] = [form["predecessor"], form["successor"]]
         return context
 
 
@@ -562,6 +621,37 @@ class ContractUpdateView(LoginRequiredMixin, OwnedObjectMixin, ContractFormLinks
 
     def get_success_url(self):
         return reverse("contract_detail", args=[self.object.pk])
+
+
+@login_required
+def contract_link_options(request):
+    """
+    Suchmaske für Vorgänger und Nachfolger (Version 0.8.0): liefert per HTMX
+    die passenden <option>-Einträge für die Auswahlliste. Es erscheinen nur
+    Verträge, die der Benutzer bearbeiten darf (web.forms.link_candidates).
+    """
+    from .forms import LINK_FIELDS, LINK_RESULTS, contract_link_label, link_candidates
+
+    field = request.GET.get("field")
+    if field not in LINK_FIELDS:
+        raise Http404
+    contract = None
+    pk = request.GET.get("contract", "")
+    if pk.isdigit():
+        contract = perms.editable_by(request.user, Contract.objects.filter(pk=int(pk))).first()
+    query = request.GET.get("q", "").strip()
+    selected = request.GET.get(field, "")
+    candidates = list(link_candidates(request.user, contract, field, query)[:LINK_RESULTS])
+    # Die bisherige Auswahl bleibt in der Liste, auch wenn sie nicht zur Suche passt
+    if selected.isdigit() and all(str(item.pk) != selected for item in candidates):
+        kept = link_candidates(request.user, contract, field).filter(pk=int(selected)).first()
+        if kept:
+            candidates.insert(0, kept)
+    return render(request, "web/contracts/_link_options.html", {
+        "options": [(item.pk, contract_link_label(item)) for item in candidates],
+        "selected": selected,
+        "limited": len(candidates) >= LINK_RESULTS,
+    })
 
 
 class ContractDeleteView(LoginRequiredMixin, OwnedObjectMixin, DeleteView):

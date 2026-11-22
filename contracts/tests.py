@@ -2509,94 +2509,35 @@ class OldBackupImportTest(TestCase):
 
 
 class EnsureAdminTest(TestCase):
-    """Erster Administrator aus der .env (0.9.1 beta)"""
-
-    ENV = {"ADMIN_USERNAME": "chef", "ADMIN_PASSWORD": "Sehr-gutes-Passwort-7391", "ADMIN_EMAIL": "chef@example.com"}
+    """
+    Seit 0.8.0 legt ADMIN_* keinen Administrator mehr an; ensure_admin weist
+    nur noch auf übrig gebliebene Variablen hin (Erstanlage im Browser).
+    """
 
     def run_command(self, **env):
-        """Führt den Befehl mit genau diesen ADMIN_*-Variablen aus; gibt (stdout, stderr) zurück."""
         import io
         import os
 
         from django.core.management import call_command
 
-        out, err = io.StringIO(), io.StringIO()
+        out = io.StringIO()
         clean = {k: v for k, v in os.environ.items() if not k.startswith("ADMIN_")}
         with patch.dict(os.environ, {**clean, **env}, clear=True):
-            call_command("ensure_admin", stdout=out, stderr=err)
-        return out.getvalue(), err.getvalue()
+            call_command("ensure_admin", stdout=out)
+        return out.getvalue()
 
-    def test_creates_superuser_when_none_exists(self):
-        out, err = self.run_command(**self.ENV)
-        user = User.objects.get(username="chef")
-        self.assertTrue(user.is_superuser and user.is_staff and user.is_active)
-        self.assertEqual(user.email, "chef@example.com")
-        self.assertTrue(user.check_password("Sehr-gutes-Passwort-7391"))
-        self.assertTrue(user.groups.filter(name=perms.GROUP_ALL).exists())
-        self.assertIn("wurde angelegt", out)
-        self.assertEqual(err, "")
-
-    def test_email_is_optional(self):
-        self.run_command(ADMIN_USERNAME="chef", ADMIN_PASSWORD="Sehr-gutes-Passwort-7391")
-        self.assertEqual(User.objects.get(username="chef").email, "")
-
-    def test_password_never_in_output(self):
-        out, err = self.run_command(**self.ENV)
-        self.assertNotIn("Sehr-gutes-Passwort-7391", out + err)
-        out, err = self.run_command(ADMIN_USERNAME="x y", ADMIN_PASSWORD="Sehr-gutes-Passwort-7391")
-        self.assertNotIn("Sehr-gutes-Passwort-7391", out + err)
-
-    def test_nothing_without_variables(self):
-        out, err = self.run_command()
-        self.assertFalse(User.objects.exists())
-        self.assertEqual((out, err), ("", ""))
-
-    def test_only_one_of_username_and_password_is_an_error(self):
-        for env in ({"ADMIN_USERNAME": "chef"}, {"ADMIN_PASSWORD": "Sehr-gutes-Passwort-7391"}):
-            with self.subTest(env=list(env)):
-                out, err = self.run_command(**env)
-                self.assertFalse(User.objects.exists())
-                self.assertIn("zusammen", err)
-
-    def test_ignored_when_a_superuser_exists(self):
-        User.objects.create_superuser("alt", "alt@example.com", "Das-alte-Passwort-5512")
-        out, err = self.run_command(**self.ENV)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertIn("ignoriert", out)
-        self.assertEqual(err, "")
-
-    def test_second_run_does_not_reset_password(self):
-        self.run_command(**self.ENV)
-        user = User.objects.get(username="chef")
-        user.set_password("Neues-Passwort-in-der-App-2048")
-        user.save()
-        self.run_command(**self.ENV)
-        user.refresh_from_db()
-        self.assertTrue(user.check_password("Neues-Passwort-in-der-App-2048"))
-
-    def test_existing_normal_user_is_not_promoted(self):
-        User.objects.create_user("Chef", "anderer@example.com", "Etwas-anderes-4410")
-        out, err = self.run_command(**self.ENV)
-        self.assertFalse(User.objects.get(username="Chef").is_superuser)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertIn("vergeben", err)
-
-    def test_email_of_another_user_is_rejected(self):
-        User.objects.create_user("anna", "CHEF@example.com")
-        out, err = self.run_command(**self.ENV)
+    def test_variables_no_longer_create_an_admin(self):
+        output = self.run_command(ADMIN_USERNAME="chef", ADMIN_PASSWORD="Sehr-gutes-Passwort-7391")
         self.assertFalse(User.objects.filter(username="chef").exists())
-        self.assertIn("ADMIN_EMAIL", err)
+        self.assertIn("ADMIN_USERNAME, ADMIN_PASSWORD", output)
+        self.assertIn("nicht mehr ausgewertet", output)
+        self.assertNotIn("Sehr-gutes-Passwort-7391", output)
 
-    def test_weak_password_is_rejected_without_failing(self):
-        for password in ("12345678", "password", "a1b2"):
-            with self.subTest(password=password):
-                out, err = self.run_command(ADMIN_USERNAME="chef", ADMIN_PASSWORD=password)
-                self.assertFalse(User.objects.exists())
-                self.assertIn("ungültig", err)
-                self.assertNotIn(password, out + err)
+    def test_existing_admin_is_untouched(self):
+        admin = User.objects.create_superuser("chef", "chef@example.com", "Altes-Passwort-123")
+        self.run_command(ADMIN_USERNAME="chef", ADMIN_PASSWORD="Neues-Passwort-456")
+        admin.refresh_from_db()
+        self.assertTrue(admin.check_password("Altes-Passwort-123"))
 
-    def test_invalid_username_is_rejected(self):
-        out, err = self.run_command(ADMIN_USERNAME="mit leerzeichen", ADMIN_PASSWORD="Sehr-gutes-Passwort-7391")
-        self.assertFalse(User.objects.exists())
-        self.assertIn("ungültig", err)
-
+    def test_silent_without_variables(self):
+        self.assertEqual(self.run_command(), "")

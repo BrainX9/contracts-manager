@@ -222,15 +222,17 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["ai_model"].help_text = _("Empty: value from the .env file.")
         self.fields["ai_base_url"].help_text = _(
             "Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://example.com/v1 or "
-            "http://192.168.1.20:11434/v1 for Ollama on another computer. For Ollama, empty means "
-            "the Docker host (host.docker.internal). Otherwise empty: value from the .env file."
+            "http://192.168.1.20:11434/v1 for Ollama on another computer. Empty: for Mistral AI "
+            "https://api.mistral.ai/v1, for Ollama the Docker host (host.docker.internal), otherwise "
+            "the value from the .env file."
         )
         # Dokument-KI: leere Felder gelten wie beim Hauptmodell
         self.fields["reader_kind"].required = False
         self.fields["reader_provider"].choices = [("", _("Same as the main model")), *SiteSettings.READER_PROVIDER_CHOICES]
         self.fields["reader_model"].help_text = _(
             "Empty: no document AI, scans and photos are read with the local text recognition. "
-            "Example IONOS: lightonai/LightOnOCR-2-1B (OCR model) or a model whose model card lists image input."
+            "Example Mistral: mistral-ocr-latest (type Mistral OCR). Example IONOS: lightonai/LightOnOCR-2-1B "
+            "(OCR model)."
         )
         self.fields["reader_base_url"].help_text = _(
             "Empty: the address of the main model (Ollama: the Docker host)."
@@ -260,6 +262,15 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
 
     def clean_reader_kind(self):
         return self.cleaned_data.get("reader_kind") or "vision"
+
+    def clean(self):
+        cleaned = super().clean()
+        # Mistral OCR ist ein Dienst von Mistral: nur mit dem Anbieter Mistral
+        if cleaned.get("reader_kind") == "mistral_ocr" and cleaned.get("reader_model"):
+            provider = cleaned.get("reader_provider") or cleaned.get("ai_provider") or self.env.provider
+            if provider != "mistral":
+                self.add_error("reader_kind", _("Mistral OCR only works with the provider Mistral AI."))
+        return cleaned
 
     def clean_reader_base_url(self):
         value = self.cleaned_data["reader_base_url"].strip()

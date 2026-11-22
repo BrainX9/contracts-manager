@@ -1,23 +1,20 @@
 # Contracts Manager – Docker Compose WITHOUT a .env file, minimal version
 #
-# Only the values needed to start and to log in. Replace every CHANGE_ME,
-# create the folders db and media next to this file
-# (Linux: sudo chown -R 1000:1000 media), then:
+# Only the values needed to start. Replace every CHANGE_ME, create the
+# folders db and media next to this file (Linux: sudo chown -R 1000:1000 media),
+# then:
 #   docker compose -f docker-compose.no-env-minimal.yml up -d
+# and open the app in the browser: it asks for the first administrator.
 #
 # Keep this file private, it contains passwords. A "$" in a value must be
 # written as "$$". More settings: docker-compose.no-env.yml and the README.
 
 x-app-settings: &app-settings
   SECRET_KEY: "CHANGE_ME"                         # e.g. from: openssl rand -hex 32
-  ALLOWED_HOSTS: "contracts.example.com"          # host name, without http://
-  CSRF_TRUSTED_ORIGINS: "https://contracts.example.com"
-  USE_HTTPS: "True"                               # False for http:// in the home network
   POSTGRES_DB: &db-name "contracts_db"
   POSTGRES_USER: &db-user "contracts_user"
   POSTGRES_PASSWORD: &db-password "CHANGE_ME"
-  ADMIN_USERNAME: "admin"                         # first administrator (first start only)
-  ADMIN_PASSWORD: "CHANGE_ME"                     # remove after the first login
+  USE_HTTPS: "False"                              # True behind a reverse proxy with HTTPS
   MEDIA_ROOT: /app/media
 
 services:

@@ -18,6 +18,13 @@ from django.conf import settings
 OPENAI = "openai"
 OLLAMA = "ollama"
 OLLAMA_DEFAULT_URL = "http://host.docker.internal:11434/v1"
+# Version 0.8.0: Mistral (mistral.ai) über seine OpenAI-kompatible Schnittstelle
+MISTRAL = "mistral"
+MISTRAL_DEFAULT_URL = "https://api.mistral.ai/v1"
+# Anbieter mit fester Standardadresse; ohne eigene Adresse gilt sie
+DEFAULT_URLS = {OLLAMA: OLLAMA_DEFAULT_URL, MISTRAL: MISTRAL_DEFAULT_URL}
+# Anbieter mit OpenAI-Schnittstelle (auch für die Dokument-KI)
+OPENAI_COMPATIBLE = (OPENAI, OLLAMA, MISTRAL)
 
 
 @dataclass(frozen=True)
@@ -64,12 +71,12 @@ def merge_reader(site, provider, base_url, api_key, timeout=120):
     if not model:
         return None
     reader_provider = getattr(site, "reader_provider", "") or provider
-    if reader_provider not in (OPENAI, OLLAMA):
+    if reader_provider not in OPENAI_COMPATIBLE:
         return None
     same = reader_provider == provider
     reader_url = (getattr(site, "reader_base_url", "") or "").strip() or (base_url if same else "")
-    if reader_provider == OLLAMA and not reader_url:
-        reader_url = OLLAMA_DEFAULT_URL
+    if not reader_url:
+        reader_url = DEFAULT_URLS.get(reader_provider, "")
     return ReaderConfig(
         provider=reader_provider, model=model, base_url=reader_url,
         api_key=getattr(site, "reader_api_key", "") or (api_key if same else ""),
@@ -84,7 +91,7 @@ def from_env():
         enabled=settings.AI_ENABLED,
         provider=provider,
         model=settings.AI_MODEL,
-        base_url=settings.AI_BASE_URL or (OLLAMA_DEFAULT_URL if provider == OLLAMA else ""),
+        base_url=settings.AI_BASE_URL or DEFAULT_URLS.get(provider, ""),
         api_key=settings.AI_API_KEY,
         timeout=settings.AI_TIMEOUT,
     )
@@ -98,11 +105,11 @@ def merge(site, env=None):
     env = env or from_env()
     provider = site.ai_provider or env.provider
     base_url = site.ai_base_url.strip() or env.base_url
-    if provider == OLLAMA and not site.ai_base_url.strip() and env.provider != OLLAMA:
-        # Die Adresse der .env gehört zum Anbieter der .env, nicht zu Ollama
-        base_url = OLLAMA_DEFAULT_URL
-    elif provider == OLLAMA and not base_url:
-        base_url = OLLAMA_DEFAULT_URL
+    if provider in DEFAULT_URLS and not site.ai_base_url.strip() and env.provider != provider:
+        # Die Adresse der .env gehört zum Anbieter der .env, nicht zu Ollama oder Mistral
+        base_url = DEFAULT_URLS[provider]
+    elif provider in DEFAULT_URLS and not base_url:
+        base_url = DEFAULT_URLS[provider]
     api_key = site.ai_api_key or env.api_key
     return AIConfig(
         enabled={"on": True, "off": False}.get(site.ai_enabled, env.enabled),

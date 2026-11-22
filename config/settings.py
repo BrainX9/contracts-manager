@@ -35,6 +35,13 @@ if env_file.exists():
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+# Version 0.8.0: ALLOWED_HOSTS ist optional (empfohlen). Ohne Angabe nimmt die
+# App jede Adresse an; Links in E-Mails mit Zugang zum Konto nutzen dann die
+# "Adresse der App" (contracts.mail.link_url), Verwaltung › System zeigt
+# einen Hinweis.
+ALLOWED_HOSTS_SET = bool(ALLOWED_HOSTS)
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["*"]
 # Die Zustandsprüfung im Container ruft http://localhost:8000/health/ auf
 for _local_host in ("localhost", "127.0.0.1"):
     if _local_host not in ALLOWED_HOSTS:
@@ -317,7 +324,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.7.0"
+APP_VERSION = "0.8.0"
 
 # --- Fehlversuche bei der Anmeldung (django-axes) ----------------------------
 # Nach 5 falschen Passwörtern für denselben Benutzernamen von derselben

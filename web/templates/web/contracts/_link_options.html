@@ -1,0 +1,4 @@
+{% load i18n %}{# Einträge für Vorgänger/Nachfolger (Version 0.8.0), ersetzt den Inhalt der Auswahlliste #}<option value="">{% translate "– none –" %}</option>
+{% for pk, label in options %}<option value="{{ pk }}"{% if selected == pk|stringformat:"s" %} selected{% endif %}>{{ label }}</option>
+{% empty %}<option value="" disabled>{% translate "No matching contract" %}</option>
+{% endfor %}{% if limited %}<option value="" disabled>{% translate "More contracts found – refine the search" %}</option>{% endif %}

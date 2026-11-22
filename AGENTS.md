@@ -29,7 +29,7 @@ Mit „Maintainer“ ist die Person gemeint, die das Repository betreut (GitHub:
 - htmx, Bootstrap und Bootstrap Icons liegen lokal in `web/static/web/vendor/` (kein CDN)
 - `Pillow` für Logos, `mozilla-django-oidc` für Single Sign-on (ab Version 0.4)
 - `django-q2` (ORM-Broker, kein Redis) für Hintergrund-Aufgaben (ab Version 0.5)
-- `openai` und `anthropic` (offizielle SDKs) für den KI-Assistenten (ab Version 0.8a); OpenAI-kompatible Anbieter (IONOS) über `AI_BASE_URL`, Ollama als eigener Anbieter (seit 0.5.0)
+- `openai` und `anthropic` (offizielle SDKs) für den KI-Assistenten (ab Version 0.8a); OpenAI-kompatible Anbieter (IONOS) über `AI_BASE_URL`, Ollama (seit 0.5.0) und Mistral AI (seit 0.8.0) als eigene Anbieter
 - `markdown-it-py` für Markdown in Notizen (ab Version 0.4.0)
 - `django-axes` (mit `ipware`) gegen zu viele Fehlversuche bei der Anmeldung; Container laufen als Benutzer `APP_UID:APP_GID` (Standard 1000), nicht als root
 
@@ -469,6 +469,34 @@ Keine neuen Abhängigkeiten.
 **Weiteres**
 - Backup: Eintrag `0.7.0` in `backup_upgrades.VERSIONS`, Schritt von 0.6.0 ist `no_changes`.
 - `APP_VERSION` ist `0.7.0`; Tag `v0.7.0`, Push und GitHub-Release nur auf Anweisung.
+
+### Version 0.8.0: Vorgänger/Nachfolger, erster Administrator im Browser, Mistral
+Keine neuen Abhängigkeiten.
+
+**Fehler aus 0.7.0 behoben:** `web/contracts/form.html` gab die Felder `status` und `cancelled_as_of` nicht aus (die Tests hatten das Formular nur direkt abgeschickt). Neue Felder im Vertragsformular immer auch in die Vorlage eintragen; ein Test prüft die gerenderte Seite.
+
+**Vorgänger und Nachfolger (`Contract.predecessor`, Migration `contracts/0017`)**
+- `OneToOneField("self", SET_NULL, related_name="successor")`: eine Verknüpfung, von beiden Seiten sichtbar (`contract.successor_contract`), höchstens ein Vorgänger und ein Nachfolger. `Contract.clean()` verhindert Kreise.
+- Formular: Feld `predecessor` und Formularfeld `successor` (setzt beim anderen Vertrag `predecessor`). Wählbar nur Verträge mit **Bearbeitungsrecht** (Entscheidung des Maintainers) und freier Gegenseite (`web.forms.link_candidates`); ist der verknüpfte Vertrag nicht bearbeitbar, bleibt das Feld gesperrt. Suchmaske: HTMX filtert die Auswahlliste (`contract_link_options`, `/contracts/link-options/`), ohne JavaScript bleibt die volle Liste.
+- Vertragsseite zeigt beide Verknüpfungen nur, wenn sichtbar; Django-Admin, KI-Werkzeug `get_contract` (nur sichtbare).
+
+**Erster Administrator im Browser**
+- Ohne einen einzigen Benutzer leitet die Anmeldung auf `/setup/` (`web.views.FirstAdminView`, `FirstAdminForm`): Benutzername, E-Mail (optional), Passwort mit den üblichen Regeln; danach angemeldet, die Seite liefert 404. Gleichzeitige Anfragen über eine Sperre auf `SiteSettings`.
+- `ADMIN_USERNAME`/`ADMIN_PASSWORD`/`ADMIN_EMAIL` legen **keinen** Administrator mehr an; `manage.py ensure_admin` weist beim Start nur noch auf gesetzte Variablen hin. Bestehende Administratoren bleiben. Aus README, `.env.example`, Compose-Dateien, Doku und `docs/docker-hub.md` entfernt; `createsuperuser` bleibt.
+- Ohne Schutzcode (Entscheidung des Maintainers, als spätere Option vorgemerkt: Einrichtungscode im Protokoll). Die Doku rät, den Administrator vor der Freigabe ins Internet anzulegen.
+
+**`ALLOWED_HOSTS` und `CSRF_TRUSTED_ORIGINS` optional (empfohlen)**
+- Ohne `ALLOWED_HOSTS` gilt `["*"]` (`settings.ALLOWED_HOSTS_SET` = False, Hinweis unter Verwaltung › System). Links mit Zugang zum Konto (Einladung, Passwort-Reset) bilden sich über `contracts.mail.link_url` immer aus der „Adresse der App“, nur ohne sie aus der Anfrage.
+- `CSRF_TRUSTED_ORIGINS` braucht man nur, wenn der Reverse Proxy Adresse oder Schema ändert.
+
+**Mistral AI (Wunsch des Maintainers: statt IONOS)**
+- Anbieter `mistral` (`OpenAIProvider`, Standardadresse `assistant.config.MISTRAL_DEFAULT_URL` = `https://api.mistral.ai/v1`, `DEFAULT_URLS`); Nachrichten für Mistral mit Werkzeugname im Werkzeug-Ergebnis und leerem Text statt `null` (`convert_messages(..., mistral=True)`).
+- Dokument-KI: Art `mistral_ocr` (`assistant.vision.mistral_ocr`, `POST <adresse>/ocr`, Modell z. B. `mistral-ocr-latest`): PDFs direkt als Base64 (höchstens 8 Seiten), Fotos als Bild; nur mit Anbieter Mistral (Formularprüfung). Migration `web/0008`.
+- Nicht gegen die echte API geprüft; Werkzeugaufrufe über die OpenAI-Schnittstelle von Mistral zeigt der Test-Knopf.
+
+**Weiteres**
+- Backup: Eintrag `0.8.0` in `backup_upgrades.VERSIONS`, Schritt von 0.7.0 ist `no_changes`.
+- `APP_VERSION` ist `0.8.0`; Tag `v0.8.0`, Push und GitHub-Release nur auf Anweisung.
 
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)

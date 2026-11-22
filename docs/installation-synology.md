@@ -74,9 +74,8 @@ Change at least:
 |---|---|
 | `SECRET_KEY` | a new key, e.g. from `openssl rand -hex 32` |
 | `POSTGRES_PASSWORD` | your own password, letters and digits only (it is part of a URL), e.g. from `openssl rand -hex 24` |
-| `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` | the address the app is reached at, e.g. `contracts.example.com` and `https://contracts.example.com` |
+| `ALLOWED_HOSTS` | recommended: the host name the app is reached at, e.g. `contracts.example.com` (`CSRF_TRUSTED_ORIGINS`, e.g. `https://contracts.example.com`, is only needed if the reverse proxy changes the address) |
 | `APP_PORT` | a free port on the Synology, e.g. `8000` |
-| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | your first administrator, created on the first start (see step 5). Use a strong password, e.g. from `openssl rand -base64 18 \| tr -d '/+='` |
 | `APP_UID`, `APP_GID` | optional: user and group for the containers (default `1000`), must own `media` |
 
 Keep `DEBUG=False`, and `USE_HTTPS=True` when the app is reached through the reverse proxy. Leave `DATA_PATH` and `COMPOSE_FILE` commented out: the data lives in `db` and `media` next to the Compose file, and `COMPOSE_FILE` is for development only.
@@ -142,21 +141,17 @@ APP_IMAGE_TAG=0.3.0
 | `manifest unknown` / `not found` | The version in `APP_IMAGE_TAG` does not exist (typo, or a leading `v`): use e.g. `0.3.0`, or remove the line for `latest` |
 | `container name … is already in use` | An old stack with the same containers still runs: run `sudo docker compose down` in its folder |
 
-## 5. Sign in as the first administrator
+## 5. Create the first administrator
 
-The app has no preset account. On the first start it creates the administrator from `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env` (step 3), but only if no superuser exists yet. Check that it worked:
+Open the app in the browser right after the first start (e.g. `http://<synology-ip>:8000/`). A new installation shows **Create administrator**: choose user name, email address and a strong password (e.g. from `openssl rand -base64 18 | tr -d '/+='`). You are then signed in; the page disappears for good. Do this before you set up the reverse proxy for access from the internet – until then, whoever opens the page first becomes administrator.
 
-```bash
-sudo docker compose logs app | grep -i administrator
-```
-
-(`Administrator '…' wurde angelegt.`) Sign in with these values, then change the password in the app (user menu › Settings) and remove the line `ADMIN_PASSWORD` from `.env`. If the log says the password is invalid (too short, too common, only digits), fix it in `.env` and run `sudo docker compose up -d` again. Without the variables you can create the account by hand instead:
+On the command line it works too:
 
 ```bash
 sudo docker compose exec app python manage.py createsuperuser
 ```
 
-Then log in at `https://<your-address>/`. Further users and groups are managed in the sidebar under **Administration** (see [users and sharing](configuration.md#users-and-sharing)). The Django admin is available to superusers via the user menu (**Django administration**) or at `/admin/`.
+Later you log in at `https://<your-address>/`. Further users and groups are managed in the sidebar under **Administration** (see [users and sharing](configuration.md#users-and-sharing)). The Django admin is available to superusers via the user menu (**Django administration**) or at `/admin/`.
 
 ## 6. Reverse proxy with HTTPS
 

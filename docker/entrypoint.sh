@@ -8,9 +8,9 @@ set -e
 echo "Migrationen werden eingespielt ..."
 python manage.py migrate --noinput
 
-# Ersten Administrator aus ADMIN_USERNAME und ADMIN_PASSWORD (.env) anlegen,
-# aber nur, wenn noch keiner existiert. Ein Fehler hier bricht den Start nicht ab.
-python manage.py ensure_admin || echo "Der Administrator konnte nicht angelegt werden (siehe oben)."
+# Seit 0.8.0 legt ADMIN_* keinen Administrator mehr an (Erstanlage im
+# Browser); ensure_admin weist nur noch auf übrig gebliebene Variablen hin.
+python manage.py ensure_admin || true
 
 # Übersetzungen (.po) in das Laufzeitformat (.mo) übersetzen. Im Image sind
 # sie schon beim Bauen kompiliert; beim Start nur, wenn der Ordner

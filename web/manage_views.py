@@ -38,7 +38,7 @@ from django.views.generic import TemplateView
 from contracts import backup
 from contracts import permissions as perms
 from contracts.apps import ensure_reminder_schedule
-from contracts.mail import build_mail, user_language
+from contracts.mail import build_mail, link_url, user_language
 from contracts.models import Contract, Reminder
 
 from . import site_config, update_check
@@ -86,7 +86,7 @@ def send_account_mail(request, user):
         "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
         "token": default_token_generator.make_token(user),
     })
-    context = {"user": user, "reset_url": request.build_absolute_uri(path), "invited_by": request.user}
+    context = {"user": user, "reset_url": link_url(path, request.build_absolute_uri("/")), "invited_by": request.user}
     build_mail(name, context, [user.email], user_language(user)).send()
     return name
 
@@ -489,6 +489,8 @@ class SystemView(ManageMixin, View):
         return {
             "settings_form": settings_form or SiteSettingsForm(instance=SiteSettings.load()),
             "version": settings.APP_VERSION,
+            # Version 0.8.0: ALLOWED_HOSTS ist optional, aber empfohlen
+            "allowed_hosts_set": getattr(settings, "ALLOWED_HOSTS_SET", True),
             "update": self.update_info() if self.request.user.is_superuser else None,
             "worker": self.worker_status(),
             "email": {

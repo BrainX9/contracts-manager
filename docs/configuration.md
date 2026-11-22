@@ -25,23 +25,14 @@ Email, single sign-on and the AI assistant could formerly only be set with varia
 
 ## First administrator
 
-The app has no preset account: until a user exists, nobody can sign in. There are two ways to create the first administrator (a superuser).
+The app has no preset account. On the **first visit in the browser**, a new installation (no user yet) shows the page **Create administrator**: choose a user name, an email address (optional, needed for a forgotten password and for reminders) and a password. The usual password rules apply (at least 8 characters, not too common, not only digits). You are then signed in as administrator (superuser), and the page disappears for good.
 
-**From `.env` (on the first start).** Set
+> [!IMPORTANT]
+> Create the administrator right after the first start, before you make the app reachable from the internet: until then, whoever opens the page first becomes administrator.
 
-```dotenv
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=<a strong password>
-ADMIN_EMAIL=you@example.com
-```
-
-and start the containers. If **no superuser exists yet**, the app creates one with these values (`ADMIN_EMAIL` is optional). Then:
-
-- Later changes to these variables have no effect, and nothing is overwritten. They are ignored as soon as a superuser exists, so existing installations are not affected.
-- The password must pass the usual password rules (at least 8 characters, not too common, not only digits). Otherwise no user is created and the log of the `app` container says why (`sudo docker compose logs app`); the password is never logged.
-- After the first sign-in change the password in the app (user menu › Settings) and remove the line `ADMIN_PASSWORD` from `.env`. The password is stored in plain text in `.env` (keep the file readable for you only: `chmod 600 .env`).
-
-**By hand**, at any time:
+- **Existing installations** are not affected: an administrator created earlier (also via `ADMIN_USERNAME`/`ADMIN_PASSWORD` in `.env`) keeps working.
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `ADMIN_EMAIL` are **no longer used** since 0.8.0. The log of the `app` container mentions it if they are still set; you can remove them from `.env`.
+- On the command line, an administrator can still be created at any time:
 
 ```bash
 sudo docker compose exec app python manage.py createsuperuser
@@ -213,6 +204,15 @@ Archived contracts are at rest:
 
 Contracts that are cancelled but not yet archived still count, because you usually pay until the end. Archive them once they have ended.
 
+### Predecessor and successor
+
+When a contract replaces another one (new tariff, new insurer), link them in the contract form under **Predecessor and successor**. Type a few letters of the name, the reference or the contract partner into the search field to narrow the list, then choose the contract.
+
+- Linking works in both directions: choose a successor at the old contract, and the new one shows the old contract as its predecessor – and the other way round.
+- Each contract has at most one predecessor and one successor, and a contract can never follow itself.
+- Only contracts you can **edit** can be linked, because the link changes both of them. A link to a contract you cannot edit stays as it is.
+- The contract page shows both links with their status; contracts you cannot see are not shown.
+
 ## Notes with Markdown
 
 The notes of a contract, a contract partner and a consumer support [Markdown](https://commonmark.org/help/):
@@ -269,6 +269,12 @@ A superuser sets it up under **Administration › AI settings**. Then add the us
 
 **Claude specifics:** current Claude models always think before answering. Contracts Manager stores these thinking blocks with the conversation and sends them back unchanged, keeps the system prompt of a conversation fixed, and never changes the tool list within a conversation – Claude rejects changed histories otherwise. When calling Anthropic directly (no own address of the API), a request the model declines for safety reasons is automatically retried on Anthropic's recommended fallback model where possible; otherwise the chat shows that the request was declined.
 
+### Mistral AI
+
+[Mistral AI](https://mistral.ai) offers its models via an OpenAI-compatible API. Choose the provider **Mistral AI** under **Administration › AI settings**, enter your API key (from the Mistral console) and a model that supports tool calls, e.g. `mistral-medium-latest` or `mistral-large-latest`. The address `https://api.mistral.ai/v1` is used automatically.
+
+For scans and photos, set up the [document AI](#scans-and-photos-document-ai) with the type **Mistral OCR** and the model `mistral-ocr-latest`; the same key is used. Mistral OCR reads PDF files directly (at most 8 pages) and returns Markdown.
+
 ### Ollama (local models)
 
 With [Ollama](https://ollama.com) the model runs on your own hardware and no data leaves your network. Choose the provider **Ollama (local models)** under **Administration › AI settings**, enter the model name as Ollama knows it (`ollama list`) and leave the API key empty.
@@ -293,11 +299,13 @@ Files without a text layer – scanned PDFs, photos of letters or invoices – a
 | Field | Meaning |
 |---|---|
 | Model | The model that reads the pages. Empty: no document AI, only local text recognition. |
-| Type of model | **Vision model**: gets an instruction with each page (most models). **OCR model**: gets only the image (e.g. LightOnOCR). |
-| Provider | OpenAI-compatible (e.g. IONOS) or Ollama. Empty: same as the main model. |
+| Type of model | **Vision model**: gets an instruction with each page (most models). **OCR model**: gets only the image (e.g. LightOnOCR). **Mistral OCR**: the OCR service of Mistral, reads PDFs directly. |
+| Provider | Mistral AI, OpenAI-compatible (e.g. IONOS) or Ollama. Empty: same as the main model. |
 | Address of the API, API key | Empty: the address and key of the main model, if it uses the same provider. The key is stored like the main key (never shown, never in a backup). |
 
 How it works: when an uploaded file has no text, the worker turns its pages into images (at most 8 pages, 200 dpi, scaled down to 2400 pixels), sends each page to the document AI and stores the returned text with the file. The assistant then reads that text like any other. PDFs with a text layer, text files and emails are read locally as before and cost nothing. If the document AI fails (not reachable, model cannot read images), the local text recognition takes over.
+
+**Mistral AI** – choose the type **Mistral OCR** and the model `mistral-ocr-latest`. With Mistral as main model, provider, address and key can stay empty. PDFs go to Mistral as they are (no conversion into images, at most 8 pages); photos as images.
 
 **IONOS AI Model Hub** – the main model stays as it is (e.g. a Llama model for tool calls); the same key works for the document AI:
 
@@ -309,13 +317,13 @@ How it works: when an uploaded file has no text, the worker turns its pages into
 
 **Test** has a step *Document AI*: it sends a generated image with a number and checks whether the model reads it.
 
-**Privacy:** only the pages of files without text are sent to the document AI, nothing else. Choose a provider you trust with your documents – IONOS processes data in Germany, Ollama on your own hardware.
+**Privacy:** only the pages of files without text are sent to the document AI, nothing else. Choose a provider you trust with your documents – Mistral AI processes data in the EU, IONOS in Germany, Ollama on your own hardware.
 
 ### Settings in the app
 
 Under **Administration › AI settings** – without a restart:
 
-- **Connection:** on/off, provider (Claude, OpenAI, Ollama or an OpenAI-compatible provider such as the IONOS AI Model Hub or Mistral), model, address of the API and API key.
+- **Connection:** on/off, provider (Claude, Mistral AI, OpenAI, Ollama or an OpenAI-compatible provider such as the IONOS AI Model Hub), model, address of the API and API key.
 - **API key:** it is stored in the database, never shown again and never written to a backup file. Leave the field empty to keep the stored key. An import keeps the key of the installation.
 - **System prompt:** the window shows the text that tells the assistant who it is and how it should answer. Change it as you like; *Reset system prompt to default* brings back the built-in text. A few fixed rules are always added and cannot be edited (answer in the language of the user, never delete anything, changes only as proposals the user approves); the page shows them. A changed prompt applies to new conversations, existing ones keep theirs.
 - **Test:** checks the values you entered *before* saving them. It sends a few short requests to the provider.

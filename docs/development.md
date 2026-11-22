@@ -24,11 +24,13 @@ With `COMPOSE_FILE`, Compose loads `docker-compose.dev.yml` automatically: the i
 
 The interface runs at <http://localhost:8000/>, the Django admin at <http://localhost:8000/admin/>.
 
+On the first visit of an empty database the app asks for the first administrator in the browser (see [configuration](configuration.md#first-administrator)); alternatively:
+
 ```bash
 docker compose exec app python manage.py createsuperuser
 ```
 
-Instead of `createsuperuser` you can set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env`: the first start then creates the administrator (see [configuration](configuration.md#first-administrator)). The start script `docker/entrypoint.sh` is part of the image, so rebuild after changing it (`docker compose up --build`).
+The start script `docker/entrypoint.sh` is part of the image, so rebuild after changing it (`docker compose up --build`).
 
 Without SMTP settings, emails (reminders, invitations, password reset) are printed to the `app` or `worker` log.
 
