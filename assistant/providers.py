@@ -54,6 +54,32 @@ class Reply:
     raw: list = field(default_factory=list)
 
 
+def _block_value(block, key):
+    return block.get(key) if isinstance(block, dict) else getattr(block, key, None)
+
+
+def message_text(content):
+    """
+    Text einer Antwort über die OpenAI-Schnittstelle. Modelle mit
+    Denkschritten (z. B. Magistral bei Mistral) liefern statt eines Textes
+    eine Liste aus Bausteinen ("thinking", "text"); übernommen werden nur
+    die Textbausteine (Version 0.9.2).
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, (list, tuple)):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif _block_value(block, "type") == "text" and isinstance(_block_value(block, "text"), str):
+                parts.append(_block_value(block, "text"))
+        return "".join(parts)
+    return str(content)
+
+
 def _parse_arguments(raw):
     if isinstance(raw, dict):
         return raw
@@ -132,7 +158,7 @@ class OpenAIProvider:
             for call in (message.tool_calls or [])
             if getattr(call, "function", None)
         ]
-        return Reply(text=message.content or "", tool_calls=calls)
+        return Reply(text=message_text(message.content), tool_calls=calls)
 
 
 class AnthropicProvider:
