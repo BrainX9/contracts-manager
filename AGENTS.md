@@ -558,6 +558,22 @@ Keine neuen Abhängigkeiten, keine Migration.
 - Paperless: Meldet eine Aufgabe eine Python-Fehlerausgabe, zeigt das Dokument nur den Text nach der letzten Ausnahme (`contracts.paperless.short_error`); die volle Meldung steht im Protokoll. Anlass: Tika 4 wird von Paperless nicht unterstützt (HTTP 406 bei E-Mails und Office-Dateien), Abhilfe ist Tika 3.x in Paperless.
 - Backup: Eintrag `0.9.2` in `backup_upgrades.VERSIONS`, Schritt von 0.9.1 ist `no_changes`. `APP_VERSION` ist `0.9.2`.
 
+### Version 0.10.0: Neuigkeiten nach einem Update, Pfadprüfung beim Backup
+Keine neuen Abhängigkeiten.
+
+**Neuigkeiten (`web.whats_new`)**
+- Einträge je Version in `ENTRIES` (`Entry(version, title, items)`, `Item(text, superuser_only=False)`, Texte mit `gettext_lazy`, deutsch in `locale/de`). Eine Version ohne Eintrag zeigt nichts. **Jede Version mit sichtbaren Neuerungen bekommt einen Eintrag** (kurz, für Benutzer verständlich; Punkte nur für Administratoren mit `superuser_only`).
+- `UserPreferences.seen_version` (Migration `web/0010`): leer = noch nichts gesehen. Neue Benutzer bekommen beim Anlegen `APP_VERSION` (Signal `set_for_new_user`, nicht beim Import eines Backups).
+- Nach dem Anmelden: Fenster (Bootstrap-Modal, `web/includes/whats_new_modal.html`) mit allen Versionen seit `seen_version`, höchstens drei, neueste zuerst (Entscheidung des Maintainers). Schließen jeder Art zählt als gesehen (`web/static/web/app.js`, POST an `/whats-new/seen/`); ohne JavaScript ein Hinweis mit Knopf „Verstanden“. Den Stand liest `UserLanguageMiddleware` mit (eine Abfrage), Context Processor `whats_new_notice`.
+- `/whats-new/` (Benutzermenü „Neuigkeiten“): alle Einträge bis zur installierten Version, mit Link auf die Release-Notes.
+- Versionen werden immer als Zahlen verglichen (`update_check.parse_version`), damit 0.10.0 nach 0.9.2 kommt.
+
+**CodeQL `py/path-injection`** (Meldungen #1–#4 in `contracts/backup.py`)
+- `contracts.backup.safe_path(root, name)`: `os.path.realpath` und Prüfung, dass der Pfad unter `root` liegt (auch bei symbolischen Links). Genutzt beim Entpacken der Dateien (`extract_media`) und für abgelegte Uploads (`upload_path`: Kennung genau 32 Hex-Zeichen). Die bisherigen Prüfungen (`is_safe_media_name`) bleiben; ausnutzbar war es vorher nicht (nur Superuser, Namen geprüft).
+
+**Weiteres**
+- Backup: Eintrag `0.10.0` in `backup_upgrades.VERSIONS`, Schritt von 0.9.2 ist `no_changes` (neues Feld mit Standardwert). `APP_VERSION` ist `0.10.0`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

@@ -8,11 +8,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import ProtectedError, Q
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.cache import patch_cache_control, patch_vary_headers
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, TemplateView, UpdateView
@@ -32,7 +33,7 @@ from .forms import (
     ProviderForm, ReminderForm,
     SharingForm, WebPasswordChangeForm, WebPasswordResetForm, WebSetPasswordForm,
 )
-from . import site_config
+from . import site_config, whats_new
 from .models import SiteSettings, UserPreferences
 
 # Anzahl der teuersten Verträge auf der Übersicht
@@ -153,6 +154,38 @@ class WebLoginView(auth_views.LoginView):
         context["sso_enabled"] = site_config.sso().enabled
         context["sso_label"] = SiteSettings.load().sso_button_label
         return context
+
+
+class WhatsNewView(LoginRequiredMixin, TemplateView):
+    """Alle Neuigkeiten bis zur installierten Version (Version 0.10.0)."""
+    template_name = "web/whats_new.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["entries"] = whats_new.entries_for(self.request.user)
+        context["current_version"] = settings.APP_VERSION
+        return context
+
+    def get(self, request, *args, **kwargs):
+        whats_new.mark_seen(request.user)
+        # Das Fenster nicht zusätzlich auf dieser Seite zeigen
+        request.seen_version = settings.APP_VERSION
+        return super().get(request, *args, **kwargs)
+
+
+class WhatsNewSeenView(LoginRequiredMixin, View):
+    """Fenster mit den Neuigkeiten geschlossen: bis zum nächsten Update nicht mehr zeigen."""
+    http_method_names = ["post"]
+
+    def post(self, request):
+        whats_new.mark_seen(request.user)
+        if request.htmx or request.headers.get("X-Requested-With") == "fetch":
+            return HttpResponse(status=204)
+        target = request.POST.get("next", "")
+        if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
+                                               require_https=request.is_secure()):
+            target = reverse("dashboard")
+        return redirect(target)
 
 
 class PreferencesView(LoginRequiredMixin, UpdateView):

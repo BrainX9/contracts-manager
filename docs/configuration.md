@@ -395,6 +395,8 @@ Once a day the worker asks GitHub for the newest release and stores the result. 
 
 Updating itself stays manual: [Operations](operations.md#update).
 
+After an update, **every user** sees a short window **What's new** once, on the first page after logging in. It lists the new features of the versions since their last visit (at most three); closing it counts as read. Users read it again under **What's new** in the user menu. New users don't see it. The texts are part of the app (no internet access needed); the full release notes are linked.
+
 ## Language
 
 The interface is available in German (default) and English. Each user chooses the language under **Settings**; it applies on all devices, in the Django admin and in emails. The login page uses German.

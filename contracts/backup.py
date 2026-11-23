@@ -30,7 +30,9 @@ import_backup) nutzen dieselben Funktionen.
 """
 
 import json
+import os
 import posixpath
+import re
 import shutil
 import tempfile
 import uuid
@@ -255,6 +257,19 @@ def is_safe_media_name(name):
     return len(parts) >= 2 and parts[0] in MEDIA_DIRS and ".." not in parts
 
 
+def safe_path(root, name):
+    """
+    Pfad ``name`` unterhalb von ``root`` oder BackupError, wenn er nach dem
+    Auflösen von "..", absoluten Pfaden und symbolischen Links außerhalb
+    läge (Version 0.10.0, zusätzlich zu den Prüfungen der Namen).
+    """
+    base = os.path.realpath(root)
+    path = os.path.realpath(os.path.join(base, name))
+    if not path.startswith(base + os.sep):
+        raise BackupError(_("The backup contains a file with an invalid path: %(name)s") % {"name": name})
+    return Path(path)
+
+
 def info_from_manifest(manifest):
     return BackupInfo(
         app_version=str(manifest.get("app_version", "")),
@@ -451,7 +466,7 @@ def load_into_database(objects, secrets=None):
 
 def extract_media(archive, members, directory):
     for name, member in members:
-        destination = directory / name
+        destination = safe_path(directory, name)
         destination.parent.mkdir(parents=True, exist_ok=True)
         with archive.open(member) as source, open(destination, "wb") as output:
             shutil.copyfileobj(source, output)
@@ -534,11 +549,18 @@ def store_upload(uploaded_file):
     return token
 
 
+# Kennung einer abgelegten Datei: uuid4().hex (store_upload)
+UPLOAD_TOKEN = re.compile(r"[0-9a-f]{32}")
+
+
 def upload_path(token):
     """Pfad zu einer abgelegten Datei oder None (unbekannte oder ungültige Kennung)."""
-    if not token or not all(char in "0123456789abcdef" for char in token):
+    if not isinstance(token, str) or not UPLOAD_TOKEN.fullmatch(token):
         return None
-    path = upload_directory() / f"{token}.zip"
+    try:
+        path = safe_path(upload_directory(), f"{token}.zip")
+    except BackupError:
+        return None
     return path if path.is_file() else None
 
 

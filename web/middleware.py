@@ -17,17 +17,20 @@ class UserLanguageMiddleware:
 
     def __call__(self, request):
         language = settings.LANGUAGE_CODE
+        # Version 0.10.0: zuletzt gesehene Neuigkeiten (web.context_processors.whats_new)
+        request.seen_version = ""
         user = getattr(request, "user", None)
         if user is not None and user.is_authenticated:
             from .models import UserPreferences
 
-            stored = (
+            stored, seen = (
                 UserPreferences.objects.filter(user=user)
-                .values_list("language", flat=True)
+                .values_list("language", "seen_version")
                 .first()
-            )
+            ) or (None, "")
             if stored in self.available:
                 language = stored
+            request.seen_version = seen
 
         translation.activate(language)
         request.LANGUAGE_CODE = language

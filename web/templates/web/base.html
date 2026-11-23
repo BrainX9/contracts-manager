@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="{% static 'web/app.css' %}">
   <script src="{% static 'web/vendor/htmx.min.js' %}" defer></script>
   <script src="{% static 'web/vendor/bootstrap.bundle.min.js' %}" defer></script>
+  <script src="{% static 'web/app.js' %}" defer></script>
 </head>
 <body class="{% if user.is_authenticated and not auth_layout %}app-body{% else %}auth-body{% endif %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated and not auth_layout %}{# auth_layout: Seiten wie das Zurücksetzen des Passworts immer ohne Seitenleiste #}
@@ -155,6 +156,7 @@
           </button>
           <ul class="dropdown-menu shadow">
             <li><a class="dropdown-item" href="{% url 'preferences' %}"><i class="bi bi-gear me-2" aria-hidden="true"></i>{% translate "Settings" %}</a></li>
+            <li><a class="dropdown-item" href="{% url 'whats_new' %}"><i class="bi bi-stars me-2" aria-hidden="true"></i>{% translate "What's new" %}</a></li>
             {% if user.has_usable_password %}
             <li><a class="dropdown-item" href="{% url 'password_change' %}"><i class="bi bi-key me-2" aria-hidden="true"></i>{% translate "Change password" %}</a></li>
             {% endif %}
@@ -176,6 +178,7 @@
     <main class="app-main">
       <div class="app-content">
         {% include "web/includes/messages.html" %}
+        {% if whats_new_pending %}{% include "web/includes/whats_new_modal.html" %}{% endif %}
         {% block content %}{% endblock %}
       </div>
     </main>

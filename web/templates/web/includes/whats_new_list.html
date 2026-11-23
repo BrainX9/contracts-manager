@@ -1,0 +1,9 @@
+{% load i18n %}{% for entry, items in entries %}
+<section class="{% if not forloop.last %}mb-4{% endif %}">
+  <h3 class="h6 mb-2">{{ entry.title }} <span class="badge text-bg-secondary fw-normal ms-1">{% blocktranslate with version=entry.version %}Version {{ version }}{% endblocktranslate %}</span></h3>
+  <ul class="mb-1">
+    {% for item in items %}<li>{{ item.text }}</li>{% endfor %}
+  </ul>
+  <a class="small" href="{{ entry.release_url }}" target="_blank" rel="noopener noreferrer">{% translate "All changes" %} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>
+</section>
+{% endfor %}
