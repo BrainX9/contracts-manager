@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 14:24+0100\n"
+"POT-Creation-Date: 2026-11-23 15:21+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -1359,16 +1359,16 @@ msgstr "Freigabe Vertrag (Gruppe)"
 msgid "contract shares (groups)"
 msgstr "Freigaben Vertrag (Gruppen)"
 
-#: contracts/paperless.py:139
+#: contracts/paperless.py:144
 #, python-format
 msgid "Paperless is not reachable: %(error)s"
 msgstr "Paperless ist nicht erreichbar: %(error)s"
 
-#: contracts/paperless.py:144
+#: contracts/paperless.py:149
 msgid "Paperless redirected the request. Is the address correct?"
 msgstr "Paperless hat die Anfrage weitergeleitet. Stimmt die Adresse?"
 
-#: contracts/paperless.py:150
+#: contracts/paperless.py:155
 #, python-format
 msgid ""
 "Paperless refused the request (HTTP %(code)s): check the API token and the "
@@ -1377,48 +1377,59 @@ msgstr ""
 "Paperless hat die Anfrage abgelehnt (HTTP %(code)s): Bitte API-Token und "
 "Rechte des Paperless-Benutzers prüfen."
 
-#: contracts/paperless.py:153
+#: contracts/paperless.py:158
 msgid "Not found in Paperless (HTTP 404)."
 msgstr "In Paperless nicht gefunden (HTTP 404)."
 
-#: contracts/paperless.py:158
+#: contracts/paperless.py:163
 #, python-format
 msgid "Paperless answered with HTTP %(code)s."
 msgstr "Paperless hat mit HTTP %(code)s geantwortet."
 
-#: contracts/paperless.py:172 contracts/paperless.py:186
-#: contracts/paperless.py:261
+#: contracts/paperless.py:177 contracts/paperless.py:191
+#: contracts/paperless.py:304
 msgid "Paperless sent an unexpected answer. Is the address correct?"
 msgstr "Paperless hat unerwartet geantwortet. Stimmt die Adresse?"
 
-#: contracts/paperless.py:181
+#: contracts/paperless.py:186
 msgid "Please enter the address of Paperless and an API token."
 msgstr "Bitte Adresse von Paperless und API-Token eingeben."
 
-#: contracts/paperless.py:188
+#: contracts/paperless.py:193
 #, python-format
 msgid "Connected. The Paperless user sees %(count)s documents."
 msgstr "Verbunden. Der Paperless-Benutzer sieht %(count)s Dokumente."
 
-#: contracts/paperless.py:196
+#: contracts/paperless.py:204
+msgid ""
+"The Paperless user may not view tasks. Transfers still work, but errors in "
+"Paperless are only noticed after an hour. Recommended: give the user the "
+"permission to view tasks (PaperlessTask: view)."
+msgstr ""
+"Der Paperless-Benutzer darf keine Aufgaben sehen. Übertragungen "
+"funktionieren trotzdem, Fehler in Paperless fallen aber erst nach einer "
+"Stunde auf. Empfohlen: dem Benutzer das Recht „Anzeigen“ für Aufgaben geben "
+"(PaperlessTask: view)."
+
+#: contracts/paperless.py:212
 #, python-format
 msgid "Tags to be created on the first transfer: %(tags)s"
 msgstr "Diese Tags werden bei der ersten Übertragung angelegt: %(tags)s"
 
-#: contracts/paperless.py:199
+#: contracts/paperless.py:215
 msgid "All tags exist in Paperless."
 msgstr "Alle Tags gibt es in Paperless schon."
 
-#: contracts/paperless.py:201
+#: contracts/paperless.py:217
 msgid "Tags can be read."
 msgstr "Tags lassen sich lesen."
 
-#: contracts/paperless.py:203
+#: contracts/paperless.py:219
 #, python-format
 msgid "Tags: %(error)s"
 msgstr "Tags: %(error)s"
 
-#: contracts/paperless.py:320
+#: contracts/paperless.py:363
 msgid "Paperless could not process the file."
 msgstr "Paperless konnte die Datei nicht verarbeiten."
 
@@ -1882,8 +1893,18 @@ msgid "Default address of the provider"
 msgstr "Standardadresse des Anbieters"
 
 #: web/manage_forms.py:222
-msgid "Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://example.com/v1 or http://192.168.1.20:11434/v1 for Ollama on another computer. Empty: for Mistral AI https://api.mistral.ai/v1, for Ollama the Docker host (host.docker.internal), otherwise the default address of the provider."
-msgstr "Nur für OpenAI-kompatible Anbieter, Ollama oder einen Proxy, z. B. https://example.com/v1 oder http://192.168.1.20:11434/v1 für Ollama auf einem anderen Rechner. Leer: für Mistral AI https://api.mistral.ai/v1, für Ollama der Docker-Host (host.docker.internal), sonst die Standardadresse des Anbieters."
+msgid ""
+"Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://"
+"example.com/v1 or http://192.168.1.20:11434/v1 for Ollama on another "
+"computer. Empty: for Mistral AI https://api.mistral.ai/v1, for Ollama the "
+"Docker host (host.docker.internal), otherwise the default address of the "
+"provider."
+msgstr ""
+"Nur für OpenAI-kompatible Anbieter, Ollama oder einen Proxy, z. B. https://"
+"example.com/v1 oder http://192.168.1.20:11434/v1 für Ollama auf einem "
+"anderen Rechner. Leer: für Mistral AI https://api.mistral.ai/v1, für Ollama "
+"der Docker-Host (host.docker.internal), sonst die Standardadresse des "
+"Anbieters."
 
 #: web/manage_forms.py:229
 msgid "Same as the main model"
@@ -1937,8 +1958,12 @@ msgid "Empty: %(value)s."
 msgstr "Leer: %(value)s."
 
 #: web/manage_forms.py:407
-msgid "Address the emails come from, often the same as the SMTP user. Empty: the SMTP user."
-msgstr "Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. Leer: der SMTP-Benutzer."
+msgid ""
+"Address the emails come from, often the same as the SMTP user. Empty: the "
+"SMTP user."
+msgstr ""
+"Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. "
+"Leer: der SMTP-Benutzer."
 
 #: web/manage_forms.py:409
 msgid "Public address of the app, used for links in emails."
@@ -1977,13 +2002,21 @@ msgstr ""
 "lokales Passwort und nie als Administrator."
 
 #: web/manage_forms.py:516
-msgid "For the Synology SSO Server the address of the NAS, e.g. https://nas.example.com; the endpoints are derived from it."
-msgstr "Beim Synology SSO Server die Adresse der NAS, z. B. https://nas.example.com; die Endpunkte ergeben sich daraus."
+msgid ""
+"For the Synology SSO Server the address of the NAS, e.g. https://"
+"nas.example.com; the endpoints are derived from it."
+msgstr ""
+"Beim Synology SSO Server die Adresse der NAS, z. B. https://nas.example.com; "
+"die Endpunkte ergeben sich daraus."
 
 #: web/manage_forms.py:520
 #, python-format
-msgid "Synology: “username”, other providers often “preferred_username”. Empty: %(value)s."
-msgstr "Synology: „username“, andere Anbieter oft „preferred_username“. Leer: %(value)s."
+msgid ""
+"Synology: “username”, other providers often “preferred_username”. Empty: "
+"%(value)s."
+msgstr ""
+"Synology: „username“, andere Anbieter oft „preferred_username“. Leer: "
+"%(value)s."
 
 #: web/manage_forms.py:528
 msgid "A client secret is stored. Leave empty to keep it."
@@ -2409,16 +2442,16 @@ msgstr ""
 "Die Anmeldung über Single Sign-on ist fehlgeschlagen. Möglicherweise ist "
 "dein Konto für diese Anwendung noch nicht eingerichtet."
 
-#: web/paperless_sync.py:68
+#: web/paperless_sync.py:71
 msgid "The Paperless API is not configured."
 msgstr "Die Paperless-API ist nicht eingerichtet."
 
-#: web/paperless_sync.py:89
+#: web/paperless_sync.py:95 web/paperless_sync.py:126
 #, python-format
 msgid "The transfer failed: %(error)s"
 msgstr "Die Übertragung ist fehlgeschlagen: %(error)s"
 
-#: web/paperless_sync.py:115
+#: web/paperless_sync.py:135
 msgid ""
 "Paperless has not finished processing the file after an hour. If the "
 "document appears in Paperless, enter its ID here by hand."
@@ -2426,7 +2459,7 @@ msgstr ""
 "Paperless hat die Datei nach einer Stunde noch nicht verarbeitet. Erscheint "
 "das Dokument in Paperless, trag seine ID hier von Hand ein."
 
-#: web/paperless_sync.py:143 web/paperless_sync.py:152
+#: web/paperless_sync.py:163 web/paperless_sync.py:172
 #, python-format
 msgid "Paperless document #%(id)s is already linked to this contract."
 msgstr ""
@@ -3417,8 +3450,12 @@ msgid "SSO only"
 msgstr "Nur SSO"
 
 #: web/templates/web/manage/ai.html:7
-msgid "Connection and system prompt of the AI assistant. Changes apply immediately, without a restart."
-msgstr "Verbindung und System-Prompt des KI-Assistenten. Änderungen gelten sofort, ohne Neustart."
+msgid ""
+"Connection and system prompt of the AI assistant. Changes apply immediately, "
+"without a restart."
+msgstr ""
+"Verbindung und System-Prompt des KI-Assistenten. Änderungen gelten sofort, "
+"ohne Neustart."
 
 #: web/templates/web/manage/ai.html:17
 #: web/templates/web/manage/paperless.html:31
@@ -3706,8 +3743,12 @@ msgid "Replace everything and import"
 msgstr "Alles ersetzen und importieren"
 
 #: web/templates/web/manage/email.html:7
-msgid "SMTP server for reminders, invitations and password reset. Changes apply immediately, without a restart."
-msgstr "SMTP-Server für Erinnerungen, Einladungen und Passwort-Reset. Änderungen gelten sofort, ohne Neustart."
+msgid ""
+"SMTP server for reminders, invitations and password reset. Changes apply "
+"immediately, without a restart."
+msgstr ""
+"SMTP-Server für Erinnerungen, Einladungen und Passwort-Reset. Änderungen "
+"gelten sofort, ohne Neustart."
 
 #: web/templates/web/manage/email.html:21
 msgid "no user"
@@ -3842,16 +3883,8 @@ msgid "Use of Paperless"
 msgstr "Nutzung von Paperless"
 
 #: web/templates/web/manage/paperless.html:36
-msgid ""
-"The token is stored in the database, is never shown again and is not part of "
-"a backup. The Paperless user needs permission to view and add documents and "
-"tags, and must be allowed to see the documents you link (for example through "
-"a group in Paperless)."
-msgstr ""
-"Das Token wird in der Datenbank gespeichert, nie wieder angezeigt und nicht "
-"ins Backup geschrieben. Der Paperless-Benutzer braucht das Recht, Dokumente "
-"und Tags anzusehen und anzulegen, und muss die verknüpften Dokumente sehen "
-"dürfen (zum Beispiel über eine Gruppe in Paperless)."
+msgid "The token is stored in the database, is never shown again and is not part of a backup. The Paperless user needs permission to view and add documents and tags, to view correspondents and – recommended – to view tasks, and must be allowed to see the documents you link (for example through a group in Paperless)."
+msgstr "Das Token wird in der Datenbank gespeichert, nie wieder angezeigt und nicht ins Backup geschrieben. Der Paperless-Benutzer braucht das Recht, Dokumente und Tags anzusehen und anzulegen, Korrespondenten anzusehen und – empfohlen – Aufgaben anzusehen, und muss die verknüpften Dokumente sehen dürfen (zum Beispiel über eine Gruppe in Paperless)."
 
 #: web/templates/web/manage/paperless.html:41
 msgid ""
@@ -3895,8 +3928,12 @@ msgid "No reminders."
 msgstr "Keine Erinnerungen."
 
 #: web/templates/web/manage/sso.html:7
-msgid "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Changes apply immediately, without a restart. The local login always stays available."
-msgstr "Anmeldung mit OpenID Connect, z. B. über den Synology SSO Server. Änderungen gelten sofort, ohne Neustart. Die lokale Anmeldung bleibt immer möglich."
+msgid ""
+"Sign-in with OpenID Connect, e.g. the Synology SSO Server. Changes apply "
+"immediately, without a restart. The local login always stays available."
+msgstr ""
+"Anmeldung mit OpenID Connect, z. B. über den Synology SSO Server. Änderungen "
+"gelten sofort, ohne Neustart. Die lokale Anmeldung bleibt immer möglich."
 
 #: web/templates/web/manage/sso.html:21
 msgid "no client ID"
@@ -3943,8 +3980,14 @@ msgid "Advanced: other providers"
 msgstr "Erweitert: andere Anbieter"
 
 #: web/templates/web/manage/sso.html:48
-msgid "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above."
-msgstr "Nur für andere Anbieter als den Synology SSO Server nötig (z. B. Authentik, Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers oben."
+msgid ""
+"Only needed for providers other than the Synology SSO Server (e.g. "
+"Authentik, Keycloak). An empty endpoint is derived from the address of the "
+"SSO server above."
+msgstr ""
+"Nur für andere Anbieter als den Synology SSO Server nötig (z. B. Authentik, "
+"Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers "
+"oben."
 
 #: web/templates/web/manage/sso.html:62
 msgid "“Test” checks the values entered above without saving them."

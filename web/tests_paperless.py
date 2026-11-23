@@ -186,13 +186,43 @@ class ApiClientTest(TestCase):
     cfg = paperless.PaperlessConfig(mode="api", base_url=URL, token="geheim")
 
     def test_check(self):
-        responses = [FakeResponse({"count": 12, "results": []}), FakeResponse({"results": []})]
+        responses = [FakeResponse({"count": 12, "results": []}), FakeResponse({"results": []}),
+                     FakeResponse({"results": []})]
         with patch("urllib.request.urlopen", side_effect=responses) as urlopen:
             results = paperless.check(paperless.PaperlessConfig(mode="api", base_url=URL, token="geheim",
                                                                 tags=("Vertrag",)))
         self.assertTrue(all(ok for ok, _text in results))
         self.assertIn("12", results[0][1])
         self.assertIn("Vertrag", results[1][1])
+        self.assertIn("/api/tasks/", urlopen.call_args_list[1].args[0].full_url)
+
+    def test_check_reports_missing_task_permission(self):
+        from urllib.error import HTTPError
+
+        responses = [
+            FakeResponse({"count": 1, "results": []}),
+            HTTPError(f"{URL}/api/tasks/", 403, "Forbidden", {}, None),
+            FakeResponse({"results": []}),
+        ]
+        with patch("urllib.request.urlopen", side_effect=responses):
+            results = paperless.check(self.cfg)
+        self.assertEqual([ok for ok, _text in results], [True, False, True])
+        self.assertIn("Aufgaben", results[1][1])
+
+    def test_find_by_checksum_confirms_with_metadata(self):
+        sha, md5 = paperless.checksums(b"%PDF datei")
+        responses = [
+            # SHA-256: Filter unbekannt, liefert ein anderes Dokument -> verworfen
+            FakeResponse({"results": [{"id": 4}]}), FakeResponse({"original_checksum": "anders"}),
+            # MD5 (Paperless 2.x): Treffer
+            FakeResponse({"results": [{"id": 9}]}), FakeResponse({"original_checksum": md5}),
+        ]
+        with patch("urllib.request.urlopen", side_effect=responses) as urlopen:
+            self.assertEqual(paperless.find_by_checksum(self.cfg, (sha, md5)), 9)
+        self.assertIn(f"checksum__iexact={sha}", urlopen.call_args_list[0].args[0].full_url)
+        self.assertTrue(urlopen.call_args_list[1].args[0].full_url.endswith("/api/documents/4/metadata/"))
+        with patch("urllib.request.urlopen", side_effect=[FakeResponse({"results": []})] * 2):
+            self.assertIsNone(paperless.find_by_checksum(self.cfg, (sha, md5)))
         request = urlopen.call_args_list[0].args[0]
         self.assertEqual(request.get_header("Authorization"), "Token geheim")
 
@@ -409,8 +439,9 @@ class SyncTaskTest(MediaMixin, TestCase):
         self.contract.provider.save()
         self.document = self.upload_document(self.contract, paperless_sync=Document.SYNC_PENDING)
 
-    def run_transfer(self, state, **settings_fields):
+    def run_transfer(self, state, existing=None, **settings_fields):
         with api_settings(tags="Vertrag", **settings_fields), \
+                patch("contracts.paperless.find_by_checksum", return_value=existing), \
                 patch("contracts.paperless.tag_ids", return_value=[3, 9]) as tag_ids, \
                 patch("contracts.paperless.upload", return_value="task-1") as upload, \
                 patch("contracts.paperless.task_state", return_value=state):
@@ -435,7 +466,8 @@ class SyncTaskTest(MediaMixin, TestCase):
         self.assertIsNone(self.document.paperless_document_id)
 
     def test_upload_error(self):
-        with api_settings(), patch("contracts.paperless.tag_ids", side_effect=paperless.PaperlessError("weg")):
+        with api_settings(), patch("contracts.paperless.find_by_checksum", return_value=None), \
+                patch("contracts.paperless.tag_ids", side_effect=paperless.PaperlessError("weg")):
             self.assertEqual(paperless_sync.transfer(self.document.pk, self.anna.pk), "failed")
         self.document.refresh_from_db()
         self.assertEqual((self.document.paperless_sync, self.document.paperless_sync_error), ("failed", "weg"))
@@ -452,6 +484,38 @@ class SyncTaskTest(MediaMixin, TestCase):
         with api_settings(), patch("contracts.paperless.task_state",
                                    return_value=paperless.TaskState(done=True, document_id=5)):
             self.assertEqual(paperless_sync.follow(self.document.pk), "document 5")
+
+    def test_file_already_in_paperless_is_linked_without_upload(self):
+        # Version 0.9.1: z. B. erneuter Versuch nach einem Fehler
+        result, tag_ids, upload = self.run_transfer(paperless.TaskState(done=False), existing=55)
+        self.assertEqual(result, "document 55")
+        self.assertEqual((self.document.paperless_document_id, self.document.paperless_sync), (55, ""))
+        upload.assert_not_called()
+        tag_ids.assert_not_called()
+
+    def test_without_task_permission_finds_document_by_checksum(self):
+        # Version 0.9.1: Paperless-Benutzer ohne Recht auf Aufgaben (HTTP 403)
+        denied = paperless.PaperlessError("verboten", status=403)
+        with api_settings(tags="Vertrag"), \
+                patch("contracts.paperless.find_by_checksum", side_effect=[None, 77]) as find, \
+                patch("contracts.paperless.tag_ids", return_value=[3]), \
+                patch("contracts.paperless.upload", return_value="task-1"), \
+                patch("contracts.paperless.task_state", side_effect=denied):
+            result = paperless_sync.transfer(self.document.pk, self.anna.pk)
+        self.document.refresh_from_db()
+        self.assertEqual(result, "document 77")
+        self.assertEqual((self.document.paperless_document_id, self.document.paperless_sync), (77, ""))
+        self.assertEqual(find.call_args.args[1], paperless.checksums(b"%PDF-1.4 test"))
+
+    def test_other_errors_while_following_fail(self):
+        with api_settings(tags="Vertrag"), \
+                patch("contracts.paperless.find_by_checksum", return_value=None), \
+                patch("contracts.paperless.tag_ids", return_value=[3]), \
+                patch("contracts.paperless.upload", return_value="task-1"), \
+                patch("contracts.paperless.task_state", side_effect=paperless.PaperlessError("kaputt", status=500)):
+            self.assertEqual(paperless_sync.transfer(self.document.pk, self.anna.pk), "failed")
+        self.document.refresh_from_db()
+        self.assertEqual(self.document.paperless_sync_error, "kaputt")
 
     def test_duplicate_in_contract_fails(self):
         Document.objects.create(contract=self.contract, name="Alt", source="paperless", paperless_document_id=99)

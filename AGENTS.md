@@ -540,6 +540,15 @@ Keine neuen Abhängigkeiten (`setpriv` aus util-linux ist im Basis-Image).
 - Pflicht: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (bleiben, Entscheidung des Maintainers). Optional: `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `USE_HTTPS`, `APP_UID`, `APP_GID`, `SECRET_KEY`. Erweitert und archiviert: siehe `docs/variables.md`.
 - README: kurzer Quick start (Container Manager und Kommandozeile) und nur Pflicht/optional; alle Variablen in `docs/variables.md`; `.env.example` gehört zu `docker-compose.env.yml`. Synology-Anleitungen auf Container Manager ohne SSH umgestellt.
 
+### Version 0.9.1: Fehler bei der Übertragung an Paperless
+Keine neuen Abhängigkeiten, keine Migration.
+
+- **Fehler aus 0.9.0:** Ein Paperless-Benutzer ohne Recht auf Aufgaben bekommt bei `/api/tasks/` HTTP 403; das Dokument kam an, die Übertragung galt aber als fehlgeschlagen (lokal war nur mit dem Paperless-Administrator geprüft worden). Jetzt sucht `web.paperless_sync.follow` bei 403 das Dokument über die Prüfsumme der Originaldatei.
+- `contracts.paperless.checksums` (SHA-256 für Paperless 3.x, MD5 für 2.x) und `find_by_checksum` (Filter `checksum__iexact`, jeder Treffer über `/documents/<id>/metadata/` → `original_checksum` bestätigt). `PaperlessError.status` enthält den HTTP-Status.
+- Vor dem Hochladen: Liegt die Datei schon in Paperless, wird dieses Dokument verknüpft, ohne neu hochzuladen (auch bei „Erneut versuchen“; Paperless 3.x nimmt Dubletten an).
+- „Testen“ meldet ein fehlendes Recht auf Aufgaben (empfohlen: PaperlessTask anzeigen). Gegen Paperless-ngx 3.5.1 mit einem eingeschränkten Benutzer lokal geprüft.
+- Backup: Eintrag `0.9.1` in `backup_upgrades.VERSIONS`, Schritt von 0.9.0 ist `no_changes`. `APP_VERSION` ist `0.9.1`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

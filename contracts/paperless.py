@@ -33,6 +33,11 @@ TIMEOUT = 30
 class PaperlessError(Exception):
     """Fehler bei einer Anfrage an Paperless (Text ohne Token)."""
 
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        # HTTP-Status der Antwort, falls es eine gab (z. B. 403)
+        self.status = status
+
 
 @dataclass(frozen=True)
 class PaperlessConfig:
@@ -133,7 +138,7 @@ def _open(cfg, path, data=None, headers=None, method=None, timeout=TIMEOUT):
     try:
         response = urlrequest.urlopen(request, timeout=timeout)
     except urlerror.HTTPError as error:
-        raise PaperlessError(describe_http_error(error)) from None
+        raise PaperlessError(describe_http_error(error), status=error.code) from None
     except (urlerror.URLError, OSError, ValueError) as error:
         reason = getattr(error, "reason", error)
         raise PaperlessError(_("Paperless is not reachable: %(error)s") % {"error": reason}) from None
@@ -189,6 +194,17 @@ def check(cfg):
     except PaperlessError as error:
         return [(False, str(error))]
     try:
+        _json(cfg, "tasks/?page_size=1")
+    except PaperlessError as error:
+        if error.status != 403:
+            raise
+        # Version 0.9.1: ohne dieses Recht klappt die Übertragung trotzdem
+        # (Suche über die Prüfsumme), Fehler zeigt sie aber erst später
+        results.append((False, _(
+            "The Paperless user may not view tasks. Transfers still work, but errors in Paperless are only "
+            "noticed after an hour. Recommended: give the user the permission to view tasks (PaperlessTask: view)."
+        )))
+    try:
         names = list(cfg.tags)
         existing = [name for name in names if find_tag(cfg, name)]
         missing = [name for name in names if name not in existing]
@@ -202,6 +218,33 @@ def check(cfg):
     except PaperlessError as error:
         results.append((False, _("Tags: %(error)s") % {"error": error}))
     return results
+
+
+def checksums(content):
+    """
+    Prüfsummen der Originaldatei, wie Paperless sie speichert: SHA-256 seit
+    Paperless 3.x, MD5 davor.
+    """
+    import hashlib
+
+    return (hashlib.sha256(content).hexdigest(), hashlib.md5(content).hexdigest())
+
+
+def find_by_checksum(cfg, values):
+    """
+    ID eines Dokuments, dessen Originaldatei eine der Prüfsummen ``values``
+    hat und das der Paperless-Benutzer sehen darf, oder None (Version 0.9.1).
+    Jeder Treffer wird über die Metadaten bestätigt, falls Paperless den
+    Filter nicht kennt und alle Dokumente liefert.
+    """
+    wanted = {value.lower() for value in values}
+    for value in values:
+        data = _json(cfg, f"documents/?{urlencode({'checksum__iexact': value, 'fields': 'id', 'page_size': 5})}")
+        for document in (data or {}).get("results", [])[:5]:
+            metadata = _json(cfg, f"documents/{int(document['id'])}/metadata/") or {}
+            if str(metadata.get("original_checksum", "")).lower() in wanted:
+                return int(document["id"])
+    return None
 
 
 def find_tag(cfg, name):
