@@ -185,6 +185,17 @@ VERSIONS = (
             "web": ["0009_paperless_api"],
             "assistant": ["0004_document_ai"],
         },
+        # 0.9.2 -> 0.10.0: neues Feld UserPreferences.seen_version mit
+        # Standardwert (leer = Neuigkeiten einmal zeigen)
+        no_changes,
+    ),
+    BackupVersion(
+        "0.10.0",
+        {
+            "contracts": ["0018_paperless_api"],
+            "web": ["0010_whats_new"],
+            "assistant": ["0004_document_ai"],
+        },
     ),
 )
 

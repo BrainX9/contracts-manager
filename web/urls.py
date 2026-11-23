@@ -6,6 +6,9 @@ from . import document_views, manage_views, views
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="dashboard"),
+    # Neuigkeiten nach einem Update (Version 0.10.0)
+    path("whats-new/", views.WhatsNewView.as_view(), name="whats_new"),
+    path("whats-new/seen/", views.WhatsNewSeenView.as_view(), name="whats_new_seen"),
     path("contracts/", views.ContractListView.as_view(), name="contract_list"),
     path("contracts/new/", views.ContractCreateView.as_view(), name="contract_create"),
     path("contracts/link-options/", views.contract_link_options, name="contract_link_options"),

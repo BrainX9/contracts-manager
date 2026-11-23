@@ -143,6 +143,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "assistant.context_processors.assistant",
                 "web.context_processors.version_notice",
+                "web.context_processors.whats_new_notice",
             ],
         },
     },
@@ -338,7 +339,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.9.2"
+APP_VERSION = "0.10.0"
 
 # Tests unabhängig von den früheren Variablen der .env (config.test_runner)
 TEST_RUNNER = "config.test_runner.TestRunner"

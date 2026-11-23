@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
-
 UPDATE_SCHEDULE_NAME = "web.check_for_updates"
 
 
@@ -36,10 +35,14 @@ class WebConfig(AppConfig):
     verbose_name = _("Web interface")
 
     def ready(self):
-        from django.db.models.signals import post_migrate
+        from django.conf import settings
+        from django.db.models.signals import post_migrate, post_save
 
-        from . import env_import
+        from . import env_import, whats_new
 
         post_migrate.connect(ensure_update_schedule, sender=self)
+        # Version 0.10.0: neue Benutzer sehen keine Neuigkeiten älterer Versionen
+        post_save.connect(whats_new.set_for_new_user, sender=settings.AUTH_USER_MODEL,
+                          dispatch_uid="web_whats_new_new_user")
         # Version 0.9.0: Werte aus der .env einmalig in die Verwaltung übernehmen
         post_migrate.connect(env_import.run, sender=self)

@@ -129,12 +129,12 @@ class LanguageTest(TestCase):
         self.user.is_staff = True
         self.user.is_superuser = True
         self.user.save()
-        UserPreferences.objects.create(user=self.user, language="en")
+        UserPreferences.objects.update_or_create(user=self.user, defaults={"language": "en"})
         response = self.client.get(reverse("admin:index"))
         self.assertContains(response, "Site administration")
 
     def test_language_follows_user_not_browser(self):
-        UserPreferences.objects.create(user=self.user, language="de")
+        UserPreferences.objects.update_or_create(user=self.user, defaults={"language": "de"})
         response = self.client.get(reverse("dashboard"), HTTP_ACCEPT_LANGUAGE="en")
         self.assertContains(response, "Übersicht")
 

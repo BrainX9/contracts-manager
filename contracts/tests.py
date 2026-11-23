@@ -1567,7 +1567,7 @@ class ReminderTest(TestCase):
     def test_mail_in_recipient_language(self):
         from web.models import UserPreferences
 
-        UserPreferences.objects.create(user=self.reader, language="en")
+        UserPreferences.objects.update_or_create(user=self.reader, defaults={"language": "en"})
         result, outbox = self.run_on(30)
         english = next(message for message in outbox if message.to == ["bert@example.com"])
         self.assertIn("Reminder: Cancellation – Kfz-Versicherung", english.subject)

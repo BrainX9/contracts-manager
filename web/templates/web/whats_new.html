@@ -1,0 +1,14 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "What's new" %}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">{% translate "What's new" %}</h1>
+<p class="text-body-secondary mb-4">{% blocktranslate with version=current_version %}You are using version {{ version }}.{% endblocktranslate %}</p>
+<div class="card" style="max-width: 48rem"><div class="card-body">
+  {% if entries %}
+  {% include "web/includes/whats_new_list.html" %}
+  {% else %}
+  <p class="mb-0 text-body-secondary">{% translate "No news yet." %}</p>
+  {% endif %}
+</div></div>
+{% endblock %}

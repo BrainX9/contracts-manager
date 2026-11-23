@@ -29,6 +29,7 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 - **Easy start:** one Compose file, one password to set – no `.env`, no `chown`; the secret key is generated.
 - **Backup and import** of all data and files as a single ZIP file.
 - Superusers see the installed version and a **hint when an update is available**.
+- After an update, every user sees **What's new** once.
 - Interface in **English and German**, light and dark mode, works on the phone.
 - All assets served locally – no CDN, no tracking.
 

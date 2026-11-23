@@ -1,0 +1,27 @@
+{% load i18n %}{# Version 0.10.0: einmal nach einem Update; Schließen zählt als gesehen (web/static/web/app.js) #}
+<div class="modal fade" id="whats-new" tabindex="-1" aria-labelledby="whats-new-title" aria-hidden="true" data-seen-url="{% url 'whats_new_seen' %}">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="whats-new-title"><i class="bi bi-stars me-2 text-primary" aria-hidden="true"></i>{% translate "What's new" %}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        {% include "web/includes/whats_new_list.html" with entries=whats_new_pending %}
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-link me-auto" href="{% url 'whats_new' %}">{% translate "All news" %}</a>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Got it" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<noscript>
+  <div class="alert alert-info" role="status">
+    <form method="post" action="{% url 'whats_new_seen' %}" class="d-flex flex-wrap align-items-center gap-2">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <span><i class="bi bi-stars me-1" aria-hidden="true"></i>{% translate "Contracts Manager was updated." %} <a href="{% url 'whats_new' %}">{% translate "What's new" %}</a></span>
+      <button type="submit" class="btn btn-sm btn-outline-primary ms-auto">{% translate "Got it" %}</button>
+    </form>
+  </div>
+</noscript>

@@ -21,6 +21,9 @@ class UserPreferences(models.Model):
         choices=settings.LANGUAGES,
         default=settings.LANGUAGE_CODE,
     )
+    # Version 0.10.0: zuletzt gezeigte Neuigkeiten (web.whats_new); leer =
+    # noch keine gesehen. Neue Benutzer bekommen die aktuelle Version.
+    seen_version = models.CharField(_("seen version"), max_length=20, blank=True, default="")
 
     class Meta:
         verbose_name = _("user preferences")
