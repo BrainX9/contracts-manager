@@ -196,6 +196,16 @@ VERSIONS = (
             "web": ["0010_whats_new"],
             "assistant": ["0004_document_ai"],
         },
+        # 0.10.0 -> 0.10.1: keine Änderung an den Daten
+        no_changes,
+    ),
+    BackupVersion(
+        "0.10.1",
+        {
+            "contracts": ["0018_paperless_api"],
+            "web": ["0010_whats_new"],
+            "assistant": ["0004_document_ai"],
+        },
     ),
 )
 

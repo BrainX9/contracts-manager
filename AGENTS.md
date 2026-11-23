@@ -574,6 +574,12 @@ Keine neuen Abhängigkeiten.
 **Weiteres**
 - Backup: Eintrag `0.10.0` in `backup_upgrades.VERSIONS`, Schritt von 0.9.2 ist `no_changes` (neues Feld mit Standardwert). `APP_VERSION` ist `0.10.0`.
 
+### Version 0.10.1: CodeQL-Meldung zur Weiterleitung
+Keine neuen Abhängigkeiten, keine Migration, kein Eintrag in `web.whats_new` (nichts Sichtbares).
+
+- CodeQL `py/url-redirection` (#5, `WhatsNewSeenView`): `url_has_allowed_host_and_scheme` steht jetzt direkt als Bedingung vor `redirect(target)`, sonst Übersicht. Vorher schon geprüft, aber über eine neu zugewiesene Variable, die CodeQL nicht als Absicherung erkennt. **Weiterleitungen auf Adressen aus der Anfrage immer so schreiben.**
+- Backup: Eintrag `0.10.1` in `backup_upgrades.VERSIONS`, Schritt von 0.10.0 ist `no_changes`. `APP_VERSION` ist `0.10.1`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle
