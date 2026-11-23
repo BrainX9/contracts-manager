@@ -265,7 +265,7 @@ Installations that had `PAPERLESS_URL` in `.env` start in **Links only** with th
 
 ### Setting up the API
 
-1. In Paperless, create a user, e.g. **Contracts-Manager**, and give it permission to *view* and *add* documents and tags and to *view* correspondents. It must also be allowed to **see the documents you link** – documents owned by other Paperless users are only visible if they are shared with it (for example through a group).
+1. In Paperless, create a user, e.g. **Contracts-Manager**, and give it permission to *view* and *add* documents and tags, to *view* correspondents and – recommended – to *view* tasks. It must also be allowed to **see the documents you link** – documents owned by other Paperless users are only visible if they are shared with it (for example through a group).
 2. Sign in to Paperless as that user and create an **API token** (profile › API token).
 3. In Contracts Manager open **Administration › Paperless**, choose **API**, enter the address of Paperless and the token, and click **Test**. The test checks the connection and the tags without creating anything.
 
@@ -284,7 +284,7 @@ Uploaded documents without a Paperless ID get a button **Transfer to Paperless**
 - optionally a **user tag**: prefix plus user name, e.g. `CM-anna`, so you can see in Paperless who transferred it,
 - the **correspondent**, if the contract partner has a Paperless correspondent ID.
 
-Paperless processes the file in the background; Contracts Manager waits for the result and then stores the ID of the new Paperless document. If Paperless recognises the file as a duplicate, the existing document is linked. Errors are shown below the document, with a button to try again. The file in Contracts Manager stays.
+Paperless processes the file in the background; Contracts Manager waits for the result and then stores the ID of the new Paperless document. If the same file is already in Paperless (same checksum), that document is linked without uploading it again – also when you click **Try again** after an error. Without the permission to view tasks, Contracts Manager finds the new document by its checksum; errors in Paperless (e.g. an unreadable file) are then only reported after an hour. Errors are shown below the document, with a button to try again. The file in Contracts Manager stays.
 
 ## AI assistant
 

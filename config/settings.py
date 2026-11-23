@@ -338,7 +338,7 @@ Q_CLUSTER = {
 REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
-APP_VERSION = "0.9.0"
+APP_VERSION = "0.9.1"
 
 # Tests unabhängig von den früheren Variablen der .env (config.test_runner)
 TEST_RUNNER = "config.test_runner.TestRunner"

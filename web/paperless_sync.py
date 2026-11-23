@@ -7,11 +7,14 @@ läuft alles im Worker (django-q2):
 
 1. ``start`` (Ansicht): Dokument als "wird übertragen" markieren, Aufgabe
    ``transfer`` einreihen.
-2. ``transfer``: Tags auflösen (fehlende anlegen), Datei mit Titel, Tags und
-   Korrespondent (vom Vertragspartner) hochladen, dann ``follow``.
-3. ``follow``: den Stand der Aufgabe abfragen. Fertig: Paperless-ID am
-   Dokument speichern. Noch nicht fertig: in zwei Minuten erneut, höchstens
-   eine Stunde lang.
+2. ``transfer``: Liegt die Datei schon in Paperless (gleiche Prüfsumme der
+   Originaldatei), wird dieses Dokument verknüpft, ohne neu hochzuladen
+   (Version 0.9.1). Sonst Tags auflösen (fehlende anlegen), Datei mit Titel,
+   Tags und Korrespondent (vom Vertragspartner) hochladen, dann ``follow``.
+3. ``follow``: den Stand der Aufgabe abfragen. Darf der Paperless-Benutzer
+   keine Aufgaben sehen (HTTP 403), sucht es das Dokument über die
+   Prüfsumme. Fertig: Paperless-ID am Dokument speichern. Noch nicht fertig:
+   in zwei Minuten erneut, höchstens eine Stunde lang.
 """
 
 import logging
@@ -69,13 +72,16 @@ def transfer(document_id, user_id=None):
         return "failed"
     user = get_user_model().objects.filter(pk=user_id).first() if user_id else None
     try:
+        with document.file.open("rb") as file:
+            content = file.read()
+        existing = paperless.find_by_checksum(cfg, paperless.checksums(content))
+        if existing:
+            return finish(document, paperless.TaskState(done=True, document_id=existing))
         names = list(cfg.tags)
         user_tag = cfg.user_tag_for(user)
         if user_tag and user_tag.lower() not in (name.lower() for name in names):
             names.append(user_tag)
         tags = paperless.tag_ids(cfg, names)
-        with document.file.open("rb") as file:
-            content = file.read()
         provider = document.contract.provider
         task_id = paperless.upload(
             cfg, document.filename, content, document.name, tags=tags,
@@ -99,11 +105,25 @@ def follow(document_id, poll_seconds=None):
         return "skipped"
     cfg = paperless.config()
     deadline = time.monotonic() + (POLL_SECONDS if poll_seconds is None else poll_seconds)
+    file_checksums = None
     while True:
         try:
-            state = paperless.task_state(cfg, document.paperless_sync_task)
+            try:
+                state = paperless.task_state(cfg, document.paperless_sync_task)
+            except paperless.PaperlessError as error:
+                if error.status != 403:
+                    raise
+                # Ohne Recht auf Aufgaben: Dokument über die Prüfsumme finden
+                if file_checksums is None:
+                    with document.file.open("rb") as file:
+                        file_checksums = paperless.checksums(file.read())
+                found = paperless.find_by_checksum(cfg, file_checksums)
+                state = paperless.TaskState(done=bool(found), document_id=found)
         except paperless.PaperlessError as error:
             fail(document_id, error)
+            return "failed"
+        except OSError as error:
+            fail(document_id, _("The transfer failed: %(error)s") % {"error": error})
             return "failed"
         if state.done:
             return finish(document, state)
