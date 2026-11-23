@@ -181,11 +181,13 @@ class WhatsNewSeenView(LoginRequiredMixin, View):
         whats_new.mark_seen(request.user)
         if request.htmx or request.headers.get("X-Requested-With") == "fetch":
             return HttpResponse(status=204)
+        # Version 0.10.1: nur eigene Adressen; Prüfung direkt vor der
+        # Weiterleitung, damit CodeQL sie erkennt (py/url-redirection)
         target = request.POST.get("next", "")
-        if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
-                                               require_https=request.is_secure()):
-            target = reverse("dashboard")
-        return redirect(target)
+        if url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()):
+            return redirect(target)
+        return redirect("dashboard")
 
 
 class PreferencesView(LoginRequiredMixin, UpdateView):
