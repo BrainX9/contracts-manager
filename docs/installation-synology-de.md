@@ -4,12 +4,12 @@
 
 Diese Anleitung führt dich von einer frischen Synology bis zur laufenden
 App mit Anmeldung, HTTPS und täglicher Sicherung. Alles läuft über
-**Docker Compose**: Eine Datei beschreibt die Container, eine zweite
-enthält deine Einstellungen. Es wird nichts installiert, gebaut oder
-geklont. Jeder Schritt sagt, was du tust, und wie du prüfst, ob er
-geklappt hat.
+**Docker Compose**: Eine einzige Datei beschreibt die Container und enthält
+die wenigen Einstellungen. Es wird nichts installiert, gebaut oder geklont,
+und für die Installation brauchst du weder SSH noch eine `.env`-Datei.
+Jeder Schritt sagt, was du tust, und wie du prüfst, ob er geklappt hat.
 
-Zeitbedarf: etwa 40 Minuten.
+Zeitbedarf: etwa 30 Minuten.
 
 ---
 
@@ -20,9 +20,9 @@ Am Ende sieht es so aus:
 ```
 /volume1/docker/contracts-manager/
 ├── docker-compose.yml     beschreibt die drei Container (von GitHub)
-├── .env                   deine Einstellungen und Passwörter
 ├── db/                    PostgreSQL-Datenbank
 ├── media/                 Logos und Vertragsdokumente
+├── config/                erzeugter Schlüssel der App (entsteht von selbst)
 └── backups/               tägliche Sicherungen
 ```
 
@@ -31,8 +31,8 @@ Auf der Synology laufen drei Container:
 | Compose-Dienst | Container-Name | Aufgabe |
 |---|---|---|
 | `db` | `contracts-manager-db` | PostgreSQL 17 |
-| `app` | `contracts-manager-app` | die Django-Anwendung, erreichbar auf Port 8000 der Synology |
-| `worker` | `contracts-manager-worker` | Hintergrunddienst für Erinnerungen und den KI-Assistenten |
+| `app` | `contracts-manager-app` | die Django-Anwendung, erreichbar auf Port 8010 der Synology |
+| `worker` | `contracts-manager-worker` | Hintergrunddienst für Erinnerungen, den KI-Assistenten und Paperless |
 
 In Befehlen mit `docker compose` verwendest du den kurzen Dienstnamen
 (z. B. `app`), im Container Manager von DSM und bei `docker exec` siehst
@@ -52,7 +52,7 @@ heruntergeladen.
 | `pgvector/pgvector:pg17` | Docker Hub | PostgreSQL 17 |
 
 Das App-Image hat zwei Arten von Namen (Tags): `latest` ist immer die
-neueste Version, `0.3.0` o. Ä. eine feste. Standard ist `latest`;
+neueste Version, `0.9.0` o. Ä. eine feste. Standard ist `latest`;
 wie du eine Version festhältst, steht unter „Updates einspielen“.
 
 ---
@@ -62,9 +62,10 @@ wie du eine Version festhältst, steht unter „Updates einspielen“.
 - [ ] Synology mit **DSM 7.2** oder neuer (Systemsteuerung › Info-Center)
 - [ ] Ein Benutzerkonto in der Gruppe **administrators**
 - [ ] Die IP-Adresse der Synology im Heimnetz, z. B. `192.168.1.10`
-- [ ] Einen Rechner mit Terminal (Mac: Programm „Terminal“, Windows: „PowerShell“)
-- [ ] Eine Internetverbindung der Synology (lädt die Images von GitHub und Docker Hub)
+- [ ] Eine Internetverbindung der Synology (lädt die Images von Docker Hub)
+- [ ] Einen Texteditor auf deinem Rechner (z. B. TextEdit, Editor, VS Code)
 - [ ] Optional für HTTPS: eine Adresse für die App, z. B. über Synology-DDNS (`deinname.synology.me`)
+- [ ] Optional: SSH für die Befehle in den Kästen „Mit SSH“ (Schritt 3)
 
 In der Anleitung steht `192.168.1.10` für die IP deiner Synology und
 `admin` für deinen Benutzernamen. Ersetze beides durch deine Werte.
@@ -111,11 +112,16 @@ verschlüsselter Ordner gesperrt.
 
 ---
 
-## Schritt 3: SSH einschalten und verbinden
+## Schritt 3: SSH (optional)
+
+Für die Installation brauchst du kein SSH. Es ist nur für die Kästen
+„Mit SSH“ in dieser Anleitung, für Updates per Befehl und für die
+Fehlersuche praktisch.
 
 1. **Systemsteuerung › Terminal & SNMP › Terminal**
 2. Haken bei **SSH-Dienst aktivieren**, Port `22` lassen, **Übernehmen**.
-3. Auf deinem Rechner das Terminal öffnen und verbinden:
+3. Auf deinem Rechner das Terminal öffnen (Mac: „Terminal“, Windows:
+   „PowerShell“) und verbinden:
 
 ```bash
 ssh admin@192.168.1.10
@@ -123,228 +129,112 @@ ssh admin@192.168.1.10
 
 Beim ersten Mal die Frage nach dem Fingerabdruck mit `yes` bestätigen,
 dann dein DSM-Passwort eingeben (beim Tippen erscheinen keine Zeichen, das ist normal).
-
-4. Prüfen, ob Docker da ist:
-
-```bash
-sudo docker --version
-```
-
-```bash
-sudo docker compose version
-```
-
-`sudo` fragt einmal nach deinem DSM-Passwort. Beide Befehle sollten
-eine Versionsnummer ausgeben. Falls der zweite Befehl einen Fehler meldet,
-probiere `sudo docker-compose version` und verwende in dieser Anleitung
-überall `docker-compose` statt `docker compose`.
-
-> Alle folgenden Befehle tippst du in diesem SSH-Fenster.
+Docker-Befehle brauchen auf der Synology `sudo`. Falls `sudo docker compose version`
+einen Fehler meldet, verwende überall `docker-compose` statt `docker compose`.
 
 ---
 
-## Schritt 4: Ordner anlegen und Dateien holen
+## Schritt 4: Ordner anlegen
 
-Zuerst den Projektordner mit den drei Unterordnern anlegen:
+1. **File Station** öffnen, den gemeinsamen Ordner `docker` wählen.
+2. **Erstellen › Ordner erstellen**: `contracts-manager`.
+3. In `contracts-manager` drei Ordner erstellen: `db`, `media` und `backups`.
 
-```bash
-sudo mkdir -p /volume1/docker/contracts-manager/db /volume1/docker/contracts-manager/media /volume1/docker/contracts-manager/backups
-```
+Den Ordner `config` legt Docker beim ersten Start selbst an. Besitzer und
+Rechte musst du nicht ändern: Der App-Container gibt `media` und `config`
+bei jedem Start dem Benutzer, als der die App läuft (Standard `1000:1000`),
+und arbeitet danach nicht mehr als root.
 
-Den Projektordner dir geben, damit du die Dateien darin ohne `sudo`
-anlegen und ändern kannst (ersetze `admin` durch deinen Benutzernamen):
+> **Mit SSH:**
+> `sudo mkdir -p /volume1/docker/contracts-manager/db /volume1/docker/contracts-manager/media /volume1/docker/contracts-manager/backups`
 
-```bash
-sudo chown admin /volume1/docker/contracts-manager
-```
-
-```bash
-cd /volume1/docker/contracts-manager
-```
-
-Jetzt die zwei Dateien von GitHub holen:
-
-```bash
-curl -fsSLO https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml
-```
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/.env.example -o .env
-```
-
-```bash
-chmod 600 .env
-```
-
-Die zweite Datei ist die Vorlage für deine Einstellungen und heißt
-gleich `.env`.
-
-> **Hinweis:** `main` lädt die aktuelle Fassung der Dateien. Willst du genau
-> die Dateien einer bestimmten Version, schreibe statt `main` ihren Tag in
-> die Adresse, z. B. `v0.3.0`.
-
-Die Container `app` und `worker` laufen nicht als root, sondern als
-Benutzer und Gruppe `1000`. Dieser Benutzer muss in `media` schreiben
-dürfen (dort landen Logos und Dokumente):
-
-```bash
-sudo chown -R 1000:1000 /volume1/docker/contracts-manager/media
-```
-
-(Andere Werte lassen sich in `.env` mit `APP_UID` und `APP_GID` einstellen.
-Dann den `chown`-Befehl entsprechend anpassen.)
-
-**Prüfen:**
-
-```bash
-ls -la /volume1/docker/contracts-manager
-```
-
-Du solltest `docker-compose.yml`, `.env` und die Ordner `db`, `media` und
-`backups` sehen.
-
-> Alle `docker compose`-Befehle führst du im Projektordner aus. Wenn du
-> in einem neuen SSH-Fenster bist: `cd /volume1/docker/contracts-manager`.
+**Prüfen:** In File Station siehst du unter `docker/contracts-manager` die
+Ordner `db`, `media` und `backups`.
 
 ---
 
-## Schritt 5: Einstellungen in `.env` eintragen
+## Schritt 5: Compose-Datei holen und Passwort eintragen
 
-> [!TIP]
-> **Ohne `.env`-Datei:** Statt `docker-compose.yml` und `.env` geht auch eine einzige Datei mit allen Einstellungen: [`docker-compose.no-env.yml`](../docker-compose.no-env.yml) oder [`docker-compose.no-env-minimal.yml`](../docker-compose.no-env-minimal.yml) (nur Pflichtwerte). Das passt zum Container Manager (*Projekt › Erstellen › docker-compose.yml erstellen*, Datei einfügen, jedes `CHANGE_ME` ersetzen). Die Ordner `db` und `media` aus Schritt 4 brauchst du trotzdem. In der Datei stehen dann Passwörter; ein `$` in einem Wert schreibst du als `$$`. Diese Anleitung geht mit `.env` weiter.
+1. Die Datei herunterladen:
+   <https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml>
+   (im Browser öffnen und mit „Speichern unter …“ als `docker-compose.yml` sichern).
+2. Die Datei im Texteditor öffnen und in der Zeile
 
-### 5.1 Geheimnisse automatisch eintragen
+   ```yaml
+     POSTGRES_PASSWORD: &db-password "CHANGE_ME"
+   ```
 
-Diese Befehle erzeugen einen zufälligen `SECRET_KEY` und ein zufälliges
-Datenbank-Passwort (nur Buchstaben und Ziffern). Im Projektordner einfach
-nacheinander kopieren:
+   `CHANGE_ME` durch ein eigenes Passwort ersetzen, **nur Buchstaben und
+   Ziffern**, z. B. `Vertraege2026Sicher`. Die Anführungszeichen bleiben.
+   Das ist die einzige Pflichtänderung.
+3. Speichern und die Datei mit File Station in den Ordner
+   `docker/contracts-manager` hochladen.
 
-```bash
-sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(openssl rand -hex 32)|" .env
-```
+Das Passwort gilt ab dem ersten Start. Später ändern geht nur mit
+zusätzlichem Aufwand in der Datenbank – also gleich ein gutes wählen.
 
-```bash
-sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
-```
+**Optionale Einstellungen** stehen schon in der Datei, mit `#` davor
+(auskommentiert). Um eine zu nutzen, entfernst du das `#` und trägst deinen
+Wert ein:
 
-Deinen **ersten Administrator** legst du später im Browser an (Schritt 7),
-dafür ist in der `.env` nichts nötig.
+| Einstellung | Wofür |
+|---|---|
+| `ALLOWED_HOSTS` | empfohlen: Adresse(n), unter der die App erreichbar ist, ohne `http://`, z. B. `vertraege.deinname.synology.me` |
+| `CSRF_TRUSTED_ORIGINS` | nur nötig, wenn der Reverse Proxy Adresse oder Schema ändert; mit `https://`, z. B. `https://vertraege.deinname.synology.me` |
+| `USE_HTTPS` | `"True"`, sobald die App über den Reverse Proxy mit HTTPS läuft (Schritt 9) |
+| `APP_UID`, `APP_GID` | wenn `media` und `config` einem anderen Benutzer gehören sollen, z. B. deinem DSM-Benutzer |
+| `SECRET_KEY` | nur, wenn du den Schlüssel selbst festlegen willst; sonst erzeugt die App einen im Ordner `config` |
 
-### 5.2 Adresse der App eintragen
+Für den ersten Test im Heimnetz musst du nichts davon ändern. Die App ist
+auf Port **8010** erreichbar (`"8010:8000"` unter `ports:`); ist der Port
+auf deiner Synology belegt, ändere die linke Zahl. Alle weiteren
+Einstellungen: [Umgebungsvariablen](variables.md) (englisch).
 
-Jetzt entscheidest du, wie du die App aufrufst. Öffne die Datei:
+In der Datei steht das Datenbank-Passwort – gib sie nicht weiter. Ein `$`
+in einem Wert schreibst du als `$$`.
 
-```bash
-vi .env
-```
+E-Mail (für Erinnerungen und Passwort-Reset), Single Sign-on, den
+KI-Assistenten und Paperless richtest du später in der App ein, unter
+**Verwaltung** (siehe [Konfiguration](configuration.md)). Für die
+Installation sind sie nicht nötig.
 
-Kurzanleitung für `vi`: Mit den Pfeiltasten zur Zeile gehen, `i` drücken
-(Bearbeiten), Text ändern, dann `Esc` drücken und `:wq` + Enter tippen
-(speichern und beenden). Ohne Speichern beenden: `Esc`, `:q!` + Enter.
-
-Ändere die Zeilen `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` und `USE_HTTPS`
-je nach Variante. `ALLOWED_HOSTS` und `CSRF_TRUSTED_ORIGINS` sind seit
-Version 0.8.0 optional, aber empfohlen: Ohne sie nimmt die App jede Adresse
-an.
-
-**Variante A – nur zum ersten Test im Heimnetz, ohne HTTPS**
-
-```
-ALLOWED_HOSTS=192.168.1.10
-CSRF_TRUSTED_ORIGINS=http://192.168.1.10:8000
-USE_HTTPS=False
-```
-
-**Variante B – dauerhaft über den Reverse Proxy mit HTTPS (empfohlen)**
-
-```
-ALLOWED_HOSTS=vertraege.deinname.synology.me
-CSRF_TRUSTED_ORIGINS=https://vertraege.deinname.synology.me
-USE_HTTPS=True
-```
-
-Regeln, die oft schiefgehen:
-
-- `ALLOWED_HOSTS`: nur der Hostname, **ohne** `http://`, ohne Port, ohne `/`
-- `CSRF_TRUSTED_ORIGINS`: **mit** `http://` bzw. `https://`, ohne `/` am Ende
-- Mehrere Einträge mit Komma trennen, ohne Leerzeichen
-- Bei Variante A darf `USE_HTTPS` nicht `True` sein, sonst klappt die Anmeldung nicht
-
-Du kannst mit Variante A anfangen und später auf B umstellen (siehe Schritt 9).
-
-`DEBUG=False` und `APP_PORT=8000` bleiben so. Nur wenn Port 8000 auf der
-Synology schon belegt ist, `APP_PORT` auf einen anderen Wert setzen
-(z. B. `8010`) und unten überall `8000` entsprechend ersetzen.
-
-Die Zeile `DATA_PATH` bleibt auskommentiert: Datenbank und Uploads liegen
-in den Ordnern `db` und `media` neben der `docker-compose.yml`.
-
-E-Mail (für Erinnerungen und Passwort-Reset), Single Sign-on und den
-KI-Assistenten richtest du später in der App ein, unter **Verwaltung**
-(siehe [Konfiguration](configuration.md)). Für die Installation sind sie
-nicht nötig. Dort trägst du unter **E-Mail-Einstellungen › Adresse der App**
-auch die Adresse ein, die in Links in E-Mails stehen soll.
-
-### 5.3 Kontrolle
-
-```bash
-grep -v '^#' .env | grep -v '^$'
-```
-
-Es dürfen **kein** `CHANGE_ME` und **keine** Zeile `COMPOSE_FILE=` oder
-`DATA_PATH=` vorkommen.
+> **Mit SSH:** `cd /volume1/docker/contracts-manager`, dann
+> `curl -fsSLO https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml`
+> und mit `vi docker-compose.yml` bearbeiten (`i` zum Bearbeiten, `Esc` und
+> `:wq` zum Speichern). `main` lädt die aktuelle Fassung; für die Datei einer
+> bestimmten Version schreibst du ihren Tag in die Adresse, z. B. `v0.9.0`.
 
 ---
 
-## Schritt 6: Starten
+## Schritt 6: Projekt im Container Manager anlegen und starten
 
-```bash
-cd /volume1/docker/contracts-manager && sudo docker compose up -d
-```
+1. **Container Manager › Projekt › Erstellen**
+2. Projektname: `contracts-manager`
+3. Pfad: **Festlegen** › `docker/contracts-manager` (der Ordner aus Schritt 4)
+4. Quelle: **Vorhandene docker-compose.yml verwenden** (DSM findet die
+   hochgeladene Datei). Alternativ „docker-compose.yml erstellen“ und den
+   Inhalt einfügen.
+5. **Weiter**. Die Seite „Web-Portal-Einstellungen“ überspringst du mit
+   **Weiter**, dann **Fertig**.
 
 Beim ersten Mal lädt die Synology die fertigen Images herunter (Datenbank
-und App), gebaut wird nichts. Das dauert ein paar Minuten. Am Ende steht
-`Started` bzw. `Healthy`.
+und App), gebaut wird nichts. Das dauert ein paar Minuten.
 
-**Prüfen** (nach ca. einer Minute):
+> **Mit SSH:** `cd /volume1/docker/contracts-manager && sudo docker compose up -d`
 
-```bash
-sudo docker compose ps
-```
+**Prüfen** (nach ca. einer Minute): Unter **Container Manager › Projekt**
+zeigt `contracts-manager` den Status „Wird ausgeführt“, unter **Container**
+laufen `contracts-manager-db`, `contracts-manager-app` und
+`contracts-manager-worker`. Im Browser antwortet
+`http://192.168.1.10:8010/health/` mit `{"status": "ok"}`.
 
-`db` und `app` müssen in der Spalte STATUS `(healthy)` zeigen, `worker`
-startet danach und zeigt `Up`. In DSM siehst du dieselben drei Container
-im **Container Manager** unter „Container“ (`contracts-manager-…`).
+Wenn nicht: **Container › contracts-manager-app › Details › Protokoll**
+ansehen und im Abschnitt [Fehlerbehebung](#fehlerbehebung) nachschlagen.
 
-```bash
-curl http://localhost:8000/health/
-```
+> **Mit SSH:** `sudo docker compose ps` zeigt den Status (`db` und `app`
+> `(healthy)`, `worker` `Up`), `sudo docker compose logs app` das Protokoll.
 
-Antwort: `{"status": "ok"}`
-
-Wenn nicht: Logs ansehen und im Abschnitt [Fehlerbehebung](#fehlerbehebung) nachschlagen.
-
-```bash
-sudo docker compose logs app
-```
-
-```bash
-sudo docker compose logs db
-```
-
-```bash
-sudo docker compose logs worker
-```
-
-**Welche Version läuft?** Die geladenen Images und ihre Tags zeigt:
-
-```bash
-sudo docker compose images
-```
-
-In der Spalte `TAG` steht bei `app` und `worker` `latest` (oder die
-Version, die du in `.env` festgelegt hast). Die Versionsnummer der App
-selbst siehst du nach der Anmeldung unter **Verwaltung › System**.
+**Welche Version läuft?** Nach der Anmeldung unter **Verwaltung › System**.
 
 ---
 
@@ -354,16 +244,12 @@ Die App hat kein voreingestelltes Konto. Öffne sie direkt nach dem ersten
 Start im Browser:
 
 ```
-http://192.168.1.10:8000/
+http://192.168.1.10:8010/
 ```
 
 (statt `192.168.1.10` die IP-Adresse deiner Synology). Eine neue
 Installation zeigt die Seite **Administrator anlegen**. Wähle Benutzername,
-E-Mail-Adresse und ein starkes Passwort, z. B. erzeugt mit:
-
-```bash
-openssl rand -base64 18 | tr -d '/+='
-```
+E-Mail-Adresse und ein starkes Passwort (z. B. aus deinem Passwortmanager).
 
 Danach bist du angemeldet, und die Seite verschwindet für immer. Das ist
 dein Login für die App, unabhängig von DSM.
@@ -383,12 +269,10 @@ sudo docker compose exec app python manage.py createsuperuser
 
 ## Schritt 8: Erster Test im Browser
 
-- Variante A: `http://192.168.1.10:8000/`
-- Variante B: erst Schritt 9 erledigen, dann `https://vertraege.deinname.synology.me/`
-
-Mit dem Benutzer aus Schritt 7 anmelden. Du landest auf der Übersicht mit
-den Summen pro Monat und Jahr. Das Django-Admin erreichst du als Superuser
-über das Benutzermenü oder unter `/admin/`.
+Unter `http://192.168.1.10:8010/` mit dem Benutzer aus Schritt 7 anmelden.
+Du landest auf der Übersicht mit den Summen pro Monat und Jahr. Das
+Django-Admin erreichst du als Superuser über das Benutzermenü oder unter
+`/admin/`.
 
 ---
 
@@ -418,7 +302,7 @@ Reiter **Allgemein**:
 | | Protokoll | Hostname | Port |
 |---|---|---|---|
 | Quelle | HTTPS | `vertraege.deinname.synology.me` | `443` |
-| Ziel | HTTP | `localhost` | `8000` |
+| Ziel | HTTP | `localhost` | `8010` |
 
 Beschreibung: `contracts-manager`. HSTS darf an.
 
@@ -445,31 +329,43 @@ Dienst `vertraege.deinname.synology.me` das passende Zertifikat auswählen.
   Encrypt `80`) auf die Synology weiterleiten. Nur mit starkem Passwort –
   die App enthält private Vertragsdaten.
 
-### 9.5 `.env` auf Variante B umstellen
+### 9.5 Compose-Datei auf HTTPS umstellen
 
-Falls du mit Variante A begonnen hast:
+In der `docker-compose.yml` (mit File Station herunterladen, bearbeiten,
+wieder hochladen) bei diesen Zeilen das `#` entfernen und deine Adresse
+eintragen:
 
-```bash
-cd /volume1/docker/contracts-manager && vi .env
+```yaml
+  ALLOWED_HOSTS: "vertraege.deinname.synology.me"
+  USE_HTTPS: "True"
 ```
 
-Werte wie in Schritt 5.2, Variante B eintragen, dann die App neu starten,
-damit sie die Änderung liest:
+Regeln, die oft schiefgehen:
 
-```bash
-sudo docker compose up -d
-```
+- `ALLOWED_HOSTS`: nur der Hostname, **ohne** `http://`, ohne Port, ohne `/`;
+  mehrere mit Komma trennen, ohne Leerzeichen
+- `CSRF_TRUSTED_ORIGINS` brauchst du nur, wenn die Anmeldung mit
+  „CSRF-Überprüfung fehlgeschlagen“ scheitert: dann mit `https://` und ohne
+  `/` am Ende
+- Mit `USE_HTTPS: "True"` klappt die Anmeldung über `http://192.168.1.10:8010`
+  nicht mehr – das ist gewollt
 
-### 9.6 Port 8000 abschotten
+Dann die Änderung übernehmen: **Container Manager › Projekt ›
+contracts-manager › Aktion › Erstellen** (baut die Container mit der neuen
+Datei neu auf, die Daten bleiben).
+
+> **Mit SSH:** `cd /volume1/docker/contracts-manager && sudo docker compose up -d`
+
+### 9.6 Port 8010 abschotten
 
 Damit niemand den Proxy umgeht: **Systemsteuerung › Sicherheit ›
-Firewall** aktivieren, Firewall-Profil bearbeiten und für Port `8000`
+Firewall** aktivieren, Firewall-Profil bearbeiten und für Port `8010`
 eine Regel **Ablehnen** für alle Quellen anlegen (die Regel muss über
 einer allgemeinen „Zulassen“-Regel stehen). Der Reverse Proxy greift
 über `localhost` zu und ist davon nicht betroffen.
 
 **Prüfen:** `https://vertraege.deinname.synology.me/` funktioniert,
-`http://192.168.1.10:8000/` von deinem Rechner aus nicht mehr.
+`http://192.168.1.10:8010/` von deinem Rechner aus nicht mehr.
 
 ---
 
@@ -545,11 +441,8 @@ So bringst du alles wieder hoch:
 
 1. **Systemsteuerung › Gemeinsamer Ordner** › `contracts` markieren ›
    **Verschlüsselung › Einhängen** › Passwort eingeben
-2. Per SSH:
-
-```bash
-cd /volume1/contracts/contracts-manager && sudo docker compose up -d
-```
+2. **Container Manager › Projekt › contracts-manager › Aktion › Starten**
+   (mit SSH: `cd /volume1/contracts/contracts-manager && sudo docker compose up -d`)
 
 Alternativ in DSM die Schlüsselverwaltung nutzen, damit der Ordner beim
 Start automatisch eingehängt wird. Bequemer, schützt aber nicht mehr,
@@ -559,7 +452,9 @@ wenn die ganze Synology gestohlen wird.
 
 ## Updates einspielen
 
-Wenn es eine neue Version gibt (Tag `v0.3.0` o. Ä.):
+Wenn es eine neue Version gibt (Tag `v0.9.0` o. Ä.; als Administrator
+siehst du in der Seitenleiste einen Hinweis). Updates gehen am einfachsten
+per SSH (Schritt 3):
 
 1. **Sicherung:** In DSM Aufgabenplanung die Aufgabe `contracts-backup`
    markieren › **Ausführen** (Schritt 10).
@@ -583,8 +478,9 @@ erhalten.
 
 **Die Compose-Datei** wird beim Update nicht automatisch erneuert. Meist
 bleibt sie gleich. Braucht eine Version eine geänderte Datei, steht das in
-den Hinweisen der Version auf GitHub. Dann holst du sie wie in Schritt 4
-neu (am besten unter anderem Namen) und vergleichst sie:
+den Hinweisen der Version auf GitHub. Dann holst du sie wie in Schritt 5
+neu (am besten unter anderem Namen), trägst dein Passwort ein und
+vergleichst sie:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml -o docker-compose.neu.yml
@@ -598,28 +494,33 @@ Gibt `diff` nichts aus, bist du aktuell (`rm docker-compose.neu.yml`).
 Sonst `mv docker-compose.neu.yml docker-compose.yml` und
 `sudo docker compose up -d`.
 
+**Installation von vor 0.9.0 mit `.env`:** Deine `docker-compose.yml` und
+`.env` laufen unverändert weiter. Beim ersten Start von 0.9.0 übernimmt die
+App die Einstellungen für E-Mail, Single Sign-on, KI und Paperless einmalig
+aus der `.env` in die Verwaltung; das Protokoll nennt danach die Zeilen, die
+du löschen kannst. Die Compose-Datei mit `.env` heißt auf GitHub jetzt
+`docker-compose.env.yml` – zum Vergleichen also diese holen:
+`curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.env.yml -o docker-compose.neu.yml`.
+
 ### Eine Version festhalten
 
 Mit `latest` bekommst du bei jedem `docker compose pull` die neueste
-Version. Willst du selbst bestimmen, wann es ein Update gibt, trage in
-`.env` eine feste Version ein:
+Version. Willst du selbst bestimmen, wann es ein Update gibt, schreibe in
+der `docker-compose.yml` bei `app` und `worker` eine feste Version statt
+`latest`:
 
-```bash
-vi /volume1/docker/contracts-manager/.env
+```yaml
+    image: brainx9/contracts-manager:0.9.0
 ```
 
-```
-APP_IMAGE_TAG=0.3.0
-```
-
-Dann ändert `docker compose pull` nichts, bis du die Zeile auf die nächste
-Version setzt. Welche Versionen es gibt, steht auf GitHub auf der Seite des
+(Mit `.env`: `APP_IMAGE_TAG=0.9.0`.) Dann ändert `docker compose pull`
+nichts, bis du die Zeilen auf die nächste Version setzt. Welche Versionen es gibt, steht auf GitHub auf der Seite des
 Repositorys unter **Tags** bzw. **Packages**. Danach wie oben:
 `pull`, `up -d`.
 
 ### Zurück auf eine ältere Version
 
-1. In `.env` `APP_IMAGE_TAG` auf die ältere Version setzen.
+1. Unter `image:` (bzw. in `.env` bei `APP_IMAGE_TAG`) die ältere Version eintragen.
 2. `sudo docker compose pull` und `sudo docker compose up -d`.
 
 **Achtung:** Die Datenbank wird dabei nicht zurückgedreht. Hat die neuere
@@ -639,10 +540,14 @@ Das öffentliche Repository hat mit Version 0.1.0 eine **neue
 Git-Historie**. Deshalb funktioniert `git pull` in einem alten Klon nicht
 mehr. Es gibt zwei Wege:
 
-- Die Compose-Datei per `curl` holen wie in Schritt 4, ganz ohne Git.
+- Die Compose-Datei mit `.env` per `curl` holen, ganz ohne Git:
+  `curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.env.yml -o docker-compose.yml`
 - Den Klon auf die neue Historie stellen: `git fetch origin`, dann
   `git reset --hard origin/main` (deine `.env` ist nicht versioniert und
-  bleibt erhalten).
+  bleibt erhalten). Seit 0.9.0 ist `docker-compose.yml` im Repository die
+  Datei **ohne** `.env`; trage deshalb in deine `.env` die Zeile
+  `COMPOSE_FILE=docker-compose.env.yml` ein, dann nutzt `docker compose`
+  weiter deine `.env`.
 
 Danach `sudo docker compose pull` und `sudo docker compose up -d`. Dabei
 werden die Container nur umbenannt (`contracts-manager-app` usw.), die
@@ -661,9 +566,9 @@ Daten bleiben, wo sie sind. Das alte, selbst gebaute Image
 cd /volume1/contracts/app && sudo docker compose down
 ```
 
-3. **Neuen Ordner anlegen** (Schritt 4: Ordner, `docker-compose.yml`
-   holen, `chown`). Die `.env` **nicht** neu anlegen, sondern die alte
-   übernehmen:
+3. **Neuen Ordner anlegen** (Schritt 4) und die Compose-Datei mit `.env`
+   holen: `curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.env.yml -o docker-compose.yml`.
+   Die `.env` **nicht** neu anlegen, sondern die alte übernehmen:
 
 ```bash
 sudo cp /volume1/contracts/app/.env /volume1/docker/contracts-manager/.env
@@ -707,23 +612,25 @@ Dann den neuen Ordner ebenfalls in einem verschlüsselten Ordner anlegen
 | `permission denied ... docker.sock` | `sudo` vergessen | Befehl mit `sudo` wiederholen |
 | `docker: 'compose' is not a docker command` | ältere Container-Manager-Version | `docker-compose` statt `docker compose` |
 | `no configuration file provided: not found` | Befehl nicht im Projektordner ausgeführt | `cd /volume1/docker/contracts-manager` |
-| `bind source path does not exist` | Ordner `db` oder `media` fehlt neben der `docker-compose.yml`, oder der verschlüsselte Ordner ist gesperrt | Befehl im Projektordner ausführen, `mkdir` aus Schritt 4, Ordner einhängen (Schritt 11) |
+| `bind source path does not exist` / `Bind mount failed` | Ordner `db` oder `media` fehlt neben der `docker-compose.yml`, oder der verschlüsselte Ordner ist gesperrt | Ordner anlegen (Schritt 4), Ordner einhängen (Schritt 11) |
 | `Conflict. The container name "/contracts-manager-app" is already in use` | ein alter Stack mit denselben Containern läuft noch | im alten Ordner `sudo docker compose down` ausführen |
-| `Bind for 0.0.0.0:8000 failed: port is already allocated` | Port 8000 belegt | in `.env` `APP_PORT=8010`, Reverse Proxy auf 8010 ändern |
-| `db` startet nicht, Log: `password authentication failed` | `POSTGRES_PASSWORD` nachträglich geändert | Das Passwort gilt nur beim allerersten Start. Altes Passwort zurück in `.env` – oder bei leerer Installation den Ordner `db` leeren und neu starten |
+| `Bind for 0.0.0.0:8010 failed: port is already allocated` | Port 8010 belegt | in der `docker-compose.yml` die linke Zahl bei `"8010:8000"` ändern (z. B. `"8020:8000"`), Reverse Proxy anpassen |
+| `db` startet nicht, Log: `password authentication failed` | `POSTGRES_PASSWORD` nachträglich geändert | Das Passwort gilt nur beim allerersten Start. Altes Passwort zurück in die Compose-Datei – oder bei leerer Installation den Ordner `db` leeren und neu starten |
 | `db`-Log: `data directory ... has invalid permissions` / `Operation not permitted` | Rechte des Synology-Ordners | `sudo docker compose down`, `sudo chown -R 999:999 /volume1/docker/contracts-manager/db`, `sudo chmod 700 /volume1/docker/contracts-manager/db`, neu starten |
-| Browser: **Bad Request (400)** | Adresse fehlt in `ALLOWED_HOSTS` | Hostname eintragen (ohne `http://`), `sudo docker compose up -d` |
+| Browser: **Bad Request (400)** | Adresse fehlt in `ALLOWED_HOSTS`, oder im Hostnamen steht ein Unterstrich (`_`) | Hostname eintragen (ohne `http://`) bzw. einen Namen ohne Unterstrich verwenden, Projekt neu erstellen (9.5) |
 | Beim Anmelden: **CSRF-Überprüfung fehlgeschlagen** | `CSRF_TRUSTED_ORIGINS` passt nicht oder Header fehlt | exakte Adresse mit `https://` eintragen, Kopfzeile `X-Forwarded-Proto` im Proxy (9.2) |
-| Anmeldung über `http://IP:8000` springt immer zurück zum Login | `USE_HTTPS=True` ohne HTTPS | Variante A: `USE_HTTPS=False` |
-| Endlose Weiterleitung / „zu viele Umleitungen“ | Proxy-Ziel auf HTTPS gestellt | Ziel im Reverse Proxy muss **HTTP** `localhost:8000` sein |
-| `app` oder `worker`-Log: `Permission denied: '/app/media/...'` | `media` gehört nicht dem Benutzer `1000` | `chown` aus Schritt 4 ausführen |
+| Anmeldung über `http://IP:8010` springt immer zurück zum Login | `USE_HTTPS` ist `True`, aber ohne HTTPS aufgerufen | über die HTTPS-Adresse aufrufen oder `USE_HTTPS` wieder auskommentieren |
+| Endlose Weiterleitung / „zu viele Umleitungen“ | Proxy-Ziel auf HTTPS gestellt | Ziel im Reverse Proxy muss **HTTP** `localhost:8010` sein |
+| `app` oder `worker`-Log: `Permission denied: '/app/media/...'` oder `/config` | alte Compose-Datei mit `user:`, oder die Freigabe erlaubt kein Ändern des Besitzers | `sudo chown -R 1000:1000` für `media` und `config` (bzw. `APP_UID:APP_GID`) |
 | `app` bleibt `unhealthy` | Datenbank nicht erreichbar oder Fehler beim Start | `sudo docker compose logs app` lesen |
 | `curl: (22) ... 404` oder `Not Found` beim Holen der Dateien | Die Adresse ist falsch geschrieben, oder der Tag darin existiert nicht | Adresse aus Schritt 4 neu kopieren |
-| `manifest unknown` / `not found` beim Laden des Images | die Version in `APP_IMAGE_TAG` gibt es nicht (Tippfehler, ohne `v`) | Schreibweise prüfen, z. B. `0.3.0`, oder die Zeile entfernen für `latest` |
+| `manifest unknown` / `not found` beim Laden des Images | die Version unter `image:` (bzw. in `APP_IMAGE_TAG`) gibt es nicht (Tippfehler, ohne `v`) | Schreibweise prüfen, z. B. `0.9.0`, oder `latest` |
 | Kein Administrator, die Seite „Administrator anlegen“ erscheint nicht | Es gibt schon einen Benutzer (z. B. nach einem Import) | `sudo docker compose exec app python manage.py createsuperuser` (Schritt 7) |
 | Aufgabe `contracts-backup` meldet „Sicherung fehlgeschlagen“ | Container `contracts-manager-db` läuft nicht oder heißt anders (alte Compose-Datei) | `sudo docker ps` prüfen; ggf. Compose-Datei erneuern (siehe „Updates einspielen“) |
+| Alle sind plötzlich abgemeldet | Der Ordner `config` wurde gelöscht oder geleert; die App hat einen neuen Schlüssel erzeugt | Nichts zu tun: neu anmelden. Daten gehen dabei nicht verloren |
 
-Änderungen an `.env` wirken erst nach `sudo docker compose up -d`.
+Änderungen an der `docker-compose.yml` (oder `.env`) wirken erst, wenn das
+Projekt neu erstellt wird (9.5) bzw. nach `sudo docker compose up -d`.
 
 ---
 

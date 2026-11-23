@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-4">
   <h1 class="h3 mb-1">{% translate "Single sign-on" %}</h1>
-  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart. The local login always stays available." %}</p>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Changes apply immediately, without a restart. The local login always stays available." %}</p>
 </div>
 
 <form method="post" action="{% url 'manage_sso' %}" novalidate style="max-width: 56rem">
@@ -45,7 +45,7 @@
   <div class="card mb-3"><div class="card-body">
     <details{% if form.sso_scopes.errors or form.sso_sign_algo.errors or form.sso_authorization_endpoint.errors or form.sso_token_endpoint.errors or form.sso_user_endpoint.errors or form.sso_jwks_endpoint.errors or form.sso_scopes.value or form.sso_sign_algo.value or form.sso_authorization_endpoint.value or form.sso_token_endpoint.value or form.sso_user_endpoint.value or form.sso_jwks_endpoint.value %} open{% endif %}>
       <summary class="h5 mb-0"><i class="bi bi-gear me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Advanced: other providers" %}</summary>
-      <p class="small text-body-secondary mt-3">{% translate "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above, otherwise taken from the .env file; the grey text shows the value from the .env file." %}</p>
+      <p class="small text-body-secondary mt-3">{% translate "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above." %}</p>
       <div class="row">
         <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_scopes %}</div>
         <div class="col-md-6">{% include "web/includes/field.html" with field=form.sso_sign_algo %}</div>

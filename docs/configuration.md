@@ -4,10 +4,10 @@
 
 There are two places for settings:
 
-- **`.env`** (see [`.env.example`](../.env.example)) holds what Docker and the database need before the app runs: `SECRET_KEY`, `POSTGRES_*`, `ALLOWED_HOSTS`, ports and a few more. After changing `.env`, restart with `sudo docker compose up -d`.
-- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Changes apply immediately, without a restart.
+- **Environment variables** in the Compose file (or in `.env`) hold the few things needed before the app runs: the database password and optional values such as `ALLOWED_HOSTS`. After a change, apply it with `sudo docker compose up -d` (Container Manager: Project › Action › Build). All variables: [environment variables](variables.md).
+- **Administration** in the app (superusers only) holds email, single sign-on, the AI assistant and Paperless. Changes apply immediately, without a restart.
 
-Email, single sign-on and the AI assistant could formerly only be set with variables in `.env`. These variables still work, and a value entered in the app takes precedence over them, but please do not use them for new installations: a later version will read these settings from the app only. The README lists them under [Settings that moved to the app](../README.md#settings-that-moved-to-the-app).
+Since 0.9.0 email, single sign-on, the AI assistant and Paperless are read **only** from Administration. Older installations that still set them in `.env` get the values copied into Administration once on the first start of 0.9.0; afterwards the variables are ignored ([archived variables](variables.md#archived)).
 
 - [First administrator](#first-administrator)
 - [Users and sharing](#users-and-sharing)
@@ -314,7 +314,7 @@ Things to check:
 
 - **Ollama must listen on the network.** By default it only accepts connections from its own computer. Set `OLLAMA_HOST=0.0.0.0` where Ollama runs (see the Ollama documentation) and allow port `11434` only for your local network. Ollama has no login of its own; never expose it to the internet.
 - **Use a model that supports tools** (function calling), for example `qwen3` or `llama3.1`; the assistant does not work without. The **Test** button shows whether the model calls the test tool.
-- **Pull the model first** (`ollama pull <model>`). A model that is not loaded yet makes the first answer slow; raise `AI_TIMEOUT` in `.env` if the first request times out.
+- **Pull the model first** (`ollama pull <model>`). A model that is not loaded yet makes the first answer slow; raise `AI_TIMEOUT` ([advanced variable](variables.md#advanced)) if the first request times out.
 - Small models answer more simply and make more mistakes with documents than Claude or GPT. Uploaded files are not sent to the main model; the assistant uses the recognised text. For scans and photos you can let a vision model in Ollama read them, see [Scans and photos](#scans-and-photos-document-ai).
 
 ### Scans and photos (document AI)
@@ -361,7 +361,7 @@ Under **Administration › AI settings** – without a restart:
 | Document AI | the document AI reads a generated test image (only if set up) |
 | File upload to the model | a PDF is sent to the model and read – only with Claude; other providers always work with the locally recognised text |
 
-Only the fine tuning stays in `.env` (restart with `sudo docker compose up -d` after a change):
+Only the fine tuning stays an environment variable ([advanced](variables.md#advanced); apply with `sudo docker compose up -d` after a change):
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -405,4 +405,4 @@ The interface is available in German (default) and English. Each user chooses th
 - **HTTPS:** with `USE_HTTPS=True`, session and CSRF cookies are only sent via HTTPS. HSTS can be enabled with `SECURE_HSTS_SECONDS` or in the Synology reverse proxy.
 - **Containers** run as a non-root user (`APP_UID`/`APP_GID`, default `1000`); the code in the image is read-only.
 - **Uploads:** logos are checked (PNG, JPEG, WebP, max. 2 MB), re-encoded without metadata and only delivered to users who may view the contract partner.
-- **Secrets** only in `.env` or in the app (Administration; never shown again, never written to a backup file), never in the repository.
+- **Secrets** only in the Compose file, `.env` or the app (Administration; never shown again, never written to a backup file), never in the repository. The generated `SECRET_KEY` lives in the folder `config` (readable only by the app user) and is not part of a backup.

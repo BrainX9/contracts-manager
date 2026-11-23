@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.8.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.9.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -88,7 +88,7 @@ The user interface is available in **English and German** (per user).
 - Manage **users and groups** in the web interface: invite by email, deactivate, delete, edit memberships
 - Role **“Administratoren”** for user management without being a superuser – with safeguards against privilege escalation
 - Superusers: transfer all objects of a user, see all reminders, link to the Django admin
-- **Email and single sign-on** are configured in the app (superusers), each with a test – no restart, `.env` stays supported
+- **Email, single sign-on, the AI assistant and Paperless** are configured in the app (superusers), each with a test – no restart, no `.env`
 - System page with worker status, email settings and a test email
 
 </td>
@@ -147,58 +147,47 @@ The user interface is available in **English and German** (per user).
 
 ## Quick start
 
-You need Docker with Docker Compose. There are three Compose files to choose from:
+You need Docker with Docker Compose – on a Synology NAS the **Container Manager**. One file is enough; no `.env`, nothing to clone or build.
 
-| File | Settings | For |
-|---|---|---|
-| [`docker-compose.yml`](docker-compose.yml) | in a separate `.env` file | the usual setup, described below |
-| [`docker-compose.no-env.yml`](docker-compose.no-env.yml) | **no `.env`**: all settings in the file, optional ones commented out | one file to paste, e.g. into the Synology Container Manager |
-| [`docker-compose.no-env-minimal.yml`](docker-compose.no-env-minimal.yml) | **no `.env`**: only the required values | the quickest start |
+### On a Synology NAS (Container Manager)
 
-With one of the `no-env` files, download it, replace every `CHANGE_ME`, create the folders `db` and `media`, start with `docker compose -f <file> up -d` and create the administrator in the browser. That file then contains passwords – keep it private, and write a `$` in a value as `$$`.
+1. In **File Station**, create the folder `docker/contracts-manager` and inside it the two folders `db` and `media`.
+2. Download [`docker-compose.yml`](https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml) and replace `CHANGE_ME` with a password of your own (letters and digits).
+3. In **Container Manager › Project › Create**: name `contracts-manager`, path the folder from step 1, source *Upload docker-compose.yml* (or *Create docker-compose.yml* and paste the file). Click **Next** until **Done**.
+4. Open `http://<address-of-your-NAS>:8010` and create the first administrator.
 
-The usual setup runs from one folder with two files; nothing is cloned or built:
+### With the command line
 
 ```bash
 mkdir contracts-manager && cd contracts-manager
 curl -fsSLO https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml
-curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/.env.example -o .env
-```
-
-Edit `.env`: set `SECRET_KEY` and `POSTGRES_PASSWORD`, and for a local test also
-
-```dotenv
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-CSRF_TRUSTED_ORIGINS=http://localhost:8000
-USE_HTTPS=False
-```
-
-Create the data folders and start the stack:
-
-```bash
-mkdir db media backups
-# On Linux hosts only: the containers run as user 1000, not root
-sudo chown -R 1000:1000 media
+mkdir db media
+nano docker-compose.yml   # replace CHANGE_ME with a password of your own
 docker compose up -d
 ```
 
-The folder then looks like this; database and uploads stay outside the containers:
+Open <http://localhost:8010/>.
+
+### What you get
+
+On the first visit a new installation shows **Create administrator**: choose user name, email address (optional) and password. That account gets all rights, and the page disappears for good ([details](docs/configuration.md#first-administrator)). Create the administrator before the app is reachable from the internet.
 
 ```
 contracts-manager/
 ├── docker-compose.yml
-├── .env
 ├── db/        PostgreSQL data   →  /var/lib/postgresql/data
 ├── media/     uploads           →  /app/media
-└── backups/
+└── config/    generated key     →  /config   (created automatically)
 ```
 
-Three containers run: `contracts-manager-db`, `contracts-manager-app` and `contracts-manager-worker` (the Compose services are called `db`, `app` and `worker`). Docker downloads the ready-made image, see [Docker image](#docker-image) below.
+Three containers run: `contracts-manager-db`, `contracts-manager-app` and `contracts-manager-worker`. Migrations and translations are applied automatically on every start, and the folders `media` and `config` are given to the app user (`1000:1000`) – no `chown` needed.
 
-Open <http://localhost:8000/>. On the first visit in the browser a new installation shows **Create administrator**: choose user name, email address (optional) and password. That account gets all rights, and the page disappears for good. ([details](docs/configuration.md#first-administrator)). Migrations and translations are applied automatically on every start.
+**Next steps**
 
-For a production setup on a Synology NAS (project folder, reverse proxy with HTTPS, daily backups) see the [installation guide](docs/installation-synology.md).
+- Email, single sign-on, the AI assistant and Paperless are set up in the app under **Administration**.
+- HTTPS with the reverse proxy of the NAS and daily backups: [installation guide](docs/installation-synology.md).
+- More settings (for example `ALLOWED_HOSTS`): [Configuration](#configuration) below and [all variables](docs/variables.md).
+- Installations from before 0.9.0 keep their `docker-compose.yml` and `.env`; the file with `.env` is now called [`docker-compose.env.yml`](docker-compose.env.yml).
 
 ## Docker image
 
@@ -208,72 +197,37 @@ For a production setup on a Synology NAS (project folder, reverse proxy with HTT
 |---|---|
 | Image | `brainx9/contracts-manager` on Docker Hub |
 | Mirror | `ghcr.io/brainx9/contracts-manager` (GitHub Container Registry, same image and tags) |
-| Tags | `latest` (newest release) and one per version, e.g. `0.3.0` |
+| Tags | `latest` (newest release) and one per version, e.g. `0.9.0` |
 | Platforms | `linux/amd64` and `linux/arm64` |
 | Built by | GitHub Actions on every version tag (`v…`), after the tests passed |
 
-- **Fixed version:** set `APP_IMAGE_TAG=0.3.0` in `.env` to stay on one version; the default is `latest`.
+- **Fixed version:** write e.g. `brainx9/contracts-manager:0.9.0` instead of `:latest` under `image:` (with `.env`: `APP_IMAGE_TAG=0.9.0`).
 - **Update:** `docker compose pull`, `docker compose up -d` (see [Operations](docs/operations.md#update)).
 - **Build it yourself** (for example for another platform): `docker build -t brainx9/contracts-manager:latest .` in the repository folder, then `docker compose up -d`. Compose uses the local image as long as it exists. For development use `docker-compose.dev.yml`, which builds locally and mounts the code ([Development](docs/development.md)).
 
 ## Configuration
 
-There are two places for settings:
-
-- **`.env`** holds what Docker and the database need before the app runs – no secrets in the code.
-- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Superusers also see the installed version there and a hint when a newer version exists (checked once a day at GitHub; can be switched off). Changes apply immediately, without a restart.
-
-### Variables in `.env`
-
-**Required** variables must be set, otherwise the app does not start. All others are **optional** and have a sensible default; *recommended* ones should be set for a production setup.
+Contracts Manager needs only a few settings before it starts. They are in the block `x-app-settings` at the top of `docker-compose.yml`; optional ones are commented out – remove the `#` to use them. Everything else – email, single sign-on, the AI assistant, Paperless – is set in the app under **Administration** (superusers), without a restart. Superusers also see the installed version there and a hint when a newer version exists (checked once a day at GitHub; can be switched off).
 
 | | Variable | Default | Purpose |
 |---|---|---|---|
-| **Required** | `SECRET_KEY` | – | Secret key of Django, e.g. from `openssl rand -hex 32` |
-| **Required** | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | – | Database name, user and password |
-| Optional, *recommended* | `ALLOWED_HOSTS` | every address | Host names the app is reached at, comma separated. Without it the app accepts every address; links in emails then use the address of the app from the email settings |
-| Optional | `CSRF_TRUSTED_ORIGINS` | – | Full addresses incl. `http://` or `https://`; only needed if the reverse proxy changes the address or the scheme |
+| **Required** | `POSTGRES_DB`, `POSTGRES_USER` | `contracts_db`, `contracts_user` | Name of the database and its user |
+| **Required** | `POSTGRES_PASSWORD` | – | Password of the database user (letters and digits) |
+| Optional, *recommended* | `ALLOWED_HOSTS` | every address | Host names the app is reached at, comma separated |
+| Optional | `CSRF_TRUSTED_ORIGINS` | – | Only if a reverse proxy changes the address or the scheme |
 | Optional | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
-| Optional | `DEBUG` | `False` | Only for development |
-| Optional | `APP_PORT` | `8000` | Published port on the host |
-| Optional | `APP_IMAGE_TAG` | `latest` | Version of the Docker image, e.g. `0.7.0` to stay on one version |
-| Optional | `APP_UID`, `APP_GID` | `1000` | User and group the containers run as (not root) |
-| Optional | `DATA_PATH` | folder of the Compose file | Where `db` and `media` live on the host (older installations) |
-| Optional | `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT` | model default, `16000`, `8`, `120` | AI assistant: thinking depth (Claude), length of an answer, tool rounds per answer, timeout in seconds |
-| Optional | `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_MINUTES` | `5`, `15` | Login lockout after failed attempts |
-| Optional | `SECURE_HSTS_SECONDS` | `0` | HSTS in seconds, only with `USE_HTTPS` |
-| Optional | `DJANGO_LOG_LEVEL` | `WARNING` | Log level of Django |
-| Optional | `GUNICORN_CMD_ARGS` | see image | Replaces the gunicorn options of the image (bind address, workers, timeout) |
-| Optional | `BACKUP_DIR`, `BACKUP_RETENTION_DAYS` | – | Only for `scripts/backup.sh`: target folder and days to keep database dumps |
+| Optional | `APP_UID`, `APP_GID` | `1000` | User and group the app runs as; `media` and `config` are given to them automatically |
+| Optional | `SECRET_KEY` | generated | Without it the app creates a key in the folder `config` |
 
-Set by the Compose file itself, not in `.env`: `DATABASE_URL` (built from the `POSTGRES_*` values) and `MEDIA_ROOT` (`/app/media` in the container).
-
-[`.env.example`](.env.example) lists these variables with comments. Details: [configuration guide](docs/configuration.md).
-
-### Settings that moved to the app
-
-> [!NOTE]
-> The variables below still work, but please do not use them for new installations. Enter the values in the app instead; a later version will read these settings from the app only.
-
-A value entered in the app takes precedence over the variable; an empty field in the app means “value from `.env`”. To move an existing installation, enter the values in the app, check them with **Test**, then remove the lines from `.env`.
-
-| Variable | Now in the app under |
-|---|---|
-| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | Administration › Email settings: SMTP server, encryption, user, password, sender |
-| `APP_BASE_URL` | Administration › Email settings: address of the app, used for links in emails |
-| `REMINDER_SEND_TIME` | Administration › Email settings: daily time for reminders (default `07:00`) |
-| `OIDC_ENABLED`, `OIDC_OP_BASE_URL`, `OIDC_RP_CLIENT_ID`, `OIDC_RP_CLIENT_SECRET`, `OIDC_CREATE_USERS` | Administration › Single sign-on: on/off, SSO server, client ID, client secret, create unknown users |
-| `OIDC_USERNAME_CLAIM`, `OIDC_RP_SCOPES`, `OIDC_RP_SIGN_ALGO` | Administration › Single sign-on › Advanced: claim with the user name, scopes, signing algorithm |
-| `OIDC_OP_AUTHORIZATION_ENDPOINT`, `OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT` | Administration › Single sign-on › Advanced: endpoints for providers other than the Synology SSO Server |
-| `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | Administration › AI settings: on/off, provider, API key, model, address of the API |
-| `PAPERLESS_URL` | Administration › Paperless: copied once on the first start of 0.9.0 (mode “Links only”), afterwards ignored |
+**Advanced** variables (port, image version, AI fine tuning, login lockout, logging …) and the **archived** ones that the app reads no longer since 0.9.0: [all variables](docs/variables.md).
 
 ## Documentation
 
 | Guide | Content |
 |---|---|
-| [Installation on a Synology NAS](docs/installation-synology.md) | Project folder, Compose file and `.env`, first start, superuser, reverse proxy with HTTPS, daily backup |
-| [Schritt-für-Schritt-Anleitung Synology (deutsch)](docs/installation-synology-de.md) | Detailed German walkthrough for beginners: Container Manager, SSH, Compose file and `.env`, HTTPS, daily backups, updates, troubleshooting |
+| [Installation on a Synology NAS](docs/installation-synology.md) | Project folder, Compose file, Container Manager, first administrator, reverse proxy with HTTPS, daily backup |
+| [Schritt-für-Schritt-Anleitung Synology (deutsch)](docs/installation-synology-de.md) | Detailed German walkthrough for beginners: Container Manager without SSH, Compose file, HTTPS, daily backups, updates, troubleshooting |
+| [Environment variables](docs/variables.md) | All variables in four groups – required, optional, advanced, archived – and where to set them (Compose file or `.env`) |
 | [Configuration](docs/configuration.md) | Users and sharing, settings in the app, email and reminders, single sign-on, notes with Markdown, documents, Paperless-ngx, AI assistant (also Ollama, document AI for scans and photos), version and updates |
 | [Operations](docs/operations.md) | Updates, backup and restore, export and import of all data as one file, restart with an encrypted folder |
 | [Development](docs/development.md) | Local development, translations, tests, project structure |

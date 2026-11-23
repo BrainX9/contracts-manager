@@ -3,6 +3,10 @@
 data/
 media/
 backups/
+# Erzeugter SECRET_KEY (Version 0.9.0; Entwicklung: config-data)
+config-data/
+config/secret_key
+config/.secret_key*
 # Backups der Anwendung (export_backup, Download aus der Oberfläche)
 /*.zip
 

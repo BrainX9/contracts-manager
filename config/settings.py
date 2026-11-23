@@ -32,7 +32,21 @@ if env_file.exists():
     environ.Env.read_env(env_file)
 
 # Sicherheit
-SECRET_KEY = env("SECRET_KEY")
+# Version 0.9.0: SECRET_KEY ist optional. Ohne Angabe erzeugt die App einen
+# Schlüssel im Ordner CONFIG_DIR (Container: /config) und liest ihn von dort
+# (config.secret_key).
+CONFIG_DIR = Path(env("CONFIG_DIR", default="/config"))
+SECRET_KEY = env("SECRET_KEY", default="")
+SECRET_KEY_FROM_FILE = not SECRET_KEY
+if SECRET_KEY_FROM_FILE:
+    from django.core.exceptions import ImproperlyConfigured
+
+    from config.secret_key import SecretKeyError, load_or_create
+
+    try:
+        SECRET_KEY = load_or_create(CONFIG_DIR)
+    except SecretKeyError as error:
+        raise ImproperlyConfigured(str(error)) from None
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 # Version 0.8.0: ALLOWED_HOSTS ist optional (empfohlen). Ohne Angabe nimmt die
@@ -325,6 +339,9 @@ REMINDER_SEND_TIME = env("REMINDER_SEND_TIME", default="07:00")
 
 # Angezeigte Version (Administration › System)
 APP_VERSION = "0.9.0"
+
+# Tests unabhängig von den früheren Variablen der .env (config.test_runner)
+TEST_RUNNER = "config.test_runner.TestRunner"
 
 # --- Fehlversuche bei der Anmeldung (django-axes) ----------------------------
 # Nach 5 falschen Passwörtern für denselben Benutzernamen von derselben

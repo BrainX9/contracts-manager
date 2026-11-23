@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase, override_settings
+from contracts.testing import env_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -65,11 +66,11 @@ class DefaultGroupTest(TestCase):
         member.groups.add(Group.objects.get(name=perms.GROUP_AI))
         other = User.objects.create_user("ben")
         admin = User.objects.create_superuser("chef", "chef@example.com", "x")
-        with self.settings(AI_ENABLED=True):
+        with env_settings(AI_ENABLED=True):
             self.assertTrue(perms.can_use_assistant(User.objects.get(pk=member.pk)))
             self.assertFalse(perms.can_use_assistant(other))
             self.assertTrue(perms.can_use_assistant(admin))
-        with self.settings(AI_ENABLED=False):
+        with env_settings(AI_ENABLED=False):
             self.assertFalse(perms.can_use_assistant(admin))
 
 
@@ -149,7 +150,7 @@ class ProviderConversionTest(TestCase):
         self.assertEqual([b["type"] for b in messages[1]["content"]], ["tool_use", "tool_use"])
         self.assertEqual([b["tool_use_id"] for b in messages[2]["content"]], ["c1", "c2"])
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_openai_reply(self):
         provider = OpenAIProvider()
         call = SimpleNamespace(id="c9", function=SimpleNamespace(name="get_contract", arguments='{"contract_id": 3}'))
@@ -160,7 +161,7 @@ class ProviderConversionTest(TestCase):
         self.assertEqual(create.call_args.kwargs["model"], "test-model")
         self.assertEqual(create.call_args.kwargs["tools"][0]["type"], "function")
 
-    @override_settings(**{**AI_SETTINGS, "AI_PROVIDER": "anthropic"})
+    @env_settings(**{**AI_SETTINGS, "AI_PROVIDER": "anthropic"})
     def test_anthropic_reply(self):
         provider = AnthropicProvider()
         blocks = [
@@ -178,7 +179,7 @@ class ProviderConversionTest(TestCase):
         self.assertIn("input_schema", create.call_args.kwargs["tools"][0])
 
 
-@override_settings(**AI_SETTINGS)
+@env_settings(**AI_SETTINGS)
 class AgentTest(TestCase):
     def setUp(self):
         self.anna = User.objects.create_user("anna")
@@ -264,7 +265,7 @@ class AgentTest(TestCase):
         self.assertEqual([m["role"] for m in agent.history(self.conversation)], ["user"])
 
 
-@override_settings(**AI_SETTINGS)
+@env_settings(**AI_SETTINGS)
 class AssistantPagesTest(TestCase):
     def setUp(self):
         self.anna = User.objects.create_user("anna")
@@ -280,7 +281,7 @@ class AssistantPagesTest(TestCase):
         self.client.force_login(self.anna)
         self.assertEqual(self.client.get(self.url).status_code, 200)
         self.assertContains(self.client.get(reverse("dashboard")), self.url)
-        with self.settings(AI_ENABLED=False):
+        with env_settings(AI_ENABLED=False):
             self.assertEqual(self.client.get(self.url).status_code, 404)
             self.assertNotContains(self.client.get(reverse("dashboard")), self.url)
 
@@ -357,7 +358,7 @@ class AssistantPagesTest(TestCase):
         answer.assert_not_called()
 
 
-@override_settings(**{**AI_SETTINGS, "AI_PROVIDER": "anthropic", "AI_MODEL": "claude-sonnet-5-5", "AI_BASE_URL": ""})
+@env_settings(**{**AI_SETTINGS, "AI_PROVIDER": "anthropic", "AI_MODEL": "claude-sonnet-5-5", "AI_BASE_URL": ""})
 class AnthropicDetailsTest(TestCase):
     """Claude: Denkschritte, Denktiefe, Ablehnung, Fallback (0.8a)"""
 
@@ -386,7 +387,7 @@ class AnthropicDetailsTest(TestCase):
         self.assertNotIn("thinking", kwargs)
 
     def test_no_fallback_with_base_url_and_no_tools_round(self):
-        with self.settings(AI_BASE_URL="https://proxy.example.com"):
+        with env_settings(AI_BASE_URL="https://proxy.example.com"):
             provider = AnthropicProvider()
         response = self.response([self.block(type="text", text="Ok")])
         with patch.object(provider.client.messages, "create", return_value=response) as create:
@@ -488,7 +489,7 @@ class ExtractionTest(TestCase):
         self.assertEqual(extraction.extract(broken, "kaputt.pdf"), ("", "none"))
 
 
-@override_settings(**AI_SETTINGS)
+@env_settings(**AI_SETTINGS)
 class DocumentToolsTest(MediaRootMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -567,7 +568,7 @@ class DocumentToolsTest(MediaRootMixin, TestCase):
         self.assertEqual(AnthropicProvider.tool_content(entry), entry["content"])
 
 
-@override_settings(**AI_SETTINGS)
+@env_settings(**AI_SETTINGS)
 class ProposalTest(MediaRootMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -678,7 +679,7 @@ class ProposalTest(MediaRootMixin, TestCase):
             self.propose("create_provider", name="X")
 
 
-@override_settings(**AI_SETTINGS)
+@env_settings(**AI_SETTINGS)
 class DocumentPagesTest(MediaRootMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -779,7 +780,7 @@ class ConfigTest(TestCase):
             setattr(site, name, value)
         site.save()
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_env_values_without_settings(self):
         from .config import current
 
@@ -790,7 +791,7 @@ class ConfigTest(TestCase):
             ("openai", "test-model", "sk-test", "http://127.0.0.1:9"),
         )
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_settings_take_precedence_field_by_field(self):
         from .config import current
 
@@ -808,12 +809,12 @@ class ConfigTest(TestCase):
         user = User.objects.create_user("anna")
         user.groups.add(Group.objects.get(name=perms.GROUP_AI))
         user = User.objects.get(pk=user.pk)
-        with self.settings(AI_ENABLED=False):
+        with env_settings(AI_ENABLED=False):
             self.assertFalse(enabled())
             self.site(ai_enabled="on")
             self.assertTrue(enabled())
             self.assertTrue(perms.can_use_assistant(user))
-        with self.settings(AI_ENABLED=True):
+        with env_settings(AI_ENABLED=True):
             self.site(ai_enabled="off")
             self.assertFalse(perms.can_use_assistant(user))
             self.client.force_login(user)
@@ -935,43 +936,42 @@ class OllamaTest(TestCase):
             setattr(site, name, value)
         site.save()
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_default_address_is_the_docker_host(self):
         from .config import OLLAMA_DEFAULT_URL, current
 
-        self.site(ai_provider="ollama", ai_model="qwen3")
+        self.site(ai_provider="ollama", ai_model="qwen3", ai_base_url="")
         config = current()
         self.assertEqual((config.provider, config.base_url), ("ollama", OLLAMA_DEFAULT_URL))
         self.assertEqual(OLLAMA_DEFAULT_URL, "http://host.docker.internal:11434/v1")
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_own_address_for_another_computer(self):
         from .config import current
 
         self.site(ai_provider="ollama", ai_model="qwen3", ai_base_url="http://192.168.1.20:11434/v1")
         self.assertEqual(current().base_url, "http://192.168.1.20:11434/v1")
 
-    @override_settings(**AI_SETTINGS)
-    def test_address_of_the_env_file_belongs_to_its_provider(self):
-        # Die .env nennt einen anderen Anbieter samt Adresse: nicht für Ollama übernehmen
+    @env_settings(**AI_SETTINGS)
+    def test_empty_address_uses_the_default_of_the_provider(self):
+        # Seit 0.9.0: leere Adresse = Standard des gewählten Anbieters
         from .config import OLLAMA_DEFAULT_URL, current
 
-        self.site(ai_provider="ollama")
+        self.site(ai_provider="ollama", ai_base_url="")
         self.assertEqual(current().base_url, OLLAMA_DEFAULT_URL)
 
-    @override_settings(**{**AI_SETTINGS, "AI_PROVIDER": "ollama", "AI_BASE_URL": "", "AI_API_KEY": ""})
+    @env_settings(**{**AI_SETTINGS, "AI_PROVIDER": "ollama", "AI_BASE_URL": "", "AI_API_KEY": ""})
     def test_from_env_file(self):
         from .config import OLLAMA_DEFAULT_URL, current
 
         self.assertEqual(current().base_url, OLLAMA_DEFAULT_URL)
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_uses_the_openai_interface_without_api_key(self):
         from .providers import OpenAIProvider, get_provider
 
-        self.site(ai_provider="ollama", ai_model="qwen3", ai_api_key="")
-        with override_settings(AI_API_KEY=""):
-            provider = get_provider()
+        self.site(ai_provider="ollama", ai_model="qwen3", ai_api_key="", ai_base_url="")
+        provider = get_provider()
         self.assertIsInstance(provider, OpenAIProvider)
         self.assertEqual(provider.client.api_key, "none")
         self.assertEqual(str(provider.client.base_url).rstrip("/"), "http://host.docker.internal:11434/v1")
@@ -1016,13 +1016,13 @@ class DocumentAITest(TestCase):
             setattr(site, name, value)
         site.save()
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_off_without_model(self):
         from .config import current
 
         self.assertIsNone(current().reader)
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_same_provider_shares_address_and_key(self):
         # IONOS: derselbe Schlüssel, ein anderes Modell
         from .config import current
@@ -1035,7 +1035,7 @@ class DocumentAITest(TestCase):
             ("openai", "lightonai/LightOnOCR-2-1B", "https://openai.inference.de-txl.ionos.com/v1", "sk-ionos", "ocr"),
         )
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_other_provider_gets_neither_address_nor_key(self):
         from .config import OLLAMA_DEFAULT_URL, current
 
@@ -1045,7 +1045,7 @@ class DocumentAITest(TestCase):
         self.site(reader_base_url="http://192.168.1.20:11434/v1")
         self.assertEqual(current().reader.base_url, "http://192.168.1.20:11434/v1")
 
-    @override_settings(**AI_SETTINGS)
+    @env_settings(**AI_SETTINGS)
     def test_claude_as_main_needs_an_own_provider(self):
         # Die Dokument-KI nutzt die OpenAI-Schnittstelle; "wie Hauptmodell" geht bei Claude nicht
         from .config import current

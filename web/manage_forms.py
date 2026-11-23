@@ -176,7 +176,7 @@ class SiteSettingsForm(BootstrapFormMixin, forms.ModelForm):
 class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
     """
     KI-Assistent unter Verwaltung › KI-Einstellungen (Version 0.3.0, nur
-    Superuser). Ein leeres Feld bedeutet "Wert aus der .env"
+    Superuser). Seit 0.9.0 nur noch hier, nicht mehr in der .env
     (assistant.config). Der API-Schlüssel wird gespeichert, aber nie wieder
     angezeigt: leer lassen = unverändert.
     """
@@ -207,24 +207,22 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
         from assistant.agent import DEFAULT_PROMPT
 
         super().__init__(*args, **kwargs)
-        self.env = env = ai_config.from_env()
+        self.env = env = ai_config.defaults()
         self.default_prompt = DEFAULT_PROMPT
-        as_env = _("As in the .env file (%(value)s)")
-        self.fields["ai_enabled"].choices = [
-            ("", as_env % {"value": _("on") if env.enabled else _("off")}),
-            *SiteSettings.AI_ENABLED_CHOICES,
-        ]
-        self.fields["ai_provider"].choices = [
-            ("", as_env % {"value": env.provider}), *SiteSettings.AI_PROVIDER_CHOICES,
-        ]
-        self.fields["ai_model"].widget.attrs["placeholder"] = env.model or "claude-sonnet-5-5"
-        self.fields["ai_base_url"].widget.attrs["placeholder"] = env.base_url or _("Default address of the provider")
-        self.fields["ai_model"].help_text = _("Empty: value from the .env file.")
+        # Version 0.9.0: keine Auswahl "wie in der .env" mehr; leer = Standard
+        self.fields["ai_enabled"].choices = list(SiteSettings.AI_ENABLED_CHOICES)
+        self.fields["ai_provider"].choices = list(SiteSettings.AI_PROVIDER_CHOICES)
+        if not self.instance.ai_enabled:
+            self.initial["ai_enabled"] = SiteSettings.AI_OFF
+        if not self.instance.ai_provider:
+            self.initial["ai_provider"] = env.provider
+        self.fields["ai_model"].widget.attrs["placeholder"] = "claude-sonnet-5-5"
+        self.fields["ai_base_url"].widget.attrs["placeholder"] = _("Default address of the provider")
         self.fields["ai_base_url"].help_text = _(
             "Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://example.com/v1 or "
             "http://192.168.1.20:11434/v1 for Ollama on another computer. Empty: for Mistral AI "
             "https://api.mistral.ai/v1, for Ollama the Docker host (host.docker.internal), otherwise "
-            "the value from the .env file."
+            "the default address of the provider."
         )
         # Dokument-KI: leere Felder gelten wie beim Hauptmodell
         self.fields["reader_kind"].required = False
@@ -246,10 +244,7 @@ class AISettingsForm(BootstrapFormMixin, forms.ModelForm):
             self.fields["api_key"].help_text = _("A key is stored. Leave empty to keep it.")
         else:
             del self.fields["clear_api_key"]
-            self.fields["api_key"].help_text = (
-                _("No key is stored here; the key from the .env file is used.") if env.api_key
-                else _("No key is set yet.")
-            )
+            self.fields["api_key"].help_text = _("No key is set yet.")
         # Das Fenster zeigt immer einen Text: den eigenen oder den Standard
         if not self.instance.ai_system_prompt:
             self.initial["ai_system_prompt"] = DEFAULT_PROMPT
@@ -366,8 +361,8 @@ def clean_http_url(value):
 class EmailSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
     """
     SMTP, Absender, Adresse der App und Uhrzeit der Erinnerungen unter
-    Verwaltung › E-Mail (Version 0.4.0, nur Superuser). Ein leeres Feld
-    bedeutet "Wert aus der .env" (web.site_config).
+    Verwaltung › E-Mail (Version 0.4.0, nur Superuser). Seit 0.9.0 nur noch
+    hier; ein leeres Feld bedeutet "Standardwert" (web.site_config).
     """
     secret_field = "password"
     clear_field = "clear_password"
@@ -393,35 +388,32 @@ class EmailSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
         from . import site_config
 
         super().__init__(*args, **kwargs)
-        self.env = env = site_config.mail_from_env()
-        empty = _("Empty: value from the .env file.")
+        self.env = env = site_config.mail_defaults()
         placeholders = {
-            "email_host": env.host or "smtp.example.com",
+            "email_host": "smtp.example.com",
             "email_port": env.port,
-            "email_user": env.user,
-            "email_sender": env.sender,
-            "app_base_url": env.base_url or "https://contracts.example.com",
+            "email_user": "contracts@example.com",
+            "email_sender": "contracts@example.com",
+            "app_base_url": "https://contracts.example.com",
         }
         for name, placeholder in placeholders.items():
             self.fields[name].widget.attrs["placeholder"] = placeholder
-            self.fields[name].help_text = empty
-        self.fields["email_security"].choices = [
-            ("", _("As in the .env file (%(value)s)") % {"value": env.security_label}),
-            *SiteSettings.EMAIL_SECURITY_CHOICES,
-        ]
+            self.fields[name].help_text = ""
+        self.fields["email_port"].help_text = _("Empty: %(value)s.") % {"value": env.port}
+        self.fields["email_security"].choices = list(SiteSettings.EMAIL_SECURITY_CHOICES)
+        if not self.instance.email_security:
+            self.initial["email_security"] = env.security
         self.fields["email_sender"].help_text = _(
-            "Address the emails come from, often the same as the SMTP user. Empty: value from the .env file."
+            "Address the emails come from, often the same as the SMTP user. Empty: the SMTP user."
         )
-        self.fields["app_base_url"].help_text = _(
-            "Public address of the app, used for links in emails. Empty: value from the .env file."
-        )
-        self.fields["reminder_send_time"].help_text = _(
-            "Empty: value from the .env file (%(value)s)."
-        ) % {"value": settings.REMINDER_SEND_TIME}
+        self.fields["app_base_url"].help_text = _("Public address of the app, used for links in emails.")
+        self.fields["reminder_send_time"].help_text = _("Empty: %(value)s.") % {
+            "value": site_config.REMINDER_DEFAULT,
+        }
         self.setup_secret(
-            env.password,
+            "",
             _("A password is stored. Leave empty to keep it."),
-            _("No password is stored here; the password from the .env file is used."),
+            "",
             _("No password is set yet."),
         )
 
@@ -473,8 +465,8 @@ class EmailSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
 class SSOSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
     """
     Single Sign-on unter Verwaltung › Single Sign-on (Version 0.4.0, nur
-    Superuser). Ein leeres Feld bedeutet "Wert aus der .env"
-    (web.site_config).
+    Superuser). Seit 0.9.0 nur noch hier; ein leeres Feld bedeutet
+    "Standardwert" (web.site_config).
     """
     secret_field = "client_secret"
     clear_field = "clear_client_secret"
@@ -501,42 +493,40 @@ class SSOSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
         from . import site_config
 
         super().__init__(*args, **kwargs)
-        self.env = env = site_config.sso_from_env()
-        as_env = _("As in the .env file (%(value)s)")
-        empty = _("Empty: value from the .env file.")
-        for name, value in (("sso_enabled", env.enabled), ("sso_create_users", env.create_users)):
-            self.fields[name].choices = [
-                ("", as_env % {"value": _("on") if value else _("off")}), *SiteSettings.SWITCH_CHOICES,
-            ]
+        self.env = env = site_config.sso_defaults()
+        for name in ("sso_enabled", "sso_create_users"):
+            self.fields[name].choices = list(SiteSettings.SWITCH_CHOICES)
+            if not getattr(self.instance, name):
+                self.initial[name] = SiteSettings.OFF
         self.fields["sso_create_users"].help_text = _(
             "On: a user who signs in for the first time is created automatically, "
             "without a local password and never as an administrator."
         )
         placeholders = {
-            "sso_base_url": env.base_url or "https://nas.example.com",
-            "sso_client_id": env.client_id,
+            "sso_base_url": "https://nas.example.com",
+            "sso_client_id": "",
             "sso_username_claim": env.username_claim,
             "sso_scopes": env.scopes,
             "sso_sign_algo": env.sign_algo,
         }
         for name, placeholder in placeholders.items():
             self.fields[name].widget.attrs["placeholder"] = placeholder
-            self.fields[name].help_text = empty
+            self.fields[name].help_text = _("Empty: %(value)s.") % {"value": placeholder} if placeholder else ""
         self.fields["sso_base_url"].help_text = _(
             "For the Synology SSO Server the address of the NAS, e.g. https://nas.example.com; "
-            "the endpoints are derived from it. Empty: value from the .env file."
+            "the endpoints are derived from it."
         )
         self.fields["sso_username_claim"].help_text = _(
-            "Synology: “username”, other providers often “preferred_username”. Empty: value from the .env file."
-        )
+            "Synology: “username”, other providers often “preferred_username”. Empty: %(value)s."
+        ) % {"value": env.username_claim}
         for name in self.ENDPOINTS:
             field = self.fields[f"sso_{name}"]
             field.widget.attrs["placeholder"] = getattr(env, name)
             field.help_text = ""
         self.setup_secret(
-            env.client_secret,
+            "",
             _("A client secret is stored. Leave empty to keep it."),
-            _("No client secret is stored here; the one from the .env file is used."),
+            "",
             _("No client secret is set yet."),
         )
 

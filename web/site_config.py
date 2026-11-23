@@ -1,15 +1,13 @@
 """
-E-Mail, Erinnerungsversand und Single Sign-on: Verwaltung vor .env
-(Version 0.4.0).
+E-Mail, Erinnerungsversand und Single Sign-on (Version 0.4.0, seit 0.9.0 nur
+noch aus der Verwaltung).
 
-Die Werte stehen in der .env (``EMAIL_*``, ``DEFAULT_FROM_EMAIL``,
-``APP_BASE_URL``, ``REMINDER_SEND_TIME``, ``OIDC_*``) und zusätzlich unter
-Verwaltung › E-Mail bzw. Single Sign-on (``web.SiteSettings``, nur
-Superuser). Ein Wert aus der Verwaltung hat Vorrang, ein leeres Feld
-bedeutet "Wert aus der .env". Dies ist die einzige Stelle, die beides
-zusammenführt (wie ``assistant.config`` für den KI-Assistenten); Versand,
-Anmeldung und Ansichten fragen ``mail()``, ``sso()`` und
-``reminder_time()``.
+Die Werte stehen unter Verwaltung › E-Mail bzw. Single Sign-on
+(``web.SiteSettings``, nur Superuser); ein leeres Feld bedeutet
+"Standardwert" (``mail_defaults``, ``sso_defaults``). Die früheren
+Variablen der .env (``EMAIL_*``, ``OIDC_*`` …) übernimmt ``web.env_import``
+einmalig, danach werden sie nicht mehr gelesen. Versand, Anmeldung und
+Ansichten fragen ``mail()``, ``sso()`` und ``reminder_time()``.
 """
 
 from dataclasses import dataclass
@@ -28,9 +26,12 @@ SECURITY_STARTTLS = "starttls"
 SECURITY_SSL = "ssl"
 SECURITY_NONE = "none"
 
+# Standardwerte für leere Felder
+REMINDER_DEFAULT = "07:00"
+
 
 def switch(value, default):
-    """"on"/"off" aus der Verwaltung, sonst der Wert aus der .env."""
+    """"on"/"off" aus der Verwaltung, sonst der Standardwert."""
     return {"on": True, "off": False}.get(value, default)
 
 
@@ -58,22 +59,16 @@ class MailConfig:
         return {SECURITY_SSL: "SSL/TLS", SECURITY_STARTTLS: "STARTTLS"}.get(self.security, "–")
 
 
-def mail_from_env():
-    """Konfiguration nur aus der .env."""
-    if settings.EMAIL_USE_SSL:
-        security = SECURITY_SSL
-    elif settings.EMAIL_USE_TLS:
-        security = SECURITY_STARTTLS
-    else:
-        security = SECURITY_NONE
+def mail_defaults():
+    """Standardwerte für leere Felder (seit 0.9.0 nicht mehr aus der .env)."""
     return MailConfig(
-        host=settings.EMAIL_HOST,
-        port=settings.EMAIL_PORT,
-        security=security,
-        user=settings.EMAIL_HOST_USER,
-        password=settings.EMAIL_HOST_PASSWORD,
-        sender=settings.DEFAULT_FROM_EMAIL,
-        base_url=settings.APP_BASE_URL,
+        host="",
+        port=587,
+        security=SECURITY_STARTTLS,
+        user="",
+        password="",
+        sender="contracts@localhost",
+        base_url="",
         timeout=settings.EMAIL_TIMEOUT,
     )
 
@@ -86,17 +81,17 @@ def own_user_address(site):
 
 def merge_mail(site, env=None):
     """
-    Führt die Einstellungen aus der Verwaltung (``site``: SiteSettings oder
-    ein Objekt mit denselben Attributen) mit der .env zusammen.
+    Einstellungen aus der Verwaltung (``site``: SiteSettings oder ein Objekt
+    mit denselben Attributen), leere Felder mit den Standardwerten.
     """
-    env = env or mail_from_env()
+    env = env or mail_defaults()
     return MailConfig(
         host=site.email_host.strip() or env.host,
         port=site.email_port or env.port,
         security=site.email_security or env.security,
         user=site.email_user.strip() or env.user,
         password=site.email_password or env.password,
-        # Wie in der .env: ohne eigenen Absender die Adresse des Benutzers
+        # Ohne eigenen Absender die Adresse des SMTP-Benutzers
         sender=site.email_sender.strip() or own_user_address(site) or env.sender,
         base_url=site.app_base_url.strip().rstrip("/") or env.base_url,
         timeout=env.timeout,
@@ -104,7 +99,7 @@ def merge_mail(site, env=None):
 
 
 def mail():
-    """Gültige Konfiguration: Verwaltung vor .env."""
+    """Gültige Konfiguration aus der Verwaltung."""
     from .models import SiteSettings
 
     return merge_mail(SiteSettings.load())
@@ -117,7 +112,7 @@ def reminder_time():
     # Ohne load(): läuft auch nach jeder Migration und soll dort keinen
     # Datensatz anlegen
     own = SiteSettings.objects.filter(pk=1).values_list("reminder_send_time", flat=True).first()
-    return own or settings.REMINDER_SEND_TIME
+    return own or REMINDER_DEFAULT
 
 
 # --- Single Sign-on -----------------------------------------------------------
@@ -152,31 +147,30 @@ class SSOConfig:
         }
 
 
-def sso_from_env():
-    """Konfiguration nur aus der .env."""
+def sso_defaults():
+    """Standardwerte für leere Felder (seit 0.9.0 nicht mehr aus der .env)."""
     return SSOConfig(
-        enabled=settings.OIDC_ENABLED,
-        base_url=settings.OIDC_OP_BASE_URL,
-        client_id=settings.OIDC_RP_CLIENT_ID,
-        client_secret=settings.OIDC_RP_CLIENT_SECRET,
-        create_users=settings.OIDC_CREATE_USER,
-        username_claim=settings.OIDC_USERNAME_CLAIM,
-        scopes=settings.OIDC_RP_SCOPES,
-        sign_algo=settings.OIDC_RP_SIGN_ALGO,
-        authorization_endpoint=settings.OIDC_OP_AUTHORIZATION_ENDPOINT,
-        token_endpoint=settings.OIDC_OP_TOKEN_ENDPOINT,
-        user_endpoint=settings.OIDC_OP_USER_ENDPOINT,
-        jwks_endpoint=settings.OIDC_OP_JWKS_ENDPOINT,
+        enabled=False,
+        base_url="",
+        client_id="",
+        client_secret="",
+        create_users=False,
+        username_claim="username",
+        scopes="openid email",
+        sign_algo="RS256",
+        authorization_endpoint="",
+        token_endpoint="",
+        user_endpoint="",
+        jwks_endpoint="",
     )
 
 
 def merge_sso(site, env=None):
     """
     Wie ``merge_mail``. Endpunkte: ein eigener Wert aus der Verwaltung, sonst
-    der Pfad des Synology SSO Servers unter der Adresse aus der Verwaltung,
-    sonst der Wert aus der .env.
+    der Pfad des Synology SSO Servers unter der Adresse aus der Verwaltung.
     """
-    env = env or sso_from_env()
+    env = env or sso_defaults()
     base_url = site.sso_base_url.strip().rstrip("/")
 
     def endpoint(name):
@@ -204,7 +198,7 @@ def merge_sso(site, env=None):
 
 
 def sso():
-    """Gültige Konfiguration: Verwaltung vor .env."""
+    """Gültige Konfiguration aus der Verwaltung."""
     from .models import SiteSettings
 
     return merge_sso(SiteSettings.load())

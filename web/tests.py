@@ -8,7 +8,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 
 from contracts import permissions as perms
-from contracts.testing import paperless_settings
+from contracts.testing import env_settings, paperless_settings
 from contracts.models import Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider
 
 from .models import SiteSettings, UserPreferences
@@ -1451,7 +1451,7 @@ class SSOTest(TestCase):
         self.assertNotContains(self.client.get(reverse("login")), "/oidc/authenticate/")
 
     def test_login_page_shows_sso_button(self):
-        with self.settings(**SSO_SETTINGS):
+        with env_settings(**SSO_SETTINGS):
             response = self.client.get(reverse("login") + "?next=/contracts/")
         self.assertContains(response, "/oidc/authenticate/?next=/contracts/")
         self.assertContains(response, "SSO Login")
@@ -1460,13 +1460,13 @@ class SSOTest(TestCase):
         from .models import SiteSettings
 
         SiteSettings.objects.create(sso_login_label="Mit Synology anmelden")
-        with self.settings(**SSO_SETTINGS):
+        with env_settings(**SSO_SETTINGS):
             response = self.client.get(reverse("login"))
         self.assertContains(response, "Mit Synology anmelden")
         self.assertNotContains(response, "SSO Login")
 
     def test_authenticate_redirects_to_provider(self):
-        with self.settings(**SSO_SETTINGS):
+        with env_settings(**SSO_SETTINGS):
             response = self.client.get("/oidc/authenticate/")
         self.assertEqual(response.status_code, 302)
         location = response["Location"]
@@ -1476,7 +1476,7 @@ class SSOTest(TestCase):
 
     def test_matches_username_case_insensitive(self):
         user = User.objects.create_user("Anna")
-        with self.settings(**SSO_SETTINGS):
+        with env_settings(**SSO_SETTINGS):
             backend = self.backend()
             self.assertEqual(list(backend.filter_users_by_claims({"username": "anna"})), [user])
             self.assertFalse(backend.filter_users_by_claims({"email": "anna@example.com"}).exists())
@@ -1486,7 +1486,7 @@ class SSOTest(TestCase):
     def test_unknown_user_is_not_created_by_default(self):
         from unittest.mock import patch
 
-        with self.settings(**SSO_SETTINGS, OIDC_CREATE_USER=False):
+        with env_settings(**SSO_SETTINGS, OIDC_CREATE_USER=False):
             backend = self.backend()
             with patch.object(backend, "get_userinfo", return_value={"username": "neu"}):
                 self.assertIsNone(backend.get_or_create_user("access", "id", {}))
@@ -1495,7 +1495,7 @@ class SSOTest(TestCase):
     def test_unknown_user_is_created_when_allowed(self):
         from unittest.mock import patch
 
-        with self.settings(**SSO_SETTINGS, OIDC_CREATE_USER=True):
+        with env_settings(**SSO_SETTINGS, OIDC_CREATE_USER=True):
             backend = self.backend()
             claims = {"username": "neu", "email": "neu@example.com"}
             with patch.object(backend, "get_userinfo", return_value=claims):
@@ -1514,7 +1514,7 @@ class SSOTest(TestCase):
 
         from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
-        with self.settings(**SSO_SETTINGS):
+        with env_settings(**SSO_SETTINGS):
             backend = self.backend()
             with patch.object(OIDCAuthenticationBackend, "get_userinfo", return_value={"email": "a@example.com"}):
                 claims = backend.get_userinfo("access", "id", {"username": "anna", "sub": "1"})
@@ -1532,7 +1532,7 @@ class SSOTest(TestCase):
 
         from .oidc import SSOBackend
 
-        with self.settings(**SSO_SETTINGS):
+        with env_settings(**SSO_SETTINGS):
             start = self.client.get("/oidc/authenticate/?next=/contracts/")
             query = parse_qs(urlparse(start["Location"]).query)
             state, nonce = query["state"][0], query["nonce"][0]
@@ -1565,7 +1565,7 @@ class SSOTest(TestCase):
         self.assertRedirects(self.client.get(reverse("password_change")), reverse("preferences"))
 
 
-@override_settings(APP_BASE_URL="")
+@env_settings(APP_BASE_URL="")
 class PasswordResetTest(TestCase):
     """Passwort zurücksetzen per E-Mail (0.5 beta)"""
 
@@ -1783,7 +1783,7 @@ class ManageAccessTest(ManageTestMixin, TestCase):
                              fetch_redirect_response=False)
 
 
-@override_settings(APP_BASE_URL="")
+@env_settings(APP_BASE_URL="")
 class ManageUserTest(ManageTestMixin, TestCase):
     def create(self, actor, **data):
         self.client.force_login(actor)

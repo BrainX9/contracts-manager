@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-4">
   <h1 class="h3 mb-1">{% translate "Email settings" %}</h1>
-  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "SMTP server for reminders, invitations and password reset. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart." %}</p>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "SMTP server for reminders, invitations and password reset. Changes apply immediately, without a restart." %}</p>
 </div>
 
 <form method="post" action="{% url 'manage_email' %}" novalidate style="max-width: 56rem">
