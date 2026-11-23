@@ -44,7 +44,8 @@ from contracts.models import Contract, Reminder
 from . import site_config, update_check
 from .mail_backend import smtp_backend
 from .manage_forms import (
-    AISettingsForm, BackupUploadForm, EmailSettingsForm, GroupForm, SiteSettingsForm, SSOSettingsForm,
+    AISettingsForm, BackupUploadForm, EmailSettingsForm, GroupForm, PaperlessSettingsForm, SiteSettingsForm,
+    SSOSettingsForm,
     TransferOwnershipForm, UserForm,
 )
 from .models import SiteSettings
@@ -765,6 +766,44 @@ class SSOSettingsView(ManageMixin, View):
         form.save()
         messages.success(request, _("The settings have been saved."))
         return redirect("manage_sso")
+
+
+# --- Paperless (nur Superuser, 0.9.0) ------------------------------------------
+
+class PaperlessSettingsView(ManageMixin, View):
+    """
+    Paperless-ngx: Betriebsart (aus, Links, API), Adresse, Token und Tags.
+    "Testen" prüft Adresse und Token mit den eingegebenen, nicht
+    gespeicherten Werten; es wird nichts angelegt.
+    """
+    superuser_only = True
+    template_name = "web/manage/paperless.html"
+
+    def form(self, data=None):
+        return PaperlessSettingsForm(data, instance=SiteSettings.load())
+
+    def context(self, form, results=None):
+        from contracts import paperless
+
+        return {"form": form, "current": paperless.config(), "results": results}
+
+    def get(self, request):
+        return render(request, self.template_name, self.context(self.form()))
+
+    def post(self, request):
+        from contracts import paperless
+
+        form = self.form(request.POST)
+        if request.POST.get("action") == "test":
+            form.full_clean()
+            if any(name in form.errors for name in ("paperless_url", "token", "paperless_tags")):
+                return render(request, self.template_name, self.context(form))
+            return render(request, self.template_name, self.context(form, paperless.check(form.candidate())))
+        if not form.is_valid():
+            return render(request, self.template_name, self.context(form))
+        form.save()
+        messages.success(request, _("The settings have been saved."))
+        return redirect("manage_paperless")
 
 
 # --- Backup und Import (nur Superuser, 0.9 beta) ------------------------------

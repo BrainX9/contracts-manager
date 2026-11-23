@@ -433,18 +433,28 @@ class Document(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="+", verbose_name=_("created by"),
     )
+    # Version 0.9.0: Übertragung eines Uploads an Paperless (web.paperless_sync)
+    SYNC_PENDING = "pending"
+    SYNC_FAILED = "failed"
+    paperless_sync = models.CharField(
+        max_length=10, blank=True, editable=False,
+        choices=[(SYNC_PENDING, _("transferring")), (SYNC_FAILED, _("failed"))],
+    )
+    paperless_sync_task = models.CharField(max_length=100, blank=True, editable=False)
+    paperless_sync_error = models.TextField(blank=True, editable=False)
+    paperless_sync_started = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         verbose_name = _("document")
         verbose_name_plural = _("documents")
         ordering = ["-created_at", "-id"]
         constraints = [
-            # Genau eine Quelle: Datei bei Upload, ID bei Paperless
+            # Upload: Datei (seit 0.9.0 optional zusätzlich die ID in Paperless);
+            # Paperless: nur die ID, keine Datei
             models.CheckConstraint(
-                condition=(
-                    models.Q(source="upload", paperless_document_id__isnull=True) & ~models.Q(file="")
-                ) | models.Q(source="paperless", paperless_document_id__isnull=False, file=""),
-                name="document_source_matches",
+                condition=(models.Q(source="upload") & ~models.Q(file=""))
+                | models.Q(source="paperless", paperless_document_id__isnull=False, file=""),
+                name="document_source_matches_v2",
             ),
             models.UniqueConstraint(
                 fields=["contract", "paperless_document_id"], name="unique_paperless_document_per_contract",
@@ -484,15 +494,34 @@ class Document(models.Model):
     @property
     def paperless_url(self):
         """
-        Link zum Dokument in Paperless (oder None, auch ohne PAPERLESS_URL).
+        Adresse zum Öffnen eines Paperless-Dokuments (oder None): im Modus
+        "API" über Contracts Manager (web.document_views.paperless_document),
+        im Modus "Links" in der Weboberfläche von Paperless. Uploads öffnen
+        immer die eigene Datei, auch mit Paperless-ID.
         """
-        if self.is_upload:
+        if self.is_upload or not self.paperless_document_id:
             return None
+        if paperless.config().api:
+            from django.urls import reverse
+
+            return reverse("document_paperless", args=[self.pk])
         return paperless.document_url(self.paperless_document_id)
+
+    @property
+    def paperless_web_url(self):
+        """Link in die Weboberfläche von Paperless (oder None)."""
+        return paperless.document_url(self.paperless_document_id)
+
+    @property
+    def can_sync_to_paperless(self):
+        """Upload ohne Paperless-ID, der gerade nicht übertragen wird."""
+        return (
+            self.is_upload and not self.paperless_document_id
+            and self.paperless_sync != self.SYNC_PENDING and paperless.config().api
+        )
 
     def clean(self):
         if self.is_upload:
-            self.paperless_document_id = None
             if not self.file:
                 raise ValidationError({"file": _("Please choose a file.")})
         else:

@@ -98,7 +98,7 @@ The user interface is available in **English and German** (per user).
 - **AI assistant** (optional): ask questions about your contracts, or upload a contract or invoice and let it propose the new contract – changes only after your approval; Claude, **Mistral AI**, OpenAI, an OpenAI-compatible provider or **Ollama** with local models, configured in the app (with a connection test and an editable system prompt); scans and photos are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. **Mistral OCR**, a model at IONOS or in Ollama
 - **Backup and import** of all data and files as a single ZIP file (without passwords), in the app or on the command line; backups of older versions (0.1.0 and later) can be imported
 - **Single sign-on** with the Synology SSO Server (OpenID Connect), local login stays available
-- **Paperless-ngx** links to documents and correspondents (links only, no access to Paperless)
+- **Paperless-ngx** via its API: Paperless documents open inside Contracts Manager (for everyone who may read the contract), uploads can be transferred to Paperless with tags and correspondent – or simple links only
 - Clean, responsive interface with a sidebar, **light and dark mode** following the system setting
 - All assets served locally – no CDN, no tracking
 - Login lockout after repeated failed attempts, containers run as non-root
@@ -239,7 +239,6 @@ There are two places for settings:
 | Optional | `APP_IMAGE_TAG` | `latest` | Version of the Docker image, e.g. `0.7.0` to stay on one version |
 | Optional | `APP_UID`, `APP_GID` | `1000` | User and group the containers run as (not root) |
 | Optional | `DATA_PATH` | folder of the Compose file | Where `db` and `media` live on the host (older installations) |
-| Optional | `PAPERLESS_URL` | – | Base address of Paperless-ngx for links |
 | Optional | `AI_EFFORT`, `AI_MAX_TOKENS`, `AI_MAX_TOOL_ROUNDS`, `AI_TIMEOUT` | model default, `16000`, `8`, `120` | AI assistant: thinking depth (Claude), length of an answer, tool rounds per answer, timeout in seconds |
 | Optional | `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_MINUTES` | `5`, `15` | Login lockout after failed attempts |
 | Optional | `SECURE_HSTS_SECONDS` | `0` | HSTS in seconds, only with `USE_HTTPS` |
@@ -267,6 +266,7 @@ A value entered in the app takes precedence over the variable; an empty field in
 | `OIDC_USERNAME_CLAIM`, `OIDC_RP_SCOPES`, `OIDC_RP_SIGN_ALGO` | Administration › Single sign-on › Advanced: claim with the user name, scopes, signing algorithm |
 | `OIDC_OP_AUTHORIZATION_ENDPOINT`, `OIDC_OP_TOKEN_ENDPOINT`, `OIDC_OP_USER_ENDPOINT`, `OIDC_OP_JWKS_ENDPOINT` | Administration › Single sign-on › Advanced: endpoints for providers other than the Synology SSO Server |
 | `AI_ENABLED`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | Administration › AI settings: on/off, provider, API key, model, address of the API |
+| `PAPERLESS_URL` | Administration › Paperless: copied once on the first start of 0.9.0 (mode “Links only”), afterwards ignored |
 
 ## Documentation
 

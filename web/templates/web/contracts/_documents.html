@@ -9,6 +9,7 @@
       {% endif %}
     </div>
     <div id="document-form"></div>
+    <div id="document-list"{% if paperless_sync_pending %} hx-get="{% url 'document_section' contract.pk %}" hx-trigger="every 3s" hx-select="#document-list" hx-swap="outerHTML"{% endif %}>
     {% if documents %}
     <ul class="list-group list-group-flush document-list">
       {% for document in documents %}
@@ -17,12 +18,24 @@
         <div class="flex-grow-1 min-w-0">
           {% if document.is_upload %}
           <a class="fw-medium text-break" href="{{ document.file.url }}"{% if document.opens_inline %} target="_blank" rel="noopener"{% endif %}>{{ document.name }}</a>
-          <div class="small text-body-secondary text-break">{{ document.filename }}{% if document.file_size %} · {{ document.file_size|filesizeformat }}{% endif %} · {{ document.created_at|date:"SHORT_DATE_FORMAT" }}</div>
+          <div class="small text-body-secondary text-break">{{ document.filename }}{% if document.file_size %} · {{ document.file_size|filesizeformat }}{% endif %} · {{ document.created_at|date:"SHORT_DATE_FORMAT" }}{% if document.paperless_document_id %} · {% if document.paperless_web_url %}<a href="{{ document.paperless_web_url }}" target="_blank" rel="noopener noreferrer">{% blocktranslate with id=document.paperless_document_id %}Paperless document #{{ id }}{% endblocktranslate %}</a>{% else %}{% blocktranslate with id=document.paperless_document_id %}Paperless document #{{ id }}{% endblocktranslate %}{% endif %}{% endif %}</div>
+          {% if document.paperless_sync == "pending" %}
+          <div class="small text-body-secondary mt-1"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{% translate "Transferring to Paperless…" %}</div>
+          {% elif document.paperless_sync == "failed" %}
+          <div class="small text-danger mt-1 text-break"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% translate "Transfer to Paperless failed:" %} {{ document.paperless_sync_error }}</div>
+          {% endif %}
           {% else %}
-          {% if document.paperless_url %}<a class="fw-medium text-break" href="{{ document.paperless_url }}" target="_blank" rel="noopener noreferrer">{{ document.name }}<i class="bi bi-box-arrow-up-right ms-1 small" aria-hidden="true"></i></a>{% else %}<span class="fw-medium text-break">{{ document.name }}</span>{% endif %}
-          <div class="small text-body-secondary">{% blocktranslate with id=document.paperless_document_id %}Paperless document #{{ id }}{% endblocktranslate %} · {{ document.created_at|date:"SHORT_DATE_FORMAT" }}</div>
+          {% if document.paperless_url %}<a class="fw-medium text-break" href="{{ document.paperless_url }}" target="_blank" rel="noopener noreferrer">{{ document.name }}{% if not paperless.api %}<i class="bi bi-box-arrow-up-right ms-1 small" aria-hidden="true"></i>{% endif %}</a>{% else %}<span class="fw-medium text-break">{{ document.name }}</span>{% endif %}
+          <div class="small text-body-secondary">{% blocktranslate with id=document.paperless_document_id %}Paperless document #{{ id }}{% endblocktranslate %} · {{ document.created_at|date:"SHORT_DATE_FORMAT" }}{% if paperless.api %} · <a href="{% url 'document_paperless' document.pk %}?original=1">{% translate "Download original" %}</a>{% if document.paperless_web_url %} · <a href="{{ document.paperless_web_url }}" target="_blank" rel="noopener noreferrer">{% translate "Open in Paperless" %}</a>{% endif %}{% endif %}</div>
           {% endif %}
           {% if document.notes %}<div class="small text-body-secondary mt-1" style="white-space: pre-line">{{ document.notes }}</div>{% endif %}
+          {% if can_change and document.can_sync_to_paperless %}
+          <form class="mt-1" method="post" action="{% url 'document_sync' document.pk %}"
+                hx-post="{% url 'document_sync' document.pk %}" hx-target="#documents-section" hx-swap="outerHTML">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-cloud-upload me-1" aria-hidden="true"></i>{% if document.paperless_sync == "failed" %}{% translate "Try again" %}{% else %}{% translate "Transfer to Paperless" %}{% endif %}</button>
+          </form>
+          {% endif %}
         </div>
         {% if can_change %}
         <div class="text-nowrap">
@@ -42,5 +55,6 @@
     {% else %}
     <p class="text-body-secondary mb-0">{% translate "No documents yet." %}</p>
     {% endif %}
+    </div>
   </div>
 </div>

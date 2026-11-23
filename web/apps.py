@@ -38,4 +38,8 @@ class WebConfig(AppConfig):
     def ready(self):
         from django.db.models.signals import post_migrate
 
+        from . import env_import
+
         post_migrate.connect(ensure_update_schedule, sender=self)
+        # Version 0.9.0: Werte aus der .env einmalig in die Verwaltung übernehmen
+        post_migrate.connect(env_import.run, sender=self)

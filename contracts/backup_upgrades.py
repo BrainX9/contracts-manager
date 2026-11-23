@@ -153,6 +153,18 @@ VERSIONS = (
             "web": ["0008_mistral"],
             "assistant": ["0004_document_ai"],
         },
+        # 0.8.0 -> 0.9.0: neue Felder mit Standardwert (Paperless in
+        # web.SiteSettings, Übertragung am Dokument); die Regel "genau eine
+        # Quelle" am Dokument ist nur gelockert
+        no_changes,
+    ),
+    BackupVersion(
+        "0.9.0",
+        {
+            "contracts": ["0018_paperless_api"],
+            "web": ["0009_paperless_api"],
+            "assistant": ["0004_document_ai"],
+        },
     ),
 )
 

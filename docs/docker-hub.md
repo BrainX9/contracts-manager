@@ -20,7 +20,7 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 - Keep track of every contract with a **status traffic light** – active, notice sent, cancelled, archived – and the date a cancellation takes effect. Archived contracts leave the overview and the totals.
 - Link **predecessor and successor** contracts, e.g. when you change tariff or insurer.
 - Get an **email reminder** before a notice period ends.
-- Attach **documents** to contracts (upload or link to Paperless-ngx).
+- Attach **documents** to contracts: upload files or use **Paperless-ngx** – via its API, Paperless documents open inside the app and uploads can be transferred to Paperless.
 - **Share** contracts with family members – read-only or with edit rights.
 - Optional **AI assistant** (Claude, **Mistral AI**, OpenAI, an OpenAI-compatible provider such as IONOS, or **Ollama** with local models): ask questions about your contracts or let it propose a new contract from an uploaded document. Changes only after your approval.
 - **Scans and photos** are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. **Mistral OCR**, a model at IONOS or in Ollama.
@@ -128,7 +128,6 @@ There are two places for settings:
 | `APP_PORT` | `8000` | published port (`.env` setup) |
 | `APP_IMAGE_TAG` | `latest` | image version, e.g. `0.8.0` to stay on one version |
 | `APP_UID`, `APP_GID` | `1000` | user and group the containers run as |
-| `PAPERLESS_URL` | – | links to Paperless-ngx |
 
 The complete list, and the older variables for email, single sign-on and the AI assistant that still work but should no longer be used: [README, section “Configuration”](https://github.com/BrainX9/contracts-manager#configuration).
 

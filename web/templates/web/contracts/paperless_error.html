@@ -1,0 +1,10 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}{{ document.name }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ document.name }}</h1>
+<div class="alert alert-danger text-break" role="alert" style="max-width: 48rem">
+  <i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i>{% translate "The document could not be loaded from Paperless." %} {{ error }}
+</div>
+<a class="btn btn-outline-secondary" href="{% url 'contract_detail' document.contract_id %}"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% translate "Back to the contract" %}</a>
+{% endblock %}
