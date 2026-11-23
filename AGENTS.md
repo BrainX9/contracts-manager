@@ -498,6 +498,25 @@ Keine neuen Abhängigkeiten.
 - Backup: Eintrag `0.8.0` in `backup_upgrades.VERSIONS`, Schritt von 0.7.0 ist `no_changes`.
 - `APP_VERSION` ist `0.8.0`; Tag `v0.8.0`, Push und GitHub-Release nur auf Anweisung.
 
+### Version 0.9.0 (Teil 1): Paperless über die API
+Keine neuen Abhängigkeiten (API mit `urllib`). Zwei Pull Requests, Veröffentlichung als 0.9.0 nach Teil 2.
+
+**Verwaltung › Paperless (`/manage/paperless/`, nur Superuser)**
+- `web.SiteSettings` (Migration `web/0009`): `paperless_mode` (`off` Standard, `links`, `api`), `paperless_url`, `paperless_token` (in `SECRET_FIELDS`), `paperless_tags` (kommagetrennt), `paperless_user_tag` und `paperless_user_tag_prefix` (Standard `CM-`, ergibt z. B. `CM-anna`). „Testen“ (`paperless.check`) prüft Adresse, Token und Tags, legt nichts an; eine Weiterleitung (meist Anmeldeseite) gilt als falsche Adresse.
+- `contracts.paperless` ist die einzige Stelle: `config()`/`merge()` (`PaperlessConfig.links`, `.api`), Links (`document_url`, `correspondent_url`, nur in `links`/`api`), API-Client (`check`, `tag_ids` legt fehlende Tags ohne Zuordnung an, `upload` = `post_document`, `task_state` für Paperless 2.x und 3.x, `open_document`). Fehler als `PaperlessError` ohne Token.
+- `PAPERLESS_URL` wird einmalig übernommen (`web.env_import`, nach jeder Migration, Merker `SiteSettings.env_imported`): Modus „Nur Links“; danach ignoriert (Hinweis im Protokoll). README: Tabelle „Settings that moved to the app“.
+
+**Dokumente (Migration `contracts/0018`)**
+- Uploads dürfen zusätzlich eine `paperless_document_id` haben (CheckConstraint `document_source_matches_v2`); nachtragen im Bearbeitungsformular (nicht bei Modus `off`, nicht während einer Übertragung). Eindeutig pro Vertrag wie bisher.
+- Modus `api`: Paperless-Dokumente öffnen über `web.document_views.paperless_document` (`/documents/<id>/paperless/`, Leserecht am Vertrag, sonst 404; PDF-Fassung inline, `?original=1` Download; Fehlerseite 502). Es zählen nur die Rechte in Contracts Manager. `Document.paperless_url` liefert je nach Modus diese Adresse oder den Link in Paperless; `paperless_web_url` immer den Link.
+- „An Paperless übertragen“ (`/documents/<id>/paperless/sync/`, Bearbeitungsrecht, nur Uploads ohne ID): `web.paperless_sync` im Worker; Upload mit Titel, Tags, Benutzer-Tag und Korrespondent (vom Vertragspartner), dann Stand der Aufgabe abfragen (120 s, danach alle 2 Minuten per `Schedule.ONCE`, höchstens eine Stunde). Felder `paperless_sync` (`pending`/`failed`), `paperless_sync_task`, `paperless_sync_error`, `paperless_sync_started`. Die Liste fragt währenddessen `document_section` (`/contracts/<id>/documents/`) alle 3 s ab.
+- Modus `off`: im Dokumentformular nur Uploads.
+- Gegen Paperless-ngx 3.5.1 lokal geprüft (Tags, Benutzer-Tag, Korrespondent, Aufgabenstand, PDF-Fassung, Original, Fehlerfälle).
+
+**Weiteres**
+- Tests: `contracts.testing.paperless_settings` statt `override_settings(PAPERLESS_URL=…)`.
+- Backup: Eintrag `0.9.0` in `backup_upgrades.VERSIONS`, Schritt von 0.8.0 ist `no_changes`. `APP_VERSION` ist `0.9.0`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

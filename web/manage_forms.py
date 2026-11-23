@@ -593,6 +593,70 @@ class SSOSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
         return site_config.merge_sso(SimpleNamespace(**values, sso_client_secret=self.chosen_secret()), self.env)
 
 
+class PaperlessSettingsForm(SecretFieldMixin, BootstrapFormMixin, forms.ModelForm):
+    """
+    Paperless-ngx unter Verwaltung › Paperless (Version 0.9.0, nur
+    Superuser): Betriebsart, Adresse, API-Token, Tags und Benutzer-Tag.
+    """
+    secret_field = "token"
+    clear_field = "clear_token"
+    secret_model_field = "paperless_token"
+
+    token = forms.CharField(
+        label=_("API token"), required=False, max_length=500,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+    clear_token = forms.BooleanField(label=_("Remove the stored token"), required=False)
+
+    class Meta:
+        model = SiteSettings
+        fields = [
+            "paperless_mode", "paperless_url", "paperless_tags", "paperless_user_tag", "paperless_user_tag_prefix",
+        ]
+        widgets = {"paperless_mode": forms.RadioSelect}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["paperless_url"].widget.attrs["placeholder"] = "https://paperless.example.com"
+        self.fields["paperless_url"].help_text = _("Address you open Paperless at in the browser.")
+        self.fields["paperless_tags"].widget.attrs["placeholder"] = "Contracts Manager"
+        self.setup_secret(
+            "",
+            _("A token is stored. Leave empty to keep it."),
+            "",
+            _("Only needed for the API. Create it in Paperless for the user “Contracts-Manager” (profile › API token)."),
+        )
+
+    def clean_paperless_url(self):
+        return clean_http_url(self.cleaned_data["paperless_url"])
+
+    def clean_paperless_user_tag_prefix(self):
+        return self.cleaned_data["paperless_user_tag_prefix"].strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        mode = cleaned_data.get("paperless_mode")
+        if mode in (SiteSettings.PAPERLESS_LINKS, SiteSettings.PAPERLESS_API) and not cleaned_data.get("paperless_url"):
+            self.add_error("paperless_url", _("Please enter the address of Paperless."))
+        if mode == SiteSettings.PAPERLESS_API and "token" not in self.errors and not self.chosen_secret():
+            self.add_error("token", _("The API needs a token."))
+        return cleaned_data
+
+    def candidate(self):
+        """Konfiguration aus den eingegebenen Werten (für den Test, ungespeichert)."""
+        from types import SimpleNamespace
+
+        from contracts import paperless
+
+        data = self.cleaned_data
+        return paperless.merge(SimpleNamespace(
+            paperless_mode=SiteSettings.PAPERLESS_API, paperless_url=data.get("paperless_url", ""),
+            paperless_token=self.chosen_secret(), paperless_tags=data.get("paperless_tags", ""),
+            paperless_user_tag=data.get("paperless_user_tag"),
+            paperless_user_tag_prefix=data.get("paperless_user_tag_prefix", ""),
+        ))
+
+
 class BackupUploadForm(BootstrapFormMixin, forms.Form):
     """Backup zum Import hochladen (0.9 beta); geprüft wird in contracts.backup."""
 

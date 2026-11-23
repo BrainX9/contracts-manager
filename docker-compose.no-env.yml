@@ -41,8 +41,6 @@ x-app-settings: &app-settings
   USE_HTTPS: "True"
   # Always False in production
   DEBUG: "False"
-  # Links to Paperless-ngx, without trailing slash
-  # PAPERLESS_URL: "https://paperless.example.com"
   # AI assistant fine tuning (the connection is set in the app)
   # AI_EFFORT: "medium"
   # AI_MAX_TOKENS: "16000"

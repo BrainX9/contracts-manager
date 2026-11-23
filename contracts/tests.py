@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import ProtectedError
 from . import permissions as perms
+from .testing import paperless_settings
 from .models import (
     Provider, Category, Consumer, Contract, CostEntry, Country, Document, PaymentMethod, total_current_costs,
     ProviderGroupObjectPermission, ProviderUserObjectPermission, Reminder,
@@ -539,7 +540,7 @@ class PaperlessLinkTest(TestCase):
     def setUp(self):
         self.client.force_login(self.admin_user)
 
-    @override_settings(PAPERLESS_URL="https://paperless.example.de/")
+    @paperless_settings("https://paperless.example.de/")
     def test_links_with_paperless_url(self):
         self.assertEqual(
             self.document.paperless_url,
@@ -550,17 +551,17 @@ class PaperlessLinkTest(TestCase):
             "https://paperless.example.de/documents?correspondent__id__in=7",
         )
 
-    @override_settings(PAPERLESS_URL="")
+    @paperless_settings("")
     def test_no_links_without_paperless_url(self):
         self.assertIsNone(self.document.paperless_url)
         self.assertIsNone(self.provider.paperless_correspondent_url)
 
-    @override_settings(PAPERLESS_URL="https://paperless.example.de")
+    @paperless_settings("https://paperless.example.de")
     def test_no_link_without_id(self):
         document = Document(contract=self.contract, name="Upload", source="upload", file="documents/x.pdf")
         self.assertIsNone(document.paperless_url)
 
-    @override_settings(PAPERLESS_URL="https://paperless.example.de")
+    @paperless_settings("https://paperless.example.de")
     def test_admin_pages_show_links(self):
         contract_page = self.client.get(
             reverse("admin:contracts_contract_change", args=[self.contract.pk])
@@ -1799,9 +1800,9 @@ class DocumentModelTest(TestCase):
 
     def test_paperless_url(self):
         document = Document(contract=self.contract, name="Police", source="paperless", paperless_document_id=7)
-        with self.settings(PAPERLESS_URL="https://paperless.example.de/"):
+        with paperless_settings("https://paperless.example.de/"):
             self.assertEqual(document.paperless_url, "https://paperless.example.de/documents/7/details")
-        with self.settings(PAPERLESS_URL=""):
+        with paperless_settings(""):
             self.assertIsNone(document.paperless_url)
 
     def test_file_deleted_with_document_and_empty_folders(self):

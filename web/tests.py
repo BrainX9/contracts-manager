@@ -8,6 +8,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 
 from contracts import permissions as perms
+from contracts.testing import paperless_settings
 from contracts.models import Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider
 
 from .models import SiteSettings, UserPreferences
@@ -288,7 +289,7 @@ class ContractDetailTest(TestCase):
 
     def test_paperless_link(self):
         self.client.force_login(self.anna)
-        with self.settings(PAPERLESS_URL="https://paperless.example.de"):
+        with paperless_settings("https://paperless.example.de"):
             response = self.client.get(self.url)
         self.assertContains(response, "https://paperless.example.de/documents/42/details")
 
@@ -296,7 +297,7 @@ class ContractDetailTest(TestCase):
         self.contract.provider.paperless_correspondent_id = 5
         self.contract.provider.save()
         self.client.force_login(self.ben)
-        with self.settings(PAPERLESS_URL="https://paperless.example.de"):
+        with paperless_settings("https://paperless.example.de"):
             response = self.client.get(self.url)
         self.assertContains(response, self.contract.provider.name)
         self.assertNotContains(response, "correspondent__id__in=5")
@@ -2175,7 +2176,7 @@ class DocumentPagesTest(TestCase):
     def test_paperless_link(self):
         self.client.force_login(self.anna)
         data = {"source": "paperless", "name": "Police", "paperless_document_id": "42"}
-        with self.settings(PAPERLESS_URL="https://paperless.example.de"):
+        with paperless_settings("https://paperless.example.de"):
             self.assertRedirects(self.client.post(self.add_url, data), self.detail_url)
             page = self.client.get(self.detail_url)
             duplicate = self.client.post(self.add_url, {**data, "name": "Nochmal"})
@@ -2184,6 +2185,7 @@ class DocumentPagesTest(TestCase):
         self.assertContains(duplicate, "bereits mit diesem Vertrag verknüpft")
         self.assertEqual(self.contract.documents.count(), 1)
 
+    @paperless_settings("https://paperless.example.de")
     def test_paperless_needs_name_and_id(self):
         self.client.force_login(self.anna)
         response = self.client.post(self.add_url, {"source": "paperless", "name": "", "paperless_document_id": ""})
@@ -2192,6 +2194,7 @@ class DocumentPagesTest(TestCase):
         response = self.client.post(self.add_url, {"source": "paperless", "name": "", "paperless_document_id": "5"})
         self.assertEqual(set(response.context["form"].errors), {"name"})
 
+    @paperless_settings("https://paperless.example.de")
     def test_source_tabs(self):
         self.client.force_login(self.anna)
         upload = self.client.get(self.add_url)

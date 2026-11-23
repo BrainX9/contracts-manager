@@ -17,7 +17,7 @@ Email, single sign-on and the AI assistant could formerly only be set with varia
 - [Contract status](#contract-status)
 - [Notes with Markdown](#notes-with-markdown)
 - [Documents](#documents)
-- [Paperless-ngx links](#paperless-ngx-links)
+- [Paperless-ngx](#paperless-ngx)
 - [AI assistant](#ai-assistant)
 - [Version and updates](#version-and-updates)
 - [Language](#language)
@@ -234,7 +234,7 @@ Every contract has a **Documents** card listing both kinds of documents together
 | Icon | Source | Content |
 |---|---|---|
 | Hard drive (blue) | **Upload** | A file stored in Contracts Manager |
-| Archive box (green) | **Paperless** | A link to a document in Paperless-ngx (name and document ID) |
+| Archive box (green) | **Paperless** | A document in Paperless-ngx (name and document ID), see [Paperless-ngx](#paperless-ngx) |
 
 - **Allowed files:** PDF, JPG, PNG, WebP, DOCX, XLSX, ODT, ODS, TXT and EML, up to **20 MB** each. PDFs and images open in a new tab, other files are downloaded.
 - **Storage:** `data/media/documents/<year>/<reference>/<file name>`, e.g. `documents/2026/20260001/invoice.pdf`. The year is the year the contract was created (first four digits of its reference). The original file name is kept; if it already exists in the folder, a counter is added (`invoice_2.pdf`, `invoice_3.pdf`, …).
@@ -244,22 +244,47 @@ Every contract has a **Documents** card listing both kinds of documents together
 
 If uploads of larger files fail with error **413**, the reverse proxy limits the request size; allow at least 21 MB there.
 
-## Paperless-ngx links
+## Paperless-ngx
 
 Contract partners and contract documents can point to [Paperless-ngx](https://docs.paperless-ngx.com/):
 
 - **Contract partner:** correspondent ID
-- **Document of a contract:** document ID, e.g. the policy, the invoice or the price adjustment letter (see [Documents](#documents))
+- **Document of a contract:** document ID, e.g. the policy, the invoice or the price adjustment letter (see [Documents](#documents)). Since 0.9.0 an uploaded document can also have a Paperless ID, when the same file is in both places.
 
 The IDs appear in the Paperless address bar, e.g. `…/documents/123/details` for document 123. For correspondents, filter the document list by the correspondent and read the ID from the address.
 
-To turn the IDs into links, set the Paperless address (without a trailing slash) and restart:
+Under **Administration › Paperless** (superusers) choose how Contracts Manager uses Paperless:
 
-```dotenv
-PAPERLESS_URL=https://paperless.example.com
-```
+| Mode | What happens |
+|---|---|
+| **Off** (default) | No links and no requests. Paperless documents keep their ID but cannot be opened from here. |
+| **Links only** | IDs become links that open Paperless in a new tab, where you sign in as usual. Contracts Manager does not access Paperless. |
+| **API** | Contracts Manager talks to Paperless with an API token: Paperless documents open **inside Contracts Manager** and uploads can be **transferred to Paperless**. |
 
-The links open Paperless in a new tab, where you sign in as usual. Contracts Manager does not access Paperless; it only creates links. Without `PAPERLESS_URL` the IDs are stored but not linked.
+Installations that had `PAPERLESS_URL` in `.env` start in **Links only** with that address; the variable is copied once and ignored afterwards.
+
+### Setting up the API
+
+1. In Paperless, create a user, e.g. **Contracts-Manager**, and give it permission to *view* and *add* documents and tags and to *view* correspondents. It must also be allowed to **see the documents you link** – documents owned by other Paperless users are only visible if they are shared with it (for example through a group).
+2. Sign in to Paperless as that user and create an **API token** (profile › API token).
+3. In Contracts Manager open **Administration › Paperless**, choose **API**, enter the address of Paperless and the token, and click **Test**. The test checks the connection and the tags without creating anything.
+
+The token is stored in the database, never shown again and not part of a backup.
+
+### Opening Paperless documents
+
+With the API, a Paperless document opens in Contracts Manager: by default the PDF version Paperless created (with text recognition), or the original via **Download original**. Only the rights in Contracts Manager count – everyone who may read the contract can open the document, even without an account in Paperless. **Open in Paperless** next to it leads to the Paperless web interface.
+
+### Transferring uploads to Paperless
+
+Uploaded documents without a Paperless ID get a button **Transfer to Paperless** (editors of the contract). The background worker uploads the file with:
+
+- the **name** of the document as title,
+- the **tags** from Administration › Paperless (comma separated; missing tags are created),
+- optionally a **user tag**: prefix plus user name, e.g. `CM-anna`, so you can see in Paperless who transferred it,
+- the **correspondent**, if the contract partner has a Paperless correspondent ID.
+
+Paperless processes the file in the background; Contracts Manager waits for the result and then stores the ID of the new Paperless document. If Paperless recognises the file as a duplicate, the existing document is linked. Errors are shown below the document, with a button to try again. The file in Contracts Manager stays.
 
 ## AI assistant
 

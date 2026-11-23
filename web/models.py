@@ -42,11 +42,11 @@ class SiteSettings(models.Model):
     (SiteSettings.load). Zugangsdaten stehen in der .env oder hier
     (``SECRET_FIELDS``: API-Schlüssel des KI-Assistenten seit 0.3.0,
     SMTP-Passwort und Client-Secret des SSO seit 0.4.0, Schlüssel der
-    Dokument-KI seit 0.6.0); sie werden nie
+    Dokument-KI seit 0.6.0, API-Token für Paperless seit 0.9.0); sie werden nie
     angezeigt und nie ins Backup geschrieben.
     """
     # Zugangsdaten: nie anzeigen, nie exportieren, bei einem Import behalten
-    SECRET_FIELDS = ("ai_api_key", "email_password", "sso_client_secret", "reader_api_key")
+    SECRET_FIELDS = ("ai_api_key", "email_password", "sso_client_secret", "reader_api_key", "paperless_token")
     ON = "on"
     OFF = "off"
     SWITCH_CHOICES = [(ON, _("On")), (OFF, _("Off"))]
@@ -76,6 +76,17 @@ class SiteSettings(models.Model):
         ("ocr", _("OCR model (receives only the image)")),
         # Version 0.8.0: eigener OCR-Dienst von Mistral, liest PDFs direkt
         ("mistral_ocr", _("Mistral OCR (reads PDFs directly, e.g. mistral-ocr-latest)")),
+    ]
+
+    # Version 0.9.0: Paperless-ngx (contracts.paperless). Aus, nur Links in die
+    # Weboberfläche oder Zugriff über die API (Anzeige, Synchronisieren).
+    PAPERLESS_OFF = "off"
+    PAPERLESS_LINKS = "links"
+    PAPERLESS_API = "api"
+    PAPERLESS_MODE_CHOICES = [
+        (PAPERLESS_OFF, _("Off")),
+        (PAPERLESS_LINKS, _("Links only (open documents in Paperless)")),
+        (PAPERLESS_API, _("API (show and synchronise documents)")),
     ]
 
     sso_login_label = models.CharField(
@@ -139,6 +150,25 @@ class SiteSettings(models.Model):
     update_check = models.BooleanField(_("check for updates"), default=True)
     latest_version = models.CharField(_("latest known version"), max_length=20, blank=True, editable=False)
     update_checked_at = models.DateTimeField(_("last update check"), null=True, blank=True, editable=False)
+
+    # Version 0.9.0: Paperless-ngx. Nur hier, keine .env mehr; ein früheres
+    # PAPERLESS_URL übernimmt web.env_import einmalig.
+    paperless_mode = models.CharField(
+        _("use of Paperless"), max_length=10, choices=PAPERLESS_MODE_CHOICES, default=PAPERLESS_OFF,
+    )
+    paperless_url = models.CharField(_("address of Paperless"), max_length=500, blank=True)
+    paperless_token = models.CharField(_("API token"), max_length=500, blank=True)
+    paperless_tags = models.CharField(
+        _("tags"), max_length=500, blank=True,
+        help_text=_("Comma separated, e.g. Contract, Contracts Manager. Missing tags are created in Paperless."),
+    )
+    paperless_user_tag = models.BooleanField(_("add a tag for the user"), default=False)
+    paperless_user_tag_prefix = models.CharField(
+        _("prefix of the user tag"), max_length=50, blank=True, default="CM-",
+        help_text=_("Followed by the user name, e.g. CM-anna."),
+    )
+    # Intern: Werte aus der .env einmalig übernommen (web.env_import)
+    env_imported = models.CharField(max_length=200, blank=True, editable=False)
 
     class Meta:
         verbose_name = _("application settings")

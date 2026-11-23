@@ -21,7 +21,7 @@ from django_htmx.http import reswap, retarget
 from contracts import logos
 from contracts import permissions as perms
 from contracts.models import (
-    CENT, Category, Consumer, Contract, CostEntry, PaymentMethod, Provider, Reminder, category_tree_order,
+    CENT, Category, Consumer, Contract, CostEntry, Document, PaymentMethod, Provider, Reminder, category_tree_order,
     total_current_costs,
 )
 from contracts.permissions import visible_to
@@ -353,10 +353,16 @@ def document_context(contract, user):
     """
     Dokumente eines Vertrags für Detailseite und HTMX-Antworten (Version 0.7 beta).
     """
+    from contracts import paperless
+
+    documents = list(contract.documents.order_by("-created_at", "-id"))
     return {
         "contract": contract,
-        "documents": list(contract.documents.order_by("-created_at", "-id")),
+        "documents": documents,
         "can_change": perms.can_change(user, contract),
+        # Version 0.9.0: Paperless-Konfiguration und laufende Übertragungen
+        "paperless": paperless.config(),
+        "paperless_sync_pending": any(doc.paperless_sync == Document.SYNC_PENDING for doc in documents),
     }
 
 

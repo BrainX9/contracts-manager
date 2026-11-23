@@ -1,0 +1,67 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block title %}Paperless{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Paperless</h1>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Connection to Paperless-ngx. With links, documents open in Paperless. With the API, Contracts Manager shows Paperless documents itself – everyone who may read the contract sees them, without an account in Paperless – and can transfer uploaded files to Paperless." %}</p>
+</div>
+
+<form method="post" action="{% url 'manage_paperless' %}" novalidate style="max-width: 56rem">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-toggles me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Use of Paperless" %}</h2>
+    <fieldset class="mb-0">
+      <legend class="visually-hidden">{{ form.paperless_mode.label }}</legend>
+      {% for radio in form.paperless_mode %}
+      <div class="form-check">
+        {{ radio.tag }}
+        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+      </div>
+      {% endfor %}
+      {% for error in form.paperless_mode.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    </fieldset>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-plug me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Connection" %}</h2>
+    <div class="row">
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.paperless_url %}</div>
+      <div class="col-md-6">{% include "web/manage/_secret_field.html" with field=form.token clear=form.clear_token %}</div>
+    </div>
+    <p class="small text-body-secondary mb-0">{% translate "The token is stored in the database, is never shown again and is not part of a backup. The Paperless user needs permission to view and add documents and tags, and must be allowed to see the documents you link (for example through a group in Paperless)." %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5 card-title mb-3"><i class="bi bi-tags me-2 text-body-secondary" aria-hidden="true"></i>{% translate "Transfer to Paperless" %}</h2>
+    <p class="small text-body-secondary">{% translate "Only with the API: uploaded documents get a button to transfer them to Paperless. Contracts Manager then stores the ID of the new Paperless document. The correspondent is set from the contract partner if it has a Paperless correspondent ID." %}</p>
+    {% include "web/includes/field.html" with field=form.paperless_tags %}
+    <div class="row align-items-end">
+      <div class="col-md-6">
+        <div class="form-check mb-3">{{ form.paperless_user_tag }}<label class="form-check-label" for="{{ form.paperless_user_tag.id_for_label }}">{{ form.paperless_user_tag.label }}</label>
+          <div class="form-text">{% translate "Shows in Paperless which user transferred a document." %}</div>
+        </div>
+      </div>
+      <div class="col-md-6">{% include "web/includes/field.html" with field=form.paperless_user_tag_prefix %}</div>
+    </div>
+  </div></div>
+
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <button type="submit" name="action" value="save" class="btn btn-primary">{% translate "Save" %}</button>
+    <button type="submit" name="action" value="test" class="btn btn-outline-primary"><i class="bi bi-plug me-1" aria-hidden="true"></i>{% translate "Test" %}</button>
+    <span class="small text-body-secondary">{% translate "“Test” checks the address and token entered above, without saving them. Nothing is created in Paperless." %}</span>
+  </div>
+</form>
+
+{% if results %}
+<ul class="list-group mb-3" style="max-width: 56rem">
+  {% for ok, text in results %}
+  <li class="list-group-item text-break"><i class="bi {% if ok %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-danger{% endif %} me-2" aria-hidden="true"></i>{{ text }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

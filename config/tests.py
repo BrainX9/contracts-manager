@@ -32,6 +32,8 @@ MOVED_TO_APP = {
     "OIDC_OP_AUTHORIZATION_ENDPOINT", "OIDC_OP_TOKEN_ENDPOINT",
     "OIDC_OP_USER_ENDPOINT", "OIDC_OP_JWKS_ENDPOINT",
     "AI_ENABLED", "AI_PROVIDER", "AI_API_KEY", "AI_MODEL", "AI_BASE_URL",
+    # Version 0.9.0: Verwaltung › Paperless (einmalig übernommen)
+    "PAPERLESS_URL",
 }
 
 
@@ -104,7 +106,7 @@ class NoEnvComposeTest(SimpleTestCase):
     def test_no_env(self):
         text = self.check("docker-compose.no-env.yml")
         # Die optionalen Variablen der .env stehen auskommentiert darin
-        for variable in ("ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "PAPERLESS_URL", "AI_TIMEOUT",
+        for variable in ("ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "AI_TIMEOUT",
                          "AXES_FAILURE_LIMIT", "DJANGO_LOG_LEVEL"):
             self.assertIn(variable, text)
         self.assertNotIn("ADMIN_", text)

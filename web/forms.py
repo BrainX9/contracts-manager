@@ -502,14 +502,29 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["file"].help_text = _("PDF, images, Office documents, text or emails, up to %(size)s.") % {
             "size": filesizeformat(documents.MAX_UPLOAD_SIZE),
         }
+        from contracts import paperless
+
+        self.paperless = paperless.config()
         if self.instance.pk:
             # Quelle und Datei nach dem Anlegen nicht mehr änderbar
             del self.fields["source"]
             del self.fields["file"]
             if self.instance.is_upload:
-                del self.fields["paperless_document_id"]
+                # Version 0.9.0: Paperless-ID eines Uploads nachtragen (nicht
+                # während einer Übertragung und nicht, wenn Paperless aus ist)
+                syncing = self.instance.paperless_sync == Document.SYNC_PENDING
+                if syncing or (self.paperless.mode == "off" and not self.instance.paperless_document_id):
+                    del self.fields["paperless_document_id"]
+                else:
+                    self.fields["paperless_document_id"].help_text = _(
+                        "Optional: the same document in Paperless. The local file stays."
+                    )
             self.fields["name"].required = True
             self.fields["name"].help_text = ""
+        elif self.paperless.mode == "off":
+            # Paperless ausgeschaltet: nur Uploads
+            self.fields["source"].choices = [(Document.Source.UPLOAD, Document.Source.UPLOAD.label)]
+            self.fields["paperless_document_id"].disabled = True
         elif self.data:
             # Felder der nicht gewählten Quelle ignorieren
             source = self.data.get(self.add_prefix("source"))
@@ -529,7 +544,7 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
             elif source == Document.Source.PAPERLESS and cleaned_data.get("paperless_document_id"):
                 self.add_error("name", _("Please enter a name."))
         document_id = cleaned_data.get("paperless_document_id")
-        if source == Document.Source.PAPERLESS and document_id:
+        if document_id and "paperless_document_id" in self.fields:
             duplicates = self.instance.contract.documents.filter(paperless_document_id=document_id)
             if duplicates.exclude(pk=self.instance.pk).exists():
                 self.add_error(
