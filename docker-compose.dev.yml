@@ -1,12 +1,12 @@
 # Ergänzung für die Entwicklung. Aufruf:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-# oder einmalig in .env: COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+#   docker compose -f docker-compose.env.yml -f docker-compose.dev.yml up --build
+# oder einmalig in .env: COMPOSE_FILE=docker-compose.env.yml:docker-compose.dev.yml
 #
 # Unterschiede zum Betrieb:
 # - Das Image wird lokal aus dem Dockerfile gebaut statt geladen
 # - Datenbank im Docker-Volume postgres_data statt unter DATA_PATH
 # - Code wird eingebunden, gunicorn lädt Änderungen automatisch neu
-# - Uploads im Projektordner unter ./media
+# - Uploads im Projektordner unter ./media, erzeugter Schlüssel unter ./config-data
 
 services:
   db:
@@ -21,6 +21,7 @@ services:
     volumes:
       - .:/app
       - ./media:/app/media
+      - ./config-data:/config
 
   worker:
     # Code eingebunden; nach Änderungen an Aufgaben neu starten:
@@ -28,6 +29,7 @@ services:
     image: contracts-manager-app
     volumes:
       - .:/app
+      - ./config-data:/config
 
 volumes:
   postgres_data:

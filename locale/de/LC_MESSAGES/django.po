@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 13:49+0100\n"
+"POT-Creation-Date: 2026-11-23 14:24+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -654,11 +654,11 @@ msgstr "Bitte warte, bis die aktuelle Antwort fertig ist."
 msgid "This proposal has already been decided."
 msgstr "Über diesen Vorschlag wurde bereits entschieden."
 
-#: config/settings.py:187
+#: config/settings.py:201
 msgid "German"
 msgstr "Deutsch"
 
-#: config/settings.py:188
+#: config/settings.py:202
 msgid "English"
 msgstr "Englisch"
 
@@ -1864,7 +1864,7 @@ msgstr ""
 "Der neue Eigentümer hat bereits Objekte mit diesen Namen: %(names)s. Bitte "
 "zuerst umbenennen."
 
-#: web/manage_forms.py:173 web/manage_forms.py:498 web/models.py:191
+#: web/manage_forms.py:173 web/manage_forms.py:490 web/models.py:191
 msgid "SSO Login"
 msgstr "SSO Login"
 
@@ -1877,44 +1877,19 @@ msgstr "API-Schlüssel"
 msgid "Remove the stored API key"
 msgstr "Gespeicherten API-Schlüssel entfernen"
 
-#: web/manage_forms.py:212 web/manage_forms.py:409 web/manage_forms.py:505
-#, python-format
-msgid "As in the .env file (%(value)s)"
-msgstr "Wie in der Datei .env (%(value)s)"
-
-#: web/manage_forms.py:214 web/manage_forms.py:509
-msgid "on"
-msgstr "ein"
-
-#: web/manage_forms.py:214 web/manage_forms.py:509
-msgid "off"
-msgstr "aus"
-
-#: web/manage_forms.py:221
+#: web/manage_forms.py:220
 msgid "Default address of the provider"
 msgstr "Standardadresse des Anbieters"
 
-#: web/manage_forms.py:222 web/manage_forms.py:397 web/manage_forms.py:506
-msgid "Empty: value from the .env file."
-msgstr "Leer: Wert aus der Datei .env."
+#: web/manage_forms.py:222
+msgid "Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://example.com/v1 or http://192.168.1.20:11434/v1 for Ollama on another computer. Empty: for Mistral AI https://api.mistral.ai/v1, for Ollama the Docker host (host.docker.internal), otherwise the default address of the provider."
+msgstr "Nur für OpenAI-kompatible Anbieter, Ollama oder einen Proxy, z. B. https://example.com/v1 oder http://192.168.1.20:11434/v1 für Ollama auf einem anderen Rechner. Leer: für Mistral AI https://api.mistral.ai/v1, für Ollama der Docker-Host (host.docker.internal), sonst die Standardadresse des Anbieters."
 
-#: web/manage_forms.py:224
-msgid ""
-"Only for OpenAI-compatible providers, Ollama or a proxy, e.g. https://"
-"example.com/v1 or http://192.168.1.20:11434/v1 for Ollama on another "
-"computer. Empty: for Mistral AI https://api.mistral.ai/v1, for Ollama the "
-"Docker host (host.docker.internal), otherwise the value from the .env file."
-msgstr ""
-"Nur für OpenAI-kompatible Anbieter, Ollama oder einen Proxy, z. B. https://"
-"example.com/v1 oder http://192.168.1.20:11434/v1 für Ollama auf einem "
-"anderen Rechner. Leer: bei Mistral AI https://api.mistral.ai/v1, bei Ollama "
-"der Docker-Host (host.docker.internal), sonst der Wert aus der Datei .env."
-
-#: web/manage_forms.py:231
+#: web/manage_forms.py:229
 msgid "Same as the main model"
 msgstr "Wie beim Hauptmodell"
 
-#: web/manage_forms.py:233
+#: web/manage_forms.py:231
 msgid ""
 "Empty: no document AI, scans and photos are read with the local text "
 "recognition. Example Mistral: mistral-ocr-latest (type Mistral OCR). Example "
@@ -1924,95 +1899,76 @@ msgstr ""
 "Texterkennung gelesen. Beispiel Mistral: mistral-ocr-latest (Art Mistral "
 "OCR). Beispiel IONOS: lightonai/LightOnOCR-2-1B (OCR-Modell)."
 
-#: web/manage_forms.py:238
+#: web/manage_forms.py:236
 msgid "Empty: the address of the main model (Ollama: the Docker host)."
 msgstr "Leer: die Adresse des Hauptmodells (Ollama: der Docker-Host)."
 
-#: web/manage_forms.py:241 web/manage_forms.py:246
+#: web/manage_forms.py:239 web/manage_forms.py:244
 msgid "A key is stored. Leave empty to keep it."
 msgstr "Ein Schlüssel ist gespeichert. Leer lassen, um ihn zu behalten."
 
-#: web/manage_forms.py:244
+#: web/manage_forms.py:242
 msgid "Empty: the key of the main model (same provider)."
 msgstr "Leer: der Schlüssel des Hauptmodells (bei gleichem Anbieter)."
 
-#: web/manage_forms.py:250
-msgid "No key is stored here; the key from the .env file is used."
-msgstr ""
-"Hier ist kein Schlüssel gespeichert; es gilt der Schlüssel aus der "
-"Datei .env."
-
-#: web/manage_forms.py:251
+#: web/manage_forms.py:247
 msgid "No key is set yet."
 msgstr "Noch kein Schlüssel hinterlegt."
 
-#: web/manage_forms.py:272
+#: web/manage_forms.py:267
 msgid "Mistral OCR only works with the provider Mistral AI."
 msgstr "Mistral OCR funktioniert nur mit dem Anbieter Mistral AI."
 
-#: web/manage_forms.py:284
+#: web/manage_forms.py:279
 msgid "The system prompt may have at most 20,000 characters."
 msgstr "Der System-Prompt darf höchstens 20.000 Zeichen haben."
 
-#: web/manage_forms.py:377 web/models.py:130
+#: web/manage_forms.py:372 web/models.py:130
 msgid "SMTP password"
 msgstr "SMTP-Passwort"
 
-#: web/manage_forms.py:380
+#: web/manage_forms.py:375
 msgid "Remove the stored password"
 msgstr "Gespeichertes Passwort entfernen"
 
-#: web/manage_forms.py:413
-msgid ""
-"Address the emails come from, often the same as the SMTP user. Empty: value "
-"from the .env file."
-msgstr ""
-"Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. "
-"Leer: Wert aus der Datei .env."
-
-#: web/manage_forms.py:416
-msgid ""
-"Public address of the app, used for links in emails. Empty: value from "
-"the .env file."
-msgstr ""
-"Öffentliche Adresse der App, für Links in E-Mails. Leer: Wert aus der "
-"Datei .env."
-
-#: web/manage_forms.py:419
+#: web/manage_forms.py:402 web/manage_forms.py:410 web/manage_forms.py:514
 #, python-format
-msgid "Empty: value from the .env file (%(value)s)."
-msgstr "Leer: Wert aus der Datei .env (%(value)s)."
+msgid "Empty: %(value)s."
+msgstr "Leer: %(value)s."
 
-#: web/manage_forms.py:423
+#: web/manage_forms.py:407
+msgid "Address the emails come from, often the same as the SMTP user. Empty: the SMTP user."
+msgstr "Adresse, von der die E-Mails kommen, oft dieselbe wie der SMTP-Benutzer. Leer: der SMTP-Benutzer."
+
+#: web/manage_forms.py:409
+msgid "Public address of the app, used for links in emails."
+msgstr "Öffentliche Adresse der App, für Links in E-Mails."
+
+#: web/manage_forms.py:415
 msgid "A password is stored. Leave empty to keep it."
 msgstr "Ein Passwort ist gespeichert. Leer lassen, um es zu behalten."
 
-#: web/manage_forms.py:424
-msgid "No password is stored here; the password from the .env file is used."
-msgstr ""
-"Hier ist kein Passwort gespeichert; es gilt das Passwort aus der Datei .env."
-
-#: web/manage_forms.py:425
+#: web/manage_forms.py:417
 msgid "No password is set yet."
 msgstr "Es ist noch kein Passwort hinterlegt."
 
-#: web/manage_forms.py:431
+#: web/manage_forms.py:423
 msgid "Enter the host name only, e.g. smtp.example.com."
 msgstr "Nur den Servernamen eingeben, z. B. smtp.example.com."
 
-#: web/manage_forms.py:455
+#: web/manage_forms.py:447
 msgid "Enter a time such as 07:00."
 msgstr "Gib eine Uhrzeit wie 07:00 ein."
 
-#: web/manage_forms.py:486
+#: web/manage_forms.py:478
 msgid "Client secret"
 msgstr "Client-Secret"
 
-#: web/manage_forms.py:489
+#: web/manage_forms.py:481
 msgid "Remove the stored client secret"
 msgstr "Gespeichertes Client-Secret entfernen"
 
-#: web/manage_forms.py:512
+#: web/manage_forms.py:502
 msgid ""
 "On: a user who signs in for the first time is created automatically, without "
 "a local password and never as an administrator."
@@ -2020,54 +1976,41 @@ msgstr ""
 "An: Wer sich zum ersten Mal anmeldet, wird automatisch angelegt, ohne "
 "lokales Passwort und nie als Administrator."
 
-#: web/manage_forms.py:526
-msgid ""
-"For the Synology SSO Server the address of the NAS, e.g. https://"
-"nas.example.com; the endpoints are derived from it. Empty: value from "
-"the .env file."
-msgstr ""
-"Beim Synology SSO Server die Adresse des NAS, z. B. https://nas.example.com; "
-"die Endpunkte ergeben sich daraus. Leer: Wert aus der Datei .env."
+#: web/manage_forms.py:516
+msgid "For the Synology SSO Server the address of the NAS, e.g. https://nas.example.com; the endpoints are derived from it."
+msgstr "Beim Synology SSO Server die Adresse der NAS, z. B. https://nas.example.com; die Endpunkte ergeben sich daraus."
 
-#: web/manage_forms.py:530
-msgid ""
-"Synology: “username”, other providers often “preferred_username”. Empty: "
-"value from the .env file."
-msgstr ""
-"Synology: „username“, andere Anbieter oft „preferred_username“. Leer: Wert "
-"aus der Datei .env."
+#: web/manage_forms.py:520
+#, python-format
+msgid "Synology: “username”, other providers often “preferred_username”. Empty: %(value)s."
+msgstr "Synology: „username“, andere Anbieter oft „preferred_username“. Leer: %(value)s."
 
-#: web/manage_forms.py:538
+#: web/manage_forms.py:528
 msgid "A client secret is stored. Leave empty to keep it."
 msgstr "Ein Client-Secret ist gespeichert. Leer lassen, um es zu behalten."
 
-#: web/manage_forms.py:539
-msgid "No client secret is stored here; the one from the .env file is used."
-msgstr ""
-"Hier ist kein Client-Secret gespeichert; es gilt das aus der Datei .env."
-
-#: web/manage_forms.py:540
+#: web/manage_forms.py:530
 msgid "No client secret is set yet."
 msgstr "Es ist noch kein Client-Secret hinterlegt."
 
-#: web/manage_forms.py:550
+#: web/manage_forms.py:540
 #, python-format
 msgid "Supported: %(values)s."
 msgstr "Unterstützt: %(values)s."
 
-#: web/manage_forms.py:571
+#: web/manage_forms.py:561
 msgid "address of the SSO server or the endpoints"
 msgstr "Adresse des SSO-Servers oder die Endpunkte"
 
-#: web/manage_forms.py:574 web/models.py:137 web/sso_check.py:37
+#: web/manage_forms.py:564 web/models.py:137 web/sso_check.py:37
 msgid "client ID"
 msgstr "Client-ID"
 
-#: web/manage_forms.py:575 web/models.py:138 web/sso_check.py:38
+#: web/manage_forms.py:565 web/models.py:138 web/sso_check.py:38
 msgid "client secret"
 msgstr "Client-Secret"
 
-#: web/manage_forms.py:580
+#: web/manage_forms.py:570
 #, python-format
 msgid ""
 "Single sign-on can only be switched on with complete settings. Missing: "
@@ -2076,23 +2019,23 @@ msgstr ""
 "Single Sign-on lässt sich nur mit vollständigen Angaben einschalten. Es "
 "fehlt: %(missing)s."
 
-#: web/manage_forms.py:606 web/models.py:160
+#: web/manage_forms.py:596 web/models.py:160
 msgid "API token"
 msgstr "API-Token"
 
-#: web/manage_forms.py:609
+#: web/manage_forms.py:599
 msgid "Remove the stored token"
 msgstr "Gespeichertes Token entfernen"
 
-#: web/manage_forms.py:621
+#: web/manage_forms.py:611
 msgid "Address you open Paperless at in the browser."
 msgstr "Adresse, unter der du Paperless im Browser öffnest."
 
-#: web/manage_forms.py:625
+#: web/manage_forms.py:615
 msgid "A token is stored. Leave empty to keep it."
 msgstr "Ein Token ist gespeichert. Leer lassen, um es zu behalten."
 
-#: web/manage_forms.py:627
+#: web/manage_forms.py:617
 msgid ""
 "Only needed for the API. Create it in Paperless for the user “Contracts-"
 "Manager” (profile › API token)."
@@ -2100,15 +2043,15 @@ msgstr ""
 "Nur für die API nötig. In Paperless für den Benutzer „Contracts-Manager“ "
 "erzeugen (Profil › API-Token)."
 
-#: web/manage_forms.py:640
+#: web/manage_forms.py:630
 msgid "Please enter the address of Paperless."
 msgstr "Bitte die Adresse von Paperless eingeben."
 
-#: web/manage_forms.py:642
+#: web/manage_forms.py:632
 msgid "The API needs a token."
 msgstr "Für die API ist ein Token nötig."
 
-#: web/manage_forms.py:663
+#: web/manage_forms.py:653
 msgid "Backup file (ZIP)"
 msgstr "Backup-Datei (ZIP)"
 
@@ -2218,8 +2161,8 @@ msgid "The system prompt has been reset to the default."
 msgstr "Der System-Prompt wurde auf den Standard zurückgesetzt."
 
 #: web/manage_views.py:712
-msgid "No SMTP server is set, neither here nor in the .env file."
-msgstr "Es ist kein SMTP-Server hinterlegt, weder hier noch in der Datei .env."
+msgid "No SMTP server is set."
+msgstr "Es ist kein SMTP-Server eingetragen."
 
 #: web/manage_views.py:723
 #, python-format
@@ -3474,14 +3417,8 @@ msgid "SSO only"
 msgstr "Nur SSO"
 
 #: web/templates/web/manage/ai.html:7
-msgid ""
-"Connection and system prompt of the AI assistant. Values entered here take "
-"precedence over the .env file; an empty field means “value from the .env "
-"file”. Changes apply immediately, without a restart."
-msgstr ""
-"Verbindung und System-Prompt des KI-Assistenten. Hier eingetragene Werte "
-"haben Vorrang vor der Datei .env; ein leeres Feld bedeutet „Wert aus der "
-"Datei .env“. Änderungen gelten sofort, ohne Neustart."
+msgid "Connection and system prompt of the AI assistant. Changes apply immediately, without a restart."
+msgstr "Verbindung und System-Prompt des KI-Assistenten. Änderungen gelten sofort, ohne Neustart."
 
 #: web/templates/web/manage/ai.html:17
 #: web/templates/web/manage/paperless.html:31
@@ -3769,15 +3706,8 @@ msgid "Replace everything and import"
 msgstr "Alles ersetzen und importieren"
 
 #: web/templates/web/manage/email.html:7
-msgid ""
-"SMTP server for reminders, invitations and password reset. Values entered "
-"here take precedence over the .env file; an empty field means “value from "
-"the .env file”. Changes apply immediately, without a restart."
-msgstr ""
-"SMTP-Server für Erinnerungen, Einladungen und das Zurücksetzen von "
-"Passwörtern. Hier eingetragene Werte haben Vorrang vor der Datei .env; ein "
-"leeres Feld bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, "
-"ohne Neustart."
+msgid "SMTP server for reminders, invitations and password reset. Changes apply immediately, without a restart."
+msgstr "SMTP-Server für Erinnerungen, Einladungen und Passwort-Reset. Änderungen gelten sofort, ohne Neustart."
 
 #: web/templates/web/manage/email.html:21
 msgid "no user"
@@ -3965,16 +3895,8 @@ msgid "No reminders."
 msgstr "Keine Erinnerungen."
 
 #: web/templates/web/manage/sso.html:7
-msgid ""
-"Sign-in with OpenID Connect, e.g. the Synology SSO Server. Values entered "
-"here take precedence over the .env file; an empty field means “value from "
-"the .env file”. Changes apply immediately, without a restart. The local "
-"login always stays available."
-msgstr ""
-"Anmeldung über OpenID Connect, z. B. mit dem Synology SSO Server. Hier "
-"eingetragene Werte haben Vorrang vor der Datei .env; ein leeres Feld "
-"bedeutet „Wert aus der Datei .env“. Änderungen gelten sofort, ohne Neustart. "
-"Die lokale Anmeldung bleibt immer möglich."
+msgid "Sign-in with OpenID Connect, e.g. the Synology SSO Server. Changes apply immediately, without a restart. The local login always stays available."
+msgstr "Anmeldung mit OpenID Connect, z. B. über den Synology SSO Server. Änderungen gelten sofort, ohne Neustart. Die lokale Anmeldung bleibt immer möglich."
 
 #: web/templates/web/manage/sso.html:21
 msgid "no client ID"
@@ -4021,16 +3943,8 @@ msgid "Advanced: other providers"
 msgstr "Erweitert: andere Anbieter"
 
 #: web/templates/web/manage/sso.html:48
-msgid ""
-"Only needed for providers other than the Synology SSO Server (e.g. "
-"Authentik, Keycloak). An empty endpoint is derived from the address of the "
-"SSO server above, otherwise taken from the .env file; the grey text shows "
-"the value from the .env file."
-msgstr ""
-"Nur nötig für andere Anbieter als den Synology SSO Server (z. B. Authentik, "
-"Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers "
-"oben, sonst aus der Datei .env; der graue Text zeigt den Wert aus der "
-"Datei .env."
+msgid "Only needed for providers other than the Synology SSO Server (e.g. Authentik, Keycloak). An empty endpoint is derived from the address of the SSO server above."
+msgstr "Nur für andere Anbieter als den Synology SSO Server nötig (z. B. Authentik, Keycloak). Ein leerer Endpunkt ergibt sich aus der Adresse des SSO-Servers oben."
 
 #: web/templates/web/manage/sso.html:62
 msgid "“Test” checks the values entered above without saving them."

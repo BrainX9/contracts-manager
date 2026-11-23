@@ -1,6 +1,8 @@
 """
 Tests für Version 0.4.0: E-Mail und Single Sign-on in der Verwaltung
-(web.site_config), Markdown in Notizen.
+(web.site_config), Markdown in Notizen. Seit 0.9.0 gelten nur noch die Werte
+der Verwaltung; ``env_settings`` stellt den Zustand nach der einmaligen
+Übernahme aus der .env her (web.env_import).
 """
 
 from types import SimpleNamespace
@@ -9,6 +11,7 @@ from unittest.mock import MagicMock, patch
 from django.contrib.auth.models import Group, User
 from django.core import mail
 from django.test import RequestFactory, TestCase, override_settings
+from contracts.testing import env_settings
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 
@@ -26,10 +29,6 @@ ENV_MAIL = {
 }
 ENV_SSO = {
     "OIDC_ENABLED": False, "OIDC_OP_BASE_URL": "https://env.example.test",
-    "OIDC_OP_AUTHORIZATION_ENDPOINT": "https://env.example.test/webman/sso/SSOOauth.cgi",
-    "OIDC_OP_TOKEN_ENDPOINT": "https://env.example.test/webman/sso/SSOAccessToken.cgi",
-    "OIDC_OP_USER_ENDPOINT": "https://env.example.test/webman/sso/SSOUserInfo.cgi",
-    "OIDC_OP_JWKS_ENDPOINT": "https://env.example.test/webman/sso/openid-jwks.json",
     "OIDC_RP_CLIENT_ID": "env-client", "OIDC_RP_CLIENT_SECRET": "env-secret",
     "OIDC_CREATE_USER": False, "OIDC_USERNAME_CLAIM": "username",
     "OIDC_RP_SCOPES": "openid email", "OIDC_RP_SIGN_ALGO": "RS256",
@@ -52,9 +51,9 @@ class SuperuserMixin:
         self.admin.groups.add(Group.objects.get(name=perms.GROUP_ADMINS))
 
 
-@override_settings(**ENV_MAIL)
+@env_settings(**ENV_MAIL)
 class MailConfigTest(TestCase):
-    """Verwaltung vor .env; ein leeres Feld bedeutet "Wert aus der .env"."""
+    """Werte aus der Verwaltung (hier: aus der .env übernommen); leere Felder = Standard."""
 
     def test_env_only(self):
         config = site_config.mail()
@@ -67,7 +66,7 @@ class MailConfigTest(TestCase):
 
     def test_site_values_take_precedence(self):
         site(email_host="smtp.db.test", email_port=465, email_security="ssl", email_user="db@example.test",
-             email_password="db-passwort", app_base_url="https://db.example.test/")
+             email_password="db-passwort", app_base_url="https://db.example.test/", email_sender="")
         config = site_config.mail()
         self.assertEqual(
             (config.host, config.port, config.security, config.user, config.password, config.base_url),
@@ -83,7 +82,7 @@ class MailConfigTest(TestCase):
         config = site_config.mail()
         self.assertEqual((config.host, config.user, config.password), ("smtp.env.test", "env@example.test", "db-passwort"))
 
-    @override_settings(EMAIL_HOST="", DEFAULT_FROM_EMAIL="contracts@localhost")
+    @env_settings(EMAIL_HOST="", DEFAULT_FROM_EMAIL="contracts@localhost")
     def test_without_server_console(self):
         from django.core.mail.backends.console import EmailBackend as ConsoleBackend
 
@@ -110,14 +109,14 @@ class MailConfigTest(TestCase):
         self.assertEqual(message.from_email, "absender@example.test")
         self.assertEqual(absolute_url("/contracts/1/"), "https://db.example.test/contracts/1/")
 
-    @override_settings(REMINDER_SEND_TIME="07:00")
+    @env_settings(REMINDER_SEND_TIME="07:00")
     def test_reminder_time(self):
         self.assertEqual(site_config.reminder_time(), "07:00")
         site(reminder_send_time="18:45")
         self.assertEqual(site_config.reminder_time(), "18:45")
 
 
-@override_settings(**ENV_MAIL, REMINDER_SEND_TIME="07:00")
+@env_settings(**ENV_MAIL, REMINDER_SEND_TIME="07:00")
 class ManageEmailSettingsTest(SuperuserMixin, TestCase):
     url = reverse_lazy("manage_email")
 
@@ -170,7 +169,7 @@ class ManageEmailSettingsTest(SuperuserMixin, TestCase):
                 response = self.client.post(self.url, self.data(**values))
                 self.assertEqual(response.status_code, 200)
                 self.assertTrue(response.context["form"].errors)
-        self.assertEqual(SiteSettings.load().email_host, "")
+        self.assertEqual(SiteSettings.load().email_host, "smtp.env.test")
         # Absender mit Anzeigename ist erlaubt
         self.client.post(self.url, self.data(email_sender="Contracts Manager <vertraege@example.test>"))
         self.assertEqual(SiteSettings.load().email_sender, "Contracts Manager <vertraege@example.test>")
@@ -185,7 +184,7 @@ class ManageEmailSettingsTest(SuperuserMixin, TestCase):
         schedule = Schedule.objects.get(name=REMINDER_SCHEDULE_NAME)
         self.assertEqual(timezone.localtime(schedule.next_run).strftime("%H:%M"), "18:45")
         self.assertContains(self.client.get(reverse("manage_system")), "18:45")
-        # Leer: wieder die Uhrzeit aus der .env
+        # Leer: wieder die Standardzeit
         self.client.post(self.url, self.data())
         schedule.refresh_from_db()
         self.assertEqual(timezone.localtime(schedule.next_run).strftime("%H:%M"), "07:00")
@@ -203,7 +202,7 @@ class ManageEmailSettingsTest(SuperuserMixin, TestCase):
         candidate = smtp_backend.call_args.args[0]
         self.assertEqual(
             (candidate.host, candidate.port, candidate.security, candidate.user, candidate.password, candidate.sender),
-            ("smtp.test.test", 2525, "none", "env@example.test", "test-geheim", "test@example.test"),
+            ("smtp.test.test", 2525, "none", "", "test-geheim", "test@example.test"),
         )
         message = connection.send_messages.call_args.args[0][0]
         self.assertEqual((message.to, message.from_email), (["chef@example.com"], "test@example.test"))
@@ -211,7 +210,7 @@ class ManageEmailSettingsTest(SuperuserMixin, TestCase):
         self.assertNotContains(response, "test-geheim")
         # Nichts gespeichert
         settings_obj = SiteSettings.load()
-        self.assertEqual((settings_obj.email_host, settings_obj.email_password), ("", ""))
+        self.assertEqual((settings_obj.email_host, settings_obj.email_password), ("smtp.env.test", "env-passwort"))
 
     def test_test_reports_error(self):
         self.client.force_login(self.superuser)
@@ -222,7 +221,7 @@ class ManageEmailSettingsTest(SuperuserMixin, TestCase):
         self.assertFalse(response.context["test_result"][0])
         self.assertContains(response, "Connection refused")
 
-    @override_settings(EMAIL_HOST="")
+    @env_settings(EMAIL_HOST="")
     def test_test_without_server(self):
         self.client.force_login(self.superuser)
         with patch("web.manage_views.smtp_backend") as smtp_backend:
@@ -231,7 +230,7 @@ class ManageEmailSettingsTest(SuperuserMixin, TestCase):
         self.assertFalse(response.context["test_result"][0])
 
 
-@override_settings(**ENV_SSO)
+@env_settings(**ENV_SSO)
 class SSOConfigTest(TestCase):
     def test_env_only(self):
         config = site_config.sso()
@@ -259,13 +258,13 @@ class SSOConfigTest(TestCase):
         self.assertEqual(config.oidc_settings()["OIDC_OP_TOKEN_ENDPOINT"], "https://idp.db.test/token")
 
     def test_switch_off_overrides_env(self):
-        with self.settings(OIDC_ENABLED=True):
+        with env_settings(OIDC_ENABLED=True):
             self.assertTrue(site_config.sso().enabled)
             site(sso_enabled="off")
             self.assertFalse(site_config.sso().enabled)
 
 
-@override_settings(**ENV_SSO)
+@env_settings(**ENV_SSO)
 class SSOFromSettingsTest(TestCase):
     """Anmeldung mit Werten aus der Verwaltung, ohne Neustart"""
 
@@ -320,7 +319,7 @@ class SSOFromSettingsTest(TestCase):
         self.assertFalse(user.has_perm("contracts.change_contract"))
 
 
-@override_settings(**ENV_SSO)
+@env_settings(**ENV_SSO)
 class ManageSSOSettingsTest(SuperuserMixin, TestCase):
     url = reverse_lazy("manage_sso")
 
@@ -361,11 +360,11 @@ class ManageSSOSettingsTest(SuperuserMixin, TestCase):
 
     def test_cannot_switch_on_incomplete(self):
         self.client.force_login(self.superuser)
-        with self.settings(OIDC_RP_CLIENT_SECRET="", OIDC_RP_CLIENT_ID=""):
+        with env_settings(OIDC_RP_CLIENT_SECRET="", OIDC_RP_CLIENT_ID=""):
             response = self.client.post(self.url, self.data(sso_enabled="on", sso_base_url="https://nas.db.test"))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].non_field_errors())
-        self.assertEqual(SiteSettings.load().sso_enabled, "")
+        self.assertEqual(SiteSettings.load().sso_enabled, "off")
 
     def test_validation(self):
         self.client.force_login(self.superuser)
@@ -393,7 +392,7 @@ class ManageSSOSettingsTest(SuperuserMixin, TestCase):
         )
         self.assertEqual([result.status for result in response.context["results"]], ["ok"] * 4)
         self.assertNotContains(response, "test-geheim")
-        self.assertEqual(SiteSettings.load().sso_base_url, "")
+        self.assertEqual(SiteSettings.load().sso_base_url, "https://env.example.test")
 
     def test_test_reports_unreachable_server(self):
         import requests
@@ -401,7 +400,9 @@ class ManageSSOSettingsTest(SuperuserMixin, TestCase):
         self.client.force_login(self.superuser)
         with patch("web.sso_check.requests.get", side_effect=requests.ConnectionError("no route")), \
                 patch("web.sso_check.requests.request", return_value=MagicMock(status_code=404)):
-            response = self.client.post(self.url, self.data(sso_base_url="https://nas.test.test", action="test"))
+            response = self.client.post(self.url, self.data(
+                sso_base_url="https://nas.test.test", sso_client_id="c", action="test",
+            ))
         self.assertEqual([result.status for result in response.context["results"]], ["ok", "failed", "failed", "failed"])
         self.assertContains(response, "no route")
 

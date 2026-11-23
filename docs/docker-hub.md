@@ -25,7 +25,8 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 - Optional **AI assistant** (Claude, **Mistral AI**, OpenAI, an OpenAI-compatible provider such as IONOS, or **Ollama** with local models): ask questions about your contracts or let it propose a new contract from an uploaded document. Changes only after your approval.
 - **Scans and photos** are read by local text recognition (Tesseract) or an optional **document AI** – an OCR or vision model, e.g. **Mistral OCR**, a model at IONOS or in Ollama.
 - **Notes with Markdown** on contracts, contract partners and consumers.
-- **Email, single sign-on (OpenID Connect, e.g. Synology SSO Server) and the AI assistant are set up in the app**, with a test button and without a restart.
+- **Email, single sign-on (OpenID Connect, e.g. Synology SSO Server), the AI assistant and Paperless are set up in the app**, with a test button and without a restart.
+- **Easy start:** one Compose file, one password to set – no `.env`, no `chown`; the secret key is generated.
 - **Backup and import** of all data and files as a single ZIP file.
 - Superusers see the installed version and a **hint when an update is available**.
 - Interface in **English and German**, light and dark mode, works on the phone.
@@ -36,63 +37,38 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 | Tag | Meaning |
 |---|---|
 | `latest` | newest release |
-| `0.8.0`, `0.7.0`, … | one tag per version |
+| `0.9.0`, `0.8.0`, … | one tag per version |
 
 Platforms: `linux/amd64` and `linux/arm64`. The image is built by GitHub Actions on every version tag, after the tests passed. The same image is also available as `ghcr.io/brainx9/contracts-manager`.
 
 ## Quick start
 
-The image needs a PostgreSQL database and a background worker, so it is started with **Docker Compose**, not with a single `docker run`. Choose one of three Compose files:
-
-| File | Settings | For |
-|---|---|---|
-| [`docker-compose.yml`](https://github.com/BrainX9/contracts-manager/blob/main/docker-compose.yml) | in a separate `.env` file | the usual setup |
-| [`docker-compose.no-env.yml`](https://github.com/BrainX9/contracts-manager/blob/main/docker-compose.no-env.yml) | **no `.env`** – all settings in the file, optional ones commented out | one file to paste, e.g. into the Synology Container Manager |
-| [`docker-compose.no-env-minimal.yml`](https://github.com/BrainX9/contracts-manager/blob/main/docker-compose.no-env-minimal.yml) | **no `.env`** – only the required values | the quickest start |
-
-### Without a `.env` file
-
-```bash
-mkdir contracts-manager && cd contracts-manager
-curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.no-env-minimal.yml -o docker-compose.yml
-```
-
-Open `docker-compose.yml` and replace every `CHANGE_ME` (secret key, database password). For HTTPS behind a reverse proxy set `USE_HTTPS: "True"`. A `$` in a value must be written as `$$`. Then:
-
-```bash
-mkdir db media
-# On Linux hosts only: the containers run as user 1000, not root
-sudo chown -R 1000:1000 media
-docker compose up -d
-```
-
-### With a `.env` file
+The image needs a PostgreSQL database and a background worker, so it is started with **Docker Compose**, not with a single `docker run`. One file is enough – no `.env`:
 
 ```bash
 mkdir contracts-manager && cd contracts-manager
 curl -fsSLO https://raw.githubusercontent.com/BrainX9/contracts-manager/main/docker-compose.yml
-curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/.env.example -o .env
+mkdir db media
 ```
 
-Edit `.env`: set `SECRET_KEY` and `POSTGRES_PASSWORD`, and for a local test also
+Open `docker-compose.yml` and replace `CHANGE_ME` with a database password of your own (letters and digits). Then:
 
-```dotenv
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-CSRF_TRUSTED_ORIGINS=http://localhost:8000
-USE_HTTPS=False
+```bash
+docker compose up -d
 ```
 
-Then create the folders and start as above (`mkdir db media`, `docker compose up -d`).
+Open <http://localhost:8010/>. A new installation asks for the **first administrator** in the browser – create it right away, before the app is reachable from the internet.
 
-Open <http://localhost:8000/>. A new installation asks for the **first administrator** in the browser – create it right away, before the app is reachable from the internet.
+On a **Synology NAS**: create the folders `db` and `media` in File Station, then *Container Manager › Project › Create* with this file ([guide](https://github.com/BrainX9/contracts-manager/blob/main/docs/installation-synology.md)).
+
+Installations from before 0.9.0 keep their `docker-compose.yml` and `.env`; the Compose file with `.env` is now [`docker-compose.env.yml`](https://github.com/BrainX9/contracts-manager/blob/main/docker-compose.env.yml).
 
 ## What runs
 
 | Container | Image | Purpose |
 |---|---|---|
-| `contracts-manager-app` | `brainx9/contracts-manager` | web application (gunicorn, port 8000) |
-| `contracts-manager-worker` | `brainx9/contracts-manager` | background jobs: reminders, update check, AI assistant |
+| `contracts-manager-app` | `brainx9/contracts-manager` | web application (gunicorn, port 8010 on the host) |
+| `contracts-manager-worker` | `brainx9/contracts-manager` | background jobs: reminders, update check, AI assistant, Paperless |
 | `contracts-manager-db` | `pgvector/pgvector:pg17` | PostgreSQL 17 |
 
 Data stays outside the containers, next to the Compose file:
@@ -101,35 +77,25 @@ Data stays outside the containers, next to the Compose file:
 |---|---|---|
 | `db/` | `/var/lib/postgresql/data` | database |
 | `media/` | `/app/media` | uploads, logos, documents |
+| `config/` | `/config` | generated secret key (created automatically) |
 
-The containers run as user `1000:1000` (not root). Database migrations are applied automatically on every start.
+The container starts as root only to give `media` and `config` to the app user (`APP_UID:APP_GID`, default `1000:1000`), then runs everything as that user. Database migrations are applied automatically on every start.
 
 ## Configuration
 
-There are two places for settings:
+Only a few settings are needed before the app runs; they are at the top of `docker-compose.yml` (optional ones commented out). Everything else – email, single sign-on, the AI assistant, Paperless – is set in the app under **Administration** (superusers), without a restart.
 
-- **Environment variables** (in `.env` or directly in the Compose file) hold what Docker and the database need before the app runs.
-- **Administration** in the app (superusers only) holds email, single sign-on and the AI assistant. Changes apply immediately, without a restart.
+| | Variable | Default | Purpose |
+|---|---|---|---|
+| **Required** | `POSTGRES_DB`, `POSTGRES_USER` | `contracts_db`, `contracts_user` | database name and user |
+| **Required** | `POSTGRES_PASSWORD` | – | database password |
+| Optional | `ALLOWED_HOSTS` | every address | recommended: host names the app is reached at, comma separated |
+| Optional | `CSRF_TRUSTED_ORIGINS` | – | only if the reverse proxy changes the address or the scheme |
+| Optional | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
+| Optional | `APP_UID`, `APP_GID` | `1000` | user and group the app runs as |
+| Optional | `SECRET_KEY` | generated | without it the app creates a key in `config/` |
 
-### Required variables
-
-| Variable | Purpose |
-|---|---|
-| `SECRET_KEY` | secret key of Django, e.g. from `openssl rand -hex 32` |
-| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | database |
-
-### Optional variables (selection)
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `ALLOWED_HOSTS` | every address | recommended: host names the app is reached at, comma separated |
-| `CSRF_TRUSTED_ORIGINS` | – | only if the reverse proxy changes the address or the scheme |
-| `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
-| `APP_PORT` | `8000` | published port (`.env` setup) |
-| `APP_IMAGE_TAG` | `latest` | image version, e.g. `0.8.0` to stay on one version |
-| `APP_UID`, `APP_GID` | `1000` | user and group the containers run as |
-
-The complete list, and the older variables for email, single sign-on and the AI assistant that still work but should no longer be used: [README, section “Configuration”](https://github.com/BrainX9/contracts-manager#configuration).
+Advanced variables (logging, login lockout, AI fine tuning …) and the archived ones that the app reads no longer since 0.9.0: [all variables](https://github.com/BrainX9/contracts-manager/blob/main/docs/variables.md).
 
 ## Update
 
@@ -140,13 +106,14 @@ docker compose pull
 docker compose up -d
 ```
 
-To stay on one version, use a fixed tag such as `brainx9/contracts-manager:0.8.0`. Superusers see a hint in the app when a new version is out. Release notes: [GitHub releases](https://github.com/BrainX9/contracts-manager/releases).
+To stay on one version, use a fixed tag such as `brainx9/contracts-manager:0.9.0`. Superusers see a hint in the app when a new version is out. Release notes: [GitHub releases](https://github.com/BrainX9/contracts-manager/releases).
 
 ## Documentation
 
 - [Installation on a Synology NAS](https://github.com/BrainX9/contracts-manager/blob/main/docs/installation-synology.md) (reverse proxy with HTTPS, daily backup)
 - [Schritt-für-Schritt-Anleitung Synology (deutsch)](https://github.com/BrainX9/contracts-manager/blob/main/docs/installation-synology-de.md)
 - [Configuration](https://github.com/BrainX9/contracts-manager/blob/main/docs/configuration.md)
+- [Environment variables](https://github.com/BrainX9/contracts-manager/blob/main/docs/variables.md)
 - [Operations](https://github.com/BrainX9/contracts-manager/blob/main/docs/operations.md) (updates, backup and restore)
 - [Development](https://github.com/BrainX9/contracts-manager/blob/main/docs/development.md)
 

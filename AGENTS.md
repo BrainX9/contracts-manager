@@ -31,7 +31,7 @@ Mit „Maintainer“ ist die Person gemeint, die das Repository betreut (GitHub:
 - `django-q2` (ORM-Broker, kein Redis) für Hintergrund-Aufgaben (ab Version 0.5)
 - `openai` und `anthropic` (offizielle SDKs) für den KI-Assistenten (ab Version 0.8a); OpenAI-kompatible Anbieter (IONOS) über `AI_BASE_URL`, Ollama (seit 0.5.0) und Mistral AI (seit 0.8.0) als eigene Anbieter
 - `markdown-it-py` für Markdown in Notizen (ab Version 0.4.0)
-- `django-axes` (mit `ipware`) gegen zu viele Fehlversuche bei der Anmeldung; Container laufen als Benutzer `APP_UID:APP_GID` (Standard 1000), nicht als root
+- `django-axes` (mit `ipware`) gegen zu viele Fehlversuche bei der Anmeldung; die App läuft als Benutzer `APP_UID:APP_GID` (Standard 1000), nicht als root (seit 0.9.0 startet der Container als root und wechselt mit `setpriv`)
 
 ## Datenmodell
 Lege eine Django-App `contracts` an.
@@ -516,6 +516,29 @@ Keine neuen Abhängigkeiten (API mit `urllib`). Zwei Pull Requests, Veröffentli
 **Weiteres**
 - Tests: `contracts.testing.paperless_settings` statt `override_settings(PAPERLESS_URL=…)`.
 - Backup: Eintrag `0.9.0` in `backup_upgrades.VERSIONS`, Schritt von 0.8.0 ist `no_changes`. `APP_VERSION` ist `0.9.0`.
+
+### Version 0.9.0 (Teil 2): Einstieg ohne .env, Variablen in vier Gruppen
+Keine neuen Abhängigkeiten (`setpriv` aus util-linux ist im Basis-Image).
+
+**Einstellungen nur noch in der Verwaltung**
+- `web.env_import` übernimmt KI, E-Mail, SSO und Paperless einmalig aus der `.env` (`FIELDS`: Name in settings, Variable, Feld, Umwandlung): nur tatsächlich gesetzte Variablen (`os.environ`), nur in leere Felder; Gruppen in `SiteSettings.env_imported`. Danach Hinweis im Protokoll bei jedem Start. Läuft nach jeder Migration, legt ohne alte Variablen keinen Datensatz an; passt den Zeitplan der Erinnerungen an.
+- `web.site_config` (`mail_defaults`, `sso_defaults`, `REMINDER_DEFAULT`) und `assistant.config.defaults()` lesen die alten Variablen nicht mehr; leeres Feld = Standardwert, leere Adresse = Standard des gewählten Anbieters. Formulare ohne Auswahl „wie in der .env“ (Schalter vorbelegt mit „Aus“, Verschlüsselung mit STARTTLS).
+- Tests: `contracts.testing.env_settings(**alte_variablen)` setzt Variablen und Verwaltung wie nach der Übernahme; `site_settings(**felder)`. `config.test_runner.TestRunner` entfernt die archivierten Variablen aus der Umgebung, damit Tests nicht von der Entwicklungs-`.env` abhängen.
+
+**`SECRET_KEY` optional**
+- Ohne `SECRET_KEY` erzeugt `config.secret_key.load_or_create` den Schlüssel in `CONFIG_DIR` (Container `/config`, Host-Ordner `config` neben der Compose-Datei; Entscheidung des Maintainers): Rechte 600, atomar per `os.link` (App und Worker gleichzeitig), nicht im Backup. Verlust = alle abgemeldet, keine Daten weg. `/app/config` ist das Django-Projekt, deshalb `/config`.
+
+**Start ohne `chown`**
+- Dockerfile ohne `USER`; `docker/entrypoint.sh` als root: Besitzer von `media` und `config` auf `APP_UID:APP_GID` (nur abweichende Einträge, Fehler brechen nicht ab), `config` 700, dann `setpriv --reuid --regid --clear-groups --inh-caps=-all`. Mit `user:` in alten Compose-Dateien läuft es wie bisher ohne root.
+- `manage.py` wechselt im Image (`CONTRACTS_MANAGER_IMAGE=1`) als root ebenfalls zum App-Benutzer (`docker compose exec app python manage.py …`); der Bauschritt im Dockerfile setzt die Variable leer.
+
+**Compose-Dateien und Port**
+- `docker-compose.yml` = Standard ohne `.env`: nur Pflicht- (`POSTGRES_*`) und optionale Werte (auskommentiert), Port `8010:8000`, Ordner `db`, `media` (müssen existieren) und `config` (entsteht von selbst). Die bisherige Datei heißt `docker-compose.env.yml` (Port-Standard `8010`, ohne `user:`, mit `config`); die `no-env`-Dateien sind entfallen. Entwicklung: `COMPOSE_FILE=docker-compose.env.yml:docker-compose.dev.yml`, Schlüssel in `./config-data`.
+- Port 8010 (Host): bei der IANA nicht vergeben, nur inoffiziell genutzt; 8000 ist oft belegt.
+
+**Variablen in vier Gruppen** (`config/tests.py`: `REQUIRED`, `OPTIONAL`, `ADVANCED`, `ARCHIVED`, dazu `INTERNAL`)
+- Pflicht: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (bleiben, Entscheidung des Maintainers). Optional: `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `USE_HTTPS`, `APP_UID`, `APP_GID`, `SECRET_KEY`. Erweitert und archiviert: siehe `docs/variables.md`.
+- README: kurzer Quick start (Container Manager und Kommandozeile) und nur Pflicht/optional; alle Variablen in `docs/variables.md`; `.env.example` gehört zu `docker-compose.env.yml`. Synology-Anleitungen auf Container Manager ohne SSH umgestellt.
 
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)

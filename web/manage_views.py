@@ -709,7 +709,7 @@ class EmailSettingsView(ManageMixin, View):
     def test(self, request, candidate):
         """Ergebnis als (Erfolg, Text); nichts wird gespeichert."""
         if not candidate.smtp:
-            return False, _("No SMTP server is set, neither here nor in the .env file.")
+            return False, _("No SMTP server is set.")
         if not request.user.email:
             return False, _("Please enter your email address under Settings first.")
         try:

@@ -30,14 +30,14 @@ curl -fsSL https://raw.githubusercontent.com/BrainX9/contracts-manager/main/dock
 diff docker-compose.yml docker-compose.new.yml
 ```
 
-If `diff` prints nothing you are up to date (`rm docker-compose.new.yml`); otherwise `mv docker-compose.new.yml docker-compose.yml` and `sudo docker compose up -d`. For the file of one release instead of the newest, replace `main` in the address by the tag, e.g. `v0.1.0`.
+If `diff` prints nothing you are up to date (`rm docker-compose.new.yml`); otherwise put your password into the new file, `mv docker-compose.new.yml docker-compose.yml` and `sudo docker compose up -d`. Installations with `.env` (from before 0.9.0) compare with `docker-compose.env.yml` instead. For the file of one release instead of the newest, replace `main` in the address by the tag, e.g. `v0.1.0`.
 
-**Pin a version.** With the default `latest`, every `docker compose pull` fetches the newest version. To decide yourself when to update, set `APP_IMAGE_TAG` in `.env` (e.g. `APP_IMAGE_TAG=0.3.0`) and raise it when you want to update. The available versions are listed on GitHub under *Tags* and *Packages*.
+**Pin a version.** With the default `latest`, every `docker compose pull` fetches the newest version. To decide yourself when to update, write a fixed version under `image:` for `app` and `worker` (e.g. `brainx9/contracts-manager:0.9.0`; with `.env`: `APP_IMAGE_TAG=0.9.0`) and raise it when you want to update. The available versions are listed on GitHub under *Tags* and *Packages*.
 
-**Go back to an older version.** Set `APP_IMAGE_TAG` to the older version, then `sudo docker compose pull` and `sudo docker compose up -d`. Migrations are **not** undone: if the newer version changed the database, the older one may not start. In that case restore the backup made before the update (see [Restore](#restore)) first.
+**Go back to an older version.** Set the older version under `image:` (or in `APP_IMAGE_TAG`), then `sudo docker compose pull` and `sudo docker compose up -d`. Migrations are **not** undone: if the newer version changed the database, the older one may not start. In that case restore the backup made before the update (see [Restore](#restore)) first.
 
 > [!NOTE]
-> **Installations that cloned the repository** (folders `app/` and `data/`): the public repository started a new git history with version 0.1.0, so `git pull` in an old clone no longer works. Either get the Compose file with `curl` as above, or point the clone at the new history: `git fetch origin`, then `git reset --hard origin/main` (your `.env` is not tracked and stays). How to move such an installation to the new folder layout: [installation guide](installation-synology.md#existing-installations-folders-app-and-data).
+> **Installations that cloned the repository** (folders `app/` and `data/`): the public repository started a new git history with version 0.1.0, so `git pull` in an old clone no longer works. Either get the Compose file with `curl` as above, or point the clone at the new history: `git fetch origin`, then `git reset --hard origin/main` (your `.env` is not tracked and stays; add `COMPOSE_FILE=docker-compose.env.yml` to it, because `docker-compose.yml` is the file without `.env` since 0.9.0). How to move such an installation to the new folder layout: [installation guide](installation-synology.md#existing-installations).
 
 **Changing the PostgreSQL major version** (e.g. 17 to 18): the database files only fit their major version. Back up, empty the `db` folder, start the new version and restore the backup as described below.
 
@@ -127,7 +127,7 @@ What an import does:
 - **No user has a password afterwards.** Everyone who had a local password before chooses a new one via *Forgot password?* on the sign-in page. This needs working email delivery and an email address in the account; otherwise set it with `sudo docker compose exec app python manage.py changepassword <user>`. Users who only sign in with single sign-on are not affected.
 - **Versions:** a backup of the installed version or of an older version (0.1.0 and later) can be imported; an older backup is converted during the import. The page before the import and the command show the version of the backup and say so if it is older. A backup of a *newer* version is rejected: update Contracts Manager first. Backups of the private beta versions (before 0.1.0) are not supported.
 - After importing a backup of 0.1.0, contracts have no payment method yet and the default payment methods are created (see [Configuration](configuration.md#payment-methods)).
-- Not part of the backup: the `.env` file, login lockouts and the history of the background worker.
+- Not part of the backup: the Compose file or `.env`, the generated key in `config`, login lockouts and the history of the background worker.
 
 The file contains personal data and is not encrypted. Store it in a safe place.
 

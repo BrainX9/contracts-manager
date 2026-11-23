@@ -11,8 +11,11 @@ DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 CSRF_TRUSTED_ORIGINS=http://localhost:8000
 USE_HTTPS=False
-COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+APP_PORT=8000
+COMPOSE_FILE=docker-compose.env.yml:docker-compose.dev.yml
 ```
+
+Development uses the Compose file with `.env` (`docker-compose.env.yml`); `docker-compose.yml` is the file without `.env` for installations.
 
 Then start:
 
@@ -30,7 +33,7 @@ On the first visit of an empty database the app asks for the first administrator
 docker compose exec app python manage.py createsuperuser
 ```
 
-The start script `docker/entrypoint.sh` is part of the image, so rebuild after changing it (`docker compose up --build`).
+The start script `docker/entrypoint.sh` is part of the image, so rebuild after changing it (`docker compose up --build`). The containers start as root, the script gives `media` and `config` to `APP_UID:APP_GID` and then runs everything as that user (`setpriv`); `manage.py` does the same when called as root, e.g. with `docker compose exec app python manage.py …`. The generated `SECRET_KEY` (only without `SECRET_KEY` in `.env`) lands in `./config-data`.
 
 Without SMTP settings, emails (reminders, invitations, password reset) are printed to the `app` or `worker` log.
 
@@ -42,7 +45,7 @@ docker compose exec app python manage.py test
 
 The suite covers the core logic (current amount, totals, reference numbers), permissions per role, all pages, reminders, email, single sign-on and the administration area.
 
-`config/tests.py` compares the variables read in `config/settings.py` and `docker-compose.yml` with the table in the README and with `.env.example`. When you add a variable, document it in both places. This test needs the README and is skipped inside the Docker image.
+`config/tests.py` checks that every variable belongs to one of the four groups (required, optional, advanced, archived), that [`docs/variables.md`](variables.md) lists all of them, the README the required and optional ones, `.env.example` all but the archived ones, and that `docker-compose.yml` contains the required and optional ones and nothing from a `.env`. When you add a variable, put it into a group there and document it. This test needs the README and is skipped inside the Docker image. The test runner (`config.test_runner`) removes the archived variables from the environment, so tests do not depend on your `.env`.
 
 ## Translations
 

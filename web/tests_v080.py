@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
+from contracts.testing import env_settings
 from django.urls import reverse
 
 from contracts import permissions as perms
@@ -177,7 +178,7 @@ class AllowedHostsTest(TestCase):
         SiteSettings.objects.filter(pk=1).update(app_base_url="https://contracts.example.test")
         self.assertEqual(link_url("/x/", "https://evil.example"), "https://contracts.example.test/x/")
         SiteSettings.objects.filter(pk=1).update(app_base_url="")
-        with override_settings(APP_BASE_URL=""):
+        with env_settings(APP_BASE_URL=""):
             self.assertEqual(link_url("/x/", "https://host.example/"), "https://host.example/x/")
 
 
@@ -224,13 +225,13 @@ class MistralTest(TestCase):
             setattr(site, name, value)
         site.save()
 
-    @override_settings(AI_ENABLED=True, AI_PROVIDER="openai", AI_MODEL="m", AI_API_KEY="sk-env",
+    @env_settings(AI_ENABLED=True, AI_PROVIDER="openai", AI_MODEL="m", AI_API_KEY="sk-env",
                        AI_BASE_URL="http://127.0.0.1:9")
     def test_default_address_and_shared_key(self):
         from assistant.config import MISTRAL_DEFAULT_URL, current
         from assistant.providers import OpenAIProvider, get_provider
 
-        self.site(ai_provider="mistral", ai_model="mistral-medium-latest", ai_api_key="sk-mistral",
+        self.site(ai_provider="mistral", ai_model="mistral-medium-latest", ai_api_key="sk-mistral", ai_base_url="",
                   reader_model="mistral-ocr-latest", reader_kind="mistral_ocr")
         config = current()
         self.assertEqual((config.provider, config.base_url), ("mistral", MISTRAL_DEFAULT_URL))

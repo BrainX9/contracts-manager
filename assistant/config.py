@@ -1,11 +1,13 @@
 """
 Konfiguration des KI-Assistenten (Version 0.3.0).
 
-Die Werte stehen in der .env (``AI_*``) und zusätzlich unter Verwaltung ›
-KI-Assistent (``web.SiteSettings``, nur Superuser). Ein Wert aus der
-Verwaltung hat Vorrang, ein leeres Feld bedeutet "Wert aus der .env".
-Dies ist die einzige Stelle, die beides zusammenführt; Anbieter, Agent,
-Rechteprüfung und Ansichten fragen ``current()``.
+Die Werte stehen unter Verwaltung › KI-Assistent (``web.SiteSettings``, nur
+Superuser); ein leeres Feld bedeutet "Standardwert" (``defaults``). Die
+früheren Variablen ``AI_ENABLED``, ``AI_PROVIDER``, ``AI_MODEL``,
+``AI_BASE_URL`` und ``AI_API_KEY`` übernimmt ``web.env_import`` seit 0.9.0
+einmalig, danach werden sie nicht mehr gelesen. ``AI_TIMEOUT`` bleibt eine
+Variable (erweitert). Anbieter, Agent, Rechteprüfung und Ansichten fragen
+``current()``.
 """
 
 from dataclasses import dataclass
@@ -84,32 +86,26 @@ def merge_reader(site, provider, base_url, api_key, timeout=120):
     )
 
 
-def from_env():
-    """Konfiguration nur aus der .env."""
-    provider = settings.AI_PROVIDER
+def defaults():
+    """Standardwerte für leere Felder (seit 0.9.0 nicht mehr aus der .env)."""
     return AIConfig(
-        enabled=settings.AI_ENABLED,
-        provider=provider,
-        model=settings.AI_MODEL,
-        base_url=settings.AI_BASE_URL or DEFAULT_URLS.get(provider, ""),
-        api_key=settings.AI_API_KEY,
+        enabled=False,
+        provider=OPENAI,
+        model="",
+        base_url="",
+        api_key="",
         timeout=settings.AI_TIMEOUT,
     )
 
 
 def merge(site, env=None):
     """
-    Führt die Einstellungen aus der Verwaltung (``site``: SiteSettings oder
-    ein Objekt mit denselben Attributen) mit der .env zusammen.
+    Einstellungen aus der Verwaltung (``site``: SiteSettings oder ein Objekt
+    mit denselben Attributen), leere Felder mit den Standardwerten.
     """
-    env = env or from_env()
+    env = env or defaults()
     provider = site.ai_provider or env.provider
-    base_url = site.ai_base_url.strip() or env.base_url
-    if provider in DEFAULT_URLS and not site.ai_base_url.strip() and env.provider != provider:
-        # Die Adresse der .env gehört zum Anbieter der .env, nicht zu Ollama oder Mistral
-        base_url = DEFAULT_URLS[provider]
-    elif provider in DEFAULT_URLS and not base_url:
-        base_url = DEFAULT_URLS[provider]
+    base_url = site.ai_base_url.strip() or DEFAULT_URLS.get(provider, "")
     api_key = site.ai_api_key or env.api_key
     return AIConfig(
         enabled={"on": True, "off": False}.get(site.ai_enabled, env.enabled),
@@ -124,7 +120,7 @@ def merge(site, env=None):
 
 
 def current():
-    """Gültige Konfiguration: Verwaltung vor .env."""
+    """Gültige Konfiguration aus der Verwaltung."""
     from web.models import SiteSettings
 
     return merge(SiteSettings.load())

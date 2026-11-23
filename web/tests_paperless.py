@@ -105,6 +105,7 @@ class ConfigTest(TestCase):
 
 class EnvImportTest(TestCase):
     @override_settings(PAPERLESS_URL=URL + "/")
+    @patch.dict("os.environ", {"PAPERLESS_URL": URL + "/"})
     def test_paperless_url_imported_once(self):
         env_import.run()
         site = SiteSettings.load()

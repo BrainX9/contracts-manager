@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import ProtectedError
 from . import permissions as perms
-from .testing import paperless_settings
+from .testing import env_settings, paperless_settings
 from .models import (
     Provider, Category, Consumer, Contract, CostEntry, Country, Document, PaymentMethod, total_current_costs,
     ProviderGroupObjectPermission, ProviderUserObjectPermission, Reminder,
@@ -1489,7 +1489,7 @@ class DefaultPaymentMethodsTest(TestCase):
         self.assertEqual(self.ensure(), 4)
 
 
-@override_settings(APP_BASE_URL="https://vertraege.example.test")
+@env_settings(APP_BASE_URL="https://vertraege.example.test")
 class ReminderTest(TestCase):
     """Erinnerungen: Zeitraum, täglicher Versand, Empfänger, Abschluss (0.5 beta)"""
 
@@ -1679,7 +1679,7 @@ class ReminderScheduleTest(TestCase):
 
         from .apps import REMINDER_SCHEDULE_NAME, ensure_reminder_schedule
 
-        with self.settings(REMINDER_SEND_TIME="18:30"):
+        with env_settings(REMINDER_SEND_TIME="18:30"):
             ensure_reminder_schedule(sender=None)
         schedule = Schedule.objects.get(name=REMINDER_SCHEDULE_NAME)
         self.assertEqual(timezone.localtime(schedule.next_run).strftime("%H:%M"), "18:30")

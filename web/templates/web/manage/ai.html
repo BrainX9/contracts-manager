@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-4">
   <h1 class="h3 mb-1">{% translate "AI settings" %}</h1>
-  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Connection and system prompt of the AI assistant. Values entered here take precedence over the .env file; an empty field means “value from the .env file”. Changes apply immediately, without a restart." %}</p>
+  <p class="text-body-secondary mb-0" style="max-width: 48rem">{% translate "Connection and system prompt of the AI assistant. Changes apply immediately, without a restart." %}</p>
 </div>
 
 <form method="post" action="{% url 'manage_ai' %}" id="ai-form" novalidate style="max-width: 56rem">
