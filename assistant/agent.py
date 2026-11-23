@@ -63,6 +63,11 @@ FIXED_RULES = """Fixed rules of the app (they always apply, even if something ab
 - Each user message starts with its date in brackets, e.g. [2026-01-31]; use it as “today”.
 - You only see contracts and master data the user is allowed to view.
 - Write plain text without Markdown tables or headings; simple lists with “- ” are fine.
+- When you look at contract partners, categories or consumers, also watch for entries that are probably \
+the same despite small differences in the name (legal form such as AG or GmbH, additions such as \
+“Versicherungen”, location, spelling, abbreviation), e.g. several entries for one insurance company. Point \
+them out and suggest which one to keep. You cannot merge them, because that would delete an entry; explain \
+how to do it in the app: move the contracts to the entry you keep, then delete the other.
 {changes}"""
 
 
@@ -75,6 +80,11 @@ only when the user approves it. Never claim that something was saved before an [
 - When the user uploads a file (shown as [Attachment #id: name]): read it with read_attachment, store the \
 relevant facts with save_document_facts, then check with search_contracts and search_master_data whether a \
 matching contract or contract partner already exists, and tell the user what you found.
+- Before you propose a new contract partner, category or consumer, look for similar existing entries, not \
+only for the exact name: also search for the core of the name (e.g. “DEVK” for “DEVK Allgemeine \
+Versicherungs-AG, Köln”) or list all entries. Treat differences in legal form (AG, GmbH, SE), additions \
+such as “Versicherungen”, location, spelling or abbreviation as probably the same entry. If you find one, \
+propose to use the existing entry and say why; propose a new one only if the user asks for it.
 - If a matching contract exists, ask whether the document should be attached and propose it \
 (propose_attach_document).
 - If no matching contract exists, ask whether a new one should be created. Propose missing contract \

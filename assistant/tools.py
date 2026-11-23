@@ -8,6 +8,7 @@ Aktionen mit Änderungen kommen später nur als Vorschlag, den der Benutzer
 freigibt.
 """
 
+import re
 from decimal import Decimal
 
 from django.db.models import Q
@@ -145,6 +146,24 @@ def _totals(contracts):
     return {"monthly": _money(totals["monthly"]), "yearly": _money(totals["yearly"]), "contracts": totals["count"]}
 
 
+# Wörter, die bei der Suche nach Stammdaten nichts unterscheiden
+SEARCH_STOP_WORDS = {"gmbh", "mbh", "und", "der", "die", "das", "the", "and", "für", "von"}
+
+
+def search_words(query):
+    """Suchwörter ab 3 Zeichen ohne Füllwörter, nur bei mehr als einem Wort."""
+    words = [word for word in re.findall(r"\w+", query.lower())
+             if len(word) >= 3 and word not in SEARCH_STOP_WORDS]
+    words = list(dict.fromkeys(words))
+    return words if len(words) > 1 or (words and words[0] != query.lower()) else []
+
+
+def match_score(name, query, words):
+    """Ganzer Suchtext vor der Zahl passender Wörter."""
+    name = name.lower()
+    return (100 if query.lower() in name else 0) + sum(1 for word in words if word in name)
+
+
 def search_master_data(user, kind, query=""):
     models = {"provider": Provider, "category": Category, "consumer": Consumer}
     model = models.get(kind)
@@ -152,9 +171,19 @@ def search_master_data(user, kind, query=""):
         return {"error": "kind must be provider, category or consumer."}
     objects = perms.visible_to(user, model.objects.all())
     query = (query or "").strip()
-    if query:
-        objects = objects.filter(name__icontains=query)
-    objects = list(objects.order_by("name")[:MAX_RESULTS])
+    words = search_words(query)
+    if words:
+        # Version 0.9.2: jedes Wort einzeln, damit ähnliche Namen gefunden
+        # werden ("DEVK Versicherungen" findet "DEVK Allgemeine Versicherungs-AG")
+        condition = Q(name__icontains=query)
+        for word in words:
+            condition |= Q(name__icontains=word)
+        objects = sorted(objects.filter(condition).order_by("name"),
+                         key=lambda obj: -match_score(obj.name, query, words))[:MAX_RESULTS]
+    elif query:
+        objects = list(objects.filter(name__icontains=query).order_by("name")[:MAX_RESULTS])
+    else:
+        objects = list(objects.order_by("name")[:MAX_RESULTS])
     items = []
     for obj in objects:
         item = {"id": obj.pk, "name": str(obj)}
@@ -215,7 +244,10 @@ TOOLS = {
     },
     "search_master_data": {
         "function": search_master_data,
-        "description": "Search contract partners (with address and contact), categories or consumers by name.",
+        "description": (
+            "Search contract partners (with address and contact), categories or consumers by name. With "
+            "several words, entries matching any word are returned, best matches first. Empty query lists all."
+        ),
         "parameters": {
             "type": "object",
             "properties": {

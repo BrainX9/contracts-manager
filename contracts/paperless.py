@@ -17,6 +17,7 @@ das Token.
 """
 
 import json
+import logging
 import mimetypes
 import re
 import uuid
@@ -26,6 +27,8 @@ from urllib import request as urlrequest
 from urllib.parse import quote, urlencode
 
 from django.utils.translation import gettext as _
+
+logger = logging.getLogger(__name__)
 
 TIMEOUT = 30
 
@@ -340,6 +343,32 @@ def task_message(task):
     return " ".join(parts)
 
 
+# Rahmen einer Python-Fehlerausgabe: File "...", line 12, in name
+TRACEBACK_FRAME = re.compile(r'File "[^"]*", line \d+, in \S+')
+# Name der Ausnahme, auf den die eigentliche Meldung folgt (nicht der Aufruf "Error(")
+EXCEPTION_NAME = re.compile(r"\b[A-Z]\w*(?:Error|Exception)\b:?\s+(?!\()")
+
+
+def short_error(message):
+    """
+    Meldung von Paperless ohne Python-Fehlerausgabe (Version 0.9.2): nur
+    der Text nach der letzten Ausnahme, z. B. "… Could not parse content
+    with tika server …". Ohne Fehlerausgabe bleibt die Meldung, wie sie ist.
+    """
+    message = (message or "").strip()
+    frames = list(TRACEBACK_FRAME.finditer(message))
+    if not frames:
+        return message
+    rest = message[frames[-1].end():]
+    names = list(EXCEPTION_NAME.finditer(rest))
+    if names:
+        short = rest[names[-1].end():].strip()
+    else:
+        lines = [line.strip() for line in rest.splitlines() if line.strip()]
+        short = lines[-1] if lines else ""
+    return short or message
+
+
 def task_state(cfg, task_id):
     """
     Stand einer Aufgabe von ``upload``. Erkennt Paperless die Datei als
@@ -360,7 +389,10 @@ def task_state(cfg, task_id):
     duplicate = DUPLICATE.search(message)
     if duplicate:
         return TaskState(done=True, document_id=int(duplicate.group(1)))
-    return TaskState(done=True, error=message or _("Paperless could not process the file."))
+    short = short_error(message)
+    if short != message:
+        logger.warning("Paperless konnte die Datei nicht verarbeiten (Aufgabe %s): %s", task_id, message)
+    return TaskState(done=True, error=short or _("Paperless could not process the file."))
 
 
 def open_document(cfg, document_id, original=False):

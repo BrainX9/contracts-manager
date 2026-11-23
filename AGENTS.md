@@ -549,6 +549,15 @@ Keine neuen Abhängigkeiten, keine Migration.
 - „Testen“ meldet ein fehlendes Recht auf Aufgaben (empfohlen: PaperlessTask anzeigen). Gegen Paperless-ngx 3.5.1 mit einem eingeschränkten Benutzer lokal geprüft.
 - Backup: Eintrag `0.9.1` in `backup_upgrades.VERSIONS`, Schritt von 0.9.0 ist `no_changes`. `APP_VERSION` ist `0.9.1`.
 
+### Version 0.9.2: Mistral mit Denkschritten, ähnliche Stammdaten, kurze Paperless-Meldung
+Keine neuen Abhängigkeiten, keine Migration.
+
+- **Fehler aus 0.8.0:** Modelle mit Denkschritten (z. B. Magistral bei Mistral) liefern über die OpenAI-Schnittstelle statt eines Textes eine Liste aus Bausteinen (`thinking`, `text`); der Chat zeigte sie roh an. `assistant.providers.message_text` übernimmt nur die Textbausteine. Bereits gespeicherte Nachrichten bleiben, wie sie sind (Entscheidung des Maintainers).
+- **Ähnliche Stammdaten** (Wunsch des Maintainers): feste Regel für alle Unterhaltungen (`FIXED_RULES`): vermutliche Dubletten (Rechtsform, Zusätze, Standort, Schreibweise) nennen und erklären, wie man sie in der App zusammenführt (zusammenführen kann der Assistent nicht, weil dabei gelöscht wird). In `DOCUMENTS_RULES`: vor dem Vorschlag eines neuen Vertragspartners, einer Kategorie oder eines Verbrauchers nach ähnlichen Einträgen suchen und den vorhandenen vorschlagen. Gilt für neue Unterhaltungen.
+- `search_master_data` sucht bei mehreren Wörtern jedes Wort einzeln (ab 3 Zeichen, ohne Füllwörter wie „GmbH“), beste Treffer zuerst; liest weiter nur sichtbare Objekte.
+- Paperless: Meldet eine Aufgabe eine Python-Fehlerausgabe, zeigt das Dokument nur den Text nach der letzten Ausnahme (`contracts.paperless.short_error`); die volle Meldung steht im Protokoll. Anlass: Tika 4 wird von Paperless nicht unterstützt (HTTP 406 bei E-Mails und Office-Dateien), Abhilfe ist Tika 3.x in Paperless.
+- Backup: Eintrag `0.9.2` in `backup_upgrades.VERSIONS`, Schritt von 0.9.1 ist `no_changes`. `APP_VERSION` ist `0.9.2`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle
