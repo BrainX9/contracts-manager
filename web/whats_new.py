@@ -63,6 +63,12 @@ ENTRIES = (
         Item(_("After each update, this window shows once what has changed. You can read it again at any "
                "time under “What's new” in the user menu.")),
     )),
+    Entry("0.11.0", _("System emails"), (
+        Item(_("Members of the new group “Systemmail” receive this summary of what's new by email after each "
+               "update. Administrators decide who is in the group.")),
+        Item(_("Superusers in the group also receive an email when a new version is available. Superusers and "
+               "administrators were added to the group with this update."), superuser_only=True),
+    )),
 )
 
 

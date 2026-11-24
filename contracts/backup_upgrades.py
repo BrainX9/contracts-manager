@@ -20,6 +20,9 @@ OWN_APPS = ("contracts", "web", "assistant")
 
 # Name der Standardgruppe, die Objekte anlegen darf (contracts.permissions.GROUP_USERS)
 USERS_GROUP = "Benutzer"
+# Standardgruppen für Administratoren und System-E-Mails (Version 0.11.0)
+ADMINS_GROUP = "Administratoren"
+SYSTEM_MAIL_GROUP = "Systemmail"
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,34 @@ def upgrade_0_1_0(objects):
             permissions = fields.setdefault("permissions", [])
             if add_payment_method not in permissions:
                 permissions.append(add_payment_method)
+    return objects
+
+
+def upgrade_0_10_1(objects):
+    """
+    0.10.1 -> 0.11.0: Gruppe "Systemmail" mit allen Superusern und
+    Administratoren, wie die Migration web/0011 bei bestehenden
+    Installationen. Die Neuigkeiten bis 0.11.0 gelten als angekündigt, damit
+    der Import keine E-Mail auslöst.
+    """
+    rows = [row for row in objects if isinstance(row.get("fields"), dict)]
+    groups = [row for row in rows if row.get("model") == "auth.group"]
+    if not any(row["fields"].get("name") == SYSTEM_MAIL_GROUP for row in groups):
+        pks = [row["pk"] for row in groups if isinstance(row.get("pk"), int)]
+        # Direkt hinter den anderen Gruppen, also vor den Benutzern, die auf sie verweisen
+        position = max((index + 1 for index, row in enumerate(objects) if row.get("model") == "auth.group"),
+                       default=0)
+        objects.insert(position, {"model": "auth.group", "pk": max(pks, default=0) + 1,
+                                  "fields": {"name": SYSTEM_MAIL_GROUP, "permissions": []}})
+    for row in rows:
+        fields = row["fields"]
+        if row.get("model") == "auth.user":
+            user_groups = fields.setdefault("groups", [])
+            member = fields.get("is_superuser") or [ADMINS_GROUP] in user_groups
+            if member and [SYSTEM_MAIL_GROUP] not in user_groups:
+                user_groups.append([SYSTEM_MAIL_GROUP])
+        elif row.get("model") == "web.sitesettings":
+            fields.setdefault("announced_version", "0.11.0")
     return objects
 
 
@@ -204,6 +235,15 @@ VERSIONS = (
         {
             "contracts": ["0018_paperless_api"],
             "web": ["0010_whats_new"],
+            "assistant": ["0004_document_ai"],
+        },
+        upgrade_0_10_1,
+    ),
+    BackupVersion(
+        "0.11.0",
+        {
+            "contracts": ["0018_paperless_api"],
+            "web": ["0011_system_mail"],
             "assistant": ["0004_document_ai"],
         },
     ),

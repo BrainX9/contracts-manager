@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktranslate with name=recipient.get_username %}Hello {{ name }},{% endblocktranslate %}
+
+{% blocktranslate %}Contracts Manager has been updated to version {{ version }}. What's new:{% endblocktranslate %}
+{% for entry, items in entries %}
+{{ entry.title }} ({{ entry.version }})
+{% for item in items %}- {{ item.text }}
+{% endfor %}{% translate "Release notes" %}: {{ entry.release_url }}
+{% endfor %}{% if base_url %}
+{% translate "What's new" %}: {{ whats_new_url }}
+{% endif %}
+--
+{% translate "You receive this email because you are in the group “Systemmail”. An administrator can remove you from it." %}

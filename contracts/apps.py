@@ -27,14 +27,16 @@ ADMINS_GROUP_PERMISSIONS = [
 
 def ensure_default_groups(sender, **kwargs):
     """
-    Legt die Gruppen "Benutzer", "Alle" und "Administratoren" an und setzt
-    ihre Rechte. Läuft nach jeder Migration und ist wiederholbar.
+    Legt die Gruppen "Benutzer", "Alle", "Administratoren" und
+    "Systemmail" (0.11.0) an und setzt ihre Rechte. Läuft nach jeder
+    Migration und ist wiederholbar.
     """
     from django.contrib.auth.models import Group, Permission
 
-    from .permissions import GROUP_ADMINS, GROUP_ALL, GROUP_USERS
+    from .permissions import GROUP_ADMINS, GROUP_ALL, GROUP_SYSTEM_MAIL, GROUP_USERS
 
     Group.objects.get_or_create(name=GROUP_ALL)
+    Group.objects.get_or_create(name=GROUP_SYSTEM_MAIL)
     users_group, _ = Group.objects.get_or_create(name=GROUP_USERS)
     permissions = Permission.objects.filter(
         content_type__app_label="contracts",

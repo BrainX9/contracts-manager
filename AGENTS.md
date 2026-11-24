@@ -580,6 +580,24 @@ Keine neuen Abhängigkeiten, keine Migration, kein Eintrag in `web.whats_new` (n
 - CodeQL `py/url-redirection` (#5, `WhatsNewSeenView`): `url_has_allowed_host_and_scheme` steht jetzt direkt als Bedingung vor `redirect(target)`, sonst Übersicht. Vorher schon geprüft, aber über eine neu zugewiesene Variable, die CodeQL nicht als Absicherung erkennt. **Weiterleitungen auf Adressen aus der Anfrage immer so schreiben.**
 - Backup: Eintrag `0.10.1` in `backup_upgrades.VERSIONS`, Schritt von 0.10.0 ist `no_changes`. `APP_VERSION` ist `0.10.1`.
 
+### Version 0.11.0: System-E-Mails, einfachere Issue-Formulare
+Keine neuen Abhängigkeiten.
+
+**System-E-Mails (`web.system_mail`)**
+- Neue Standardgruppe **„Systemmail“** (`perms.GROUP_SYSTEM_MAIL`, in `PROTECTED_GROUPS`, Beschreibung, angelegt in `ensure_default_groups`). Bei Freigaben nicht angeboten (`perms.NOT_SHAREABLE_GROUPS`, wie „KI“). Mitglieder pflegen nur Administratoren (Entscheidung des Maintainers), keine Einstellung für Benutzer.
+- Empfänger: aktive Mitglieder mit E-Mail-Adresse, in ihrer Sprache. Fehler beim Versand an einen Empfänger werden protokolliert, die anderen bekommen die E-Mail trotzdem.
+- **Neue Version verfügbar** (`emails/system_update*`): nur an Superuser der Gruppe (Entscheidung des Maintainers), einmal je Version nach der täglichen Prüfung (`web.tasks.check_for_updates` → `notify_update`); nicht bei ausgeschalteter Prüfung und nicht über „Jetzt prüfen“. Gemerkt in `SiteSettings.update_notified_version`.
+- **Neuigkeiten nach einem Update** (`emails/system_whats_new*`): Inhalt wie das Fenster (`whats_new.entries_for`, höchstens drei Versionen, `superuser_only` beachtet), an alle Mitglieder. Einmalige Aufgabe `web.announce_release` (`ensure_announce_schedule`, nach jeder Migration, 2 Minuten später); gemerkt in `SiteSettings.announced_version`. Leer (neue Installation) oder neuer als die installierte Version: nur merken, nichts senden. Versionen ohne Eintrag senden nichts.
+- Beide Merker werden vor dem Versand per bedingtem `update()` gesetzt (`claim`), damit nie doppelt verschickt wird.
+- Migration `web/0011`: Felder; bei bestehenden Installationen (es gibt Benutzer) alle Superuser und Mitglieder von „Administratoren“ in die Gruppe, `announced_version = "0.10.1"`. Neue Installation: der erste Benutzer, wenn er Superuser ist, kommt in die Gruppe (Signal `add_first_admin`, Einrichtungsseite und `createsuperuser`); spätere Benutzer nicht (Entscheidung des Maintainers).
+- Weitere System-E-Mails später: Vorlage `emails/system_<name>*`, Versand über `system_mail.send_each`.
+
+**Issue-Formulare**
+- `feature_request.yml` und `bug_report.yml` haben nur noch ein Pflichtfeld (Wunsch des Maintainers); Titel-Präfix `[Feature]: `/`[Bug]: ` und Labels bleiben. Ein Test prüft das (ohne YAML-Bibliothek).
+
+**Weiteres**
+- Backup: Schritt `upgrade_0_10_1` (Gruppe „Systemmail“ vor den Benutzern einfügen, Superuser und Administratoren als Mitglieder, `announced_version = "0.11.0"`, damit ein Import keine E-Mail auslöst); Eintrag `0.11.0` in `backup_upgrades.VERSIONS`. `APP_VERSION` ist `0.11.0`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

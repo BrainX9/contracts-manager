@@ -32,8 +32,12 @@ GROUP_USERS = "Benutzer"  # darf Objekte anlegen
 GROUP_ALL = "Alle"        # enthält alle Benutzer, für Freigaben an alle
 GROUP_ADMINS = "Administratoren"  # pflegt Benutzer und Gruppen im Frontend (0.6)
 GROUP_AI = "KI"  # darf den KI-Assistenten nutzen (0.8a)
+GROUP_SYSTEM_MAIL = "Systemmail"  # bekommt System-E-Mails (0.11.0)
 # Standardgruppen lassen sich nicht umbenennen oder löschen
-PROTECTED_GROUPS = (GROUP_USERS, GROUP_ALL, GROUP_ADMINS, GROUP_AI)
+PROTECTED_GROUPS = (GROUP_USERS, GROUP_ALL, GROUP_ADMINS, GROUP_AI, GROUP_SYSTEM_MAIL)
+# Gruppen, die nur Zugang oder Benachrichtigungen regeln und deshalb bei
+# Freigaben nicht angeboten werden
+NOT_SHAREABLE_GROUPS = (GROUP_AI, GROUP_SYSTEM_MAIL)
 
 
 # Beschreibung der Standardgruppen für die Verwaltung (Version 0.3.0)
@@ -45,6 +49,10 @@ GROUP_DESCRIPTIONS = {
         "May use the AI assistant: ask questions about contracts they can see, upload documents and have "
         "new contracts proposed. The assistant acts with the rights of the user. This group is only "
         "about access to the assistant and is therefore not offered when sharing objects."
+    ),
+    GROUP_SYSTEM_MAIL: _(
+        "Receives system emails: after an update a summary of what's new, superusers also an email when a "
+        "new version is available. This group is not offered when sharing objects."
     ),
 }
 
@@ -356,11 +364,11 @@ def group_description(name):
 def shareable_groups(obj=None):
     """
     Gruppen, die bei Freigaben zur Auswahl stehen (Version 0.3.0): alle
-    außer "KI", die nur den Zugang zum Assistenten regelt. Hat "KI" an
-    ``obj`` bereits eine Rolle (ältere Freigabe), bleibt sie sichtbar, damit
-    man die Freigabe entfernen kann.
+    außer "KI" und "Systemmail" (0.11.0), die nur Zugang bzw. E-Mails
+    regeln. Hat eine davon an ``obj`` bereits eine Rolle (ältere Freigabe),
+    bleibt sie sichtbar, damit man die Freigabe entfernen kann.
     """
-    hidden = Group.objects.filter(name=GROUP_AI)
+    hidden = Group.objects.filter(name__in=NOT_SHAREABLE_GROUPS)
     if obj is not None and obj.pk:
         hidden = hidden.exclude(pk__in=[group.pk for group in get_groups_with_perms(obj)])
     return Group.objects.exclude(pk__in=hidden.values("pk")).order_by("name")
