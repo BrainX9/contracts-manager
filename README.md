@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.10.1-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.11.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -78,6 +78,7 @@ The user interface is available in **English and German** (per user).
 - Sent **daily** from the lead date up to the reminder date, then switched off automatically
 - Background worker (django-q2) – no Redis needed
 - Password reset and invitations by email (SMTP, e.g. IONOS)
+- **System emails** to the group “Systemmail”: what's new after an update, and a notice when a new version is available
 
 </td>
 </tr>
@@ -247,7 +248,7 @@ Planned, not yet implemented:
 > [!IMPORTANT]
 > This project was developed primarily by **[Claude](https://www.anthropic.com/claude)** (Anthropic's AI assistant, via [Claude Code](https://claude.com/claude-code)), working phase by phase under the direction and review of the maintainer. Requirements, decisions and testing are human; most of the code, tests and documentation were written by Claude.
 
-Every version was planned first, then implemented in small, reviewed steps with automated tests (currently around 470) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
+Every version was planned first, then implemented in small, reviewed steps with automated tests (currently over 600) and checked in the browser. Commits made with Claude carry a `Co-Authored-By` trailer.
 
 ## License
 

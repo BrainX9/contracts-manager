@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 22:00+0100\n"
+"POT-Creation-Date: 2026-11-24 19:08+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -764,7 +764,7 @@ msgstr "Aktueller Betrag"
 msgid "No costs"
 msgstr "Keine Kosten"
 
-#: contracts/apps.py:115 web/templates/web/base.html:62
+#: contracts/apps.py:117 web/templates/web/base.html:62
 #: web/templates/web/categories/_results.html:19
 #: web/templates/web/consumers/_results.html:22
 #: web/templates/web/contracts/cost_form.html:7
@@ -779,7 +779,7 @@ msgstr "Keine Kosten"
 #: web/templates/web/manage/system.html:22
 #: web/templates/web/manage/users/detail.html:74
 #: web/templates/web/payment_methods/_results.html:21
-#: web/templates/web/providers/_results.html:23 web/views.py:801
+#: web/templates/web/providers/_results.html:23 web/views.py:803
 msgid "Contracts"
 msgstr "Verträge"
 
@@ -1433,19 +1433,19 @@ msgstr "Tags: %(error)s"
 msgid "Paperless could not process the file."
 msgstr "Paperless konnte die Datei nicht verarbeiten."
 
-#: contracts/permissions.py:41
+#: contracts/permissions.py:45
 msgid "Contains every user automatically."
 msgstr "Enthält automatisch alle Benutzer."
 
-#: contracts/permissions.py:42
+#: contracts/permissions.py:46
 msgid "May create own contracts and master data."
 msgstr "Darf eigene Verträge und Stammdaten anlegen."
 
-#: contracts/permissions.py:43
+#: contracts/permissions.py:47
 msgid "May manage users and groups."
 msgstr "Darf Benutzer und Gruppen verwalten."
 
-#: contracts/permissions.py:45
+#: contracts/permissions.py:49
 msgid ""
 "May use the AI assistant: ask questions about contracts they can see, upload "
 "documents and have new contracts proposed. The assistant acts with the "
@@ -1456,6 +1456,10 @@ msgstr ""
 "sehen darf, Dokumente hochladen und neue Verträge vorschlagen lassen. Der "
 "Assistent arbeitet mit den Rechten des Benutzers. Die Gruppe regelt nur den "
 "Zugang zum Assistenten und wird deshalb bei Freigaben nicht angeboten."
+
+#: contracts/permissions.py:54
+msgid "Receives system emails: after an update a summary of what's new, superusers also an email when a new version is available. This group is not offered when sharing objects."
+msgstr "Bekommt System-E-Mails: nach einem Update eine Zusammenfassung der Neuigkeiten, Superuser außerdem eine E-Mail, wenn eine neue Version verfügbar ist. Diese Gruppe wird bei Freigaben nicht angeboten."
 
 #: contracts/templates/admin/contracts/contract/change_list.html:42
 #: web/templates/web/contracts/_results.html:11
@@ -1501,6 +1505,10 @@ msgstr "Dein Zugang zu Contracts Manager"
 #: contracts/templates/emails/password_reset.txt:1
 #: contracts/templates/emails/reminder.html:6
 #: contracts/templates/emails/reminder.txt:1
+#: contracts/templates/emails/system_update.html:6
+#: contracts/templates/emails/system_update.txt:1
+#: contracts/templates/emails/system_whats_new.html:6
+#: contracts/templates/emails/system_whats_new.txt:1
 #: contracts/templates/emails/test.html:5 contracts/templates/emails/test.txt:1
 #, python-format
 msgid "Hello %(name)s,"
@@ -1641,6 +1649,70 @@ msgstr "Hinweis"
 msgid "Reminder: %(reason)s – %(name)s on %(date)s"
 msgstr "Erinnerung: %(reason)s – %(name)s am %(date)s"
 
+#: contracts/templates/emails/system_update.html:4
+msgid "Update available"
+msgstr "Update verfügbar"
+
+#: contracts/templates/emails/system_update.html:7
+#: contracts/templates/emails/system_update.txt:3
+#, python-format
+msgid "a new version of Contracts Manager is available: %(version)s (installed: %(installed_version)s)."
+msgstr "eine neue Version von Contracts Manager ist verfügbar: %(version)s (installiert: %(installed_version)s)."
+
+#: contracts/templates/emails/system_update.html:9
+#: contracts/templates/emails/system_update.txt:5
+#: contracts/templates/emails/system_whats_new.html:13
+#: contracts/templates/emails/system_whats_new.txt:7
+#: web/templates/web/manage/system.html:48
+msgid "Release notes"
+msgstr "Versionshinweise"
+
+#: contracts/templates/emails/system_update.html:11
+#: contracts/templates/emails/system_update.txt:8
+msgid "Make a backup before you update."
+msgstr "Mach vor dem Update ein Backup."
+
+#: contracts/templates/emails/system_update.html:11
+#: contracts/templates/emails/system_update.txt:6
+msgid "How to update"
+msgstr "So geht das Update"
+
+#: contracts/templates/emails/system_update.html:13
+#: contracts/templates/emails/system_update.txt:11
+#: contracts/templates/emails/system_whats_new.html:21
+#: contracts/templates/emails/system_whats_new.txt:12
+msgid "You receive this email because you are in the group “Systemmail”. An administrator can remove you from it."
+msgstr "Du bekommst diese E-Mail, weil du in der Gruppe „Systemmail“ bist. Ein Administrator kann dich daraus entfernen."
+
+#: contracts/templates/emails/system_update_subject.txt:1
+#, python-format
+msgid "Contracts Manager %(version)s is available"
+msgstr "Contracts Manager %(version)s ist verfügbar"
+
+#: contracts/templates/emails/system_whats_new.html:4
+#: contracts/templates/emails/system_whats_new.txt:9
+#: web/templates/web/base.html:159
+#: web/templates/web/includes/whats_new_modal.html:6
+#: web/templates/web/includes/whats_new_modal.html:23
+#: web/templates/web/whats_new.html:3 web/templates/web/whats_new.html:5
+msgid "What's new"
+msgstr "Neuigkeiten"
+
+#: contracts/templates/emails/system_whats_new.html:7
+#: contracts/templates/emails/system_whats_new.txt:3
+#, python-format
+msgid "Contracts Manager has been updated to version %(version)s. What's new:"
+msgstr "Contracts Manager wurde auf Version %(version)s aktualisiert. Das ist neu:"
+
+#: contracts/templates/emails/system_whats_new.html:17
+msgid "Open Contracts Manager"
+msgstr "Contracts Manager öffnen"
+
+#: contracts/templates/emails/system_whats_new_subject.txt:1
+#, python-format
+msgid "What's new in Contracts Manager %(version)s"
+msgstr "Neu in Contracts Manager %(version)s"
+
 #: contracts/templates/emails/test.html:4
 #: contracts/templates/emails/test_subject.txt:1
 msgid "Test email"
@@ -1654,7 +1726,7 @@ msgstr ""
 "Das ist eine Test-E-Mail von Contracts Manager. Wenn du sie lesen kannst, "
 "funktioniert der Versand."
 
-#: web/apps.py:36
+#: web/apps.py:58
 msgid "Web interface"
 msgstr "Oberfläche"
 
@@ -1875,7 +1947,7 @@ msgstr ""
 "Der neue Eigentümer hat bereits Objekte mit diesen Namen: %(names)s. Bitte "
 "zuerst umbenennen."
 
-#: web/manage_forms.py:173 web/manage_forms.py:490 web/models.py:194
+#: web/manage_forms.py:173 web/manage_forms.py:490 web/models.py:203
 msgid "SSO Login"
 msgstr "SSO Login"
 
@@ -2052,7 +2124,7 @@ msgstr ""
 "Single Sign-on lässt sich nur mit vollständigen Angaben einschalten. Es "
 "fehlt: %(missing)s."
 
-#: web/manage_forms.py:596 web/models.py:163
+#: web/manage_forms.py:596 web/models.py:172
 msgid "API token"
 msgstr "API-Token"
 
@@ -2398,19 +2470,27 @@ msgstr "neueste bekannte Version"
 msgid "last update check"
 msgstr "letzte Update-Prüfung"
 
-#: web/models.py:160
+#: web/models.py:161
+msgid "update email sent for version"
+msgstr "Update-E-Mail verschickt für Version"
+
+#: web/models.py:163
+msgid "what's new email sent for version"
+msgstr "Neuigkeiten-E-Mail verschickt für Version"
+
+#: web/models.py:169
 msgid "use of Paperless"
 msgstr "Nutzung von Paperless"
 
-#: web/models.py:162
+#: web/models.py:171
 msgid "address of Paperless"
 msgstr "Adresse von Paperless"
 
-#: web/models.py:165
+#: web/models.py:174
 msgid "tags"
 msgstr "Tags"
 
-#: web/models.py:166
+#: web/models.py:175
 msgid ""
 "Comma separated, e.g. Contract, Contracts Manager. Missing tags are created "
 "in Paperless."
@@ -2418,23 +2498,23 @@ msgstr ""
 "Durch Kommas getrennt, z. B. Vertrag, Contracts Manager. Fehlende Tags "
 "werden in Paperless angelegt."
 
-#: web/models.py:168
+#: web/models.py:177
 msgid "add a tag for the user"
 msgstr "Tag für den Benutzer hinzufügen"
 
-#: web/models.py:170
+#: web/models.py:179
 msgid "prefix of the user tag"
 msgstr "Präfix des Benutzer-Tags"
 
-#: web/models.py:171
+#: web/models.py:180
 msgid "Followed by the user name, e.g. CM-anna."
 msgstr "Danach folgt der Benutzername, z. B. CM-anna."
 
-#: web/models.py:177 web/models.py:178
+#: web/models.py:186 web/models.py:187
 msgid "application settings"
 msgstr "Anwendungseinstellungen"
 
-#: web/models.py:181
+#: web/models.py:190
 msgid "Application settings"
 msgstr "Anwendungseinstellungen"
 
@@ -2577,7 +2657,7 @@ msgstr "Übersicht"
 #: web/templates/web/providers/detail.html:7
 #: web/templates/web/providers/form.html:7
 #: web/templates/web/providers/list.html:3
-#: web/templates/web/providers/list.html:6 web/views.py:1093
+#: web/templates/web/providers/list.html:6 web/views.py:1095
 msgid "Contract partners"
 msgstr "Vertragspartner"
 
@@ -2585,7 +2665,7 @@ msgstr "Vertragspartner"
 #: web/templates/web/categories/form.html:7
 #: web/templates/web/categories/list.html:3
 #: web/templates/web/categories/list.html:6
-#: web/templates/web/manage/users/detail.html:76 web/views.py:1320
+#: web/templates/web/manage/users/detail.html:76 web/views.py:1322
 msgid "Categories"
 msgstr "Kategorien"
 
@@ -2593,7 +2673,7 @@ msgstr "Kategorien"
 #: web/templates/web/consumers/form.html:7
 #: web/templates/web/consumers/list.html:3
 #: web/templates/web/consumers/list.html:6
-#: web/templates/web/manage/users/detail.html:77 web/views.py:1146
+#: web/templates/web/manage/users/detail.html:77 web/views.py:1148
 msgid "Consumers"
 msgstr "Verbraucher"
 
@@ -2601,7 +2681,7 @@ msgstr "Verbraucher"
 #: web/templates/web/payment_methods/detail.html:7
 #: web/templates/web/payment_methods/form.html:7
 #: web/templates/web/payment_methods/list.html:3
-#: web/templates/web/payment_methods/list.html:6 web/views.py:1214
+#: web/templates/web/payment_methods/list.html:6 web/views.py:1216
 msgid "Payment methods"
 msgstr "Zahlungsmethoden"
 
@@ -2662,13 +2742,6 @@ msgstr "Update %(version)s"
 #: web/templates/web/preferences.html:5
 msgid "Settings"
 msgstr "Einstellungen"
-
-#: web/templates/web/base.html:159
-#: web/templates/web/includes/whats_new_modal.html:6
-#: web/templates/web/includes/whats_new_modal.html:23
-#: web/templates/web/whats_new.html:3 web/templates/web/whats_new.html:5
-msgid "What's new"
-msgstr "Neuigkeiten"
 
 #: web/templates/web/base.html:161 web/templates/web/password_change.html:3
 #: web/templates/web/password_change.html:5
@@ -2836,7 +2909,7 @@ msgstr "Kategorie bearbeiten"
 #: web/templates/web/categories/form.html:3
 #: web/templates/web/categories/form.html:9
 #: web/templates/web/categories/form.html:12
-#: web/templates/web/categories/list.html:8 web/views.py:613
+#: web/templates/web/categories/list.html:8 web/views.py:615
 msgid "New category"
 msgstr "Neue Kategorie"
 
@@ -2940,7 +3013,7 @@ msgstr "Verbraucher bearbeiten"
 #: web/templates/web/consumers/form.html:3
 #: web/templates/web/consumers/form.html:9
 #: web/templates/web/consumers/form.html:12
-#: web/templates/web/consumers/list.html:8 web/views.py:615
+#: web/templates/web/consumers/list.html:8 web/views.py:617
 msgid "New consumer"
 msgstr "Neuer Verbraucher"
 
@@ -4100,10 +4173,6 @@ msgstr "Noch nicht geprüft. Der Worker prüft einmal täglich."
 msgid "Update available: %(version)s"
 msgstr "Update verfügbar: %(version)s"
 
-#: web/templates/web/manage/system.html:48
-msgid "Release notes"
-msgstr "Versionshinweise"
-
 #: web/templates/web/manage/system.html:49
 msgid ""
 "Update with: docker compose pull, then docker compose up -d (create a backup "
@@ -4491,7 +4560,7 @@ msgstr "Zahlungsmethode bearbeiten"
 #: web/templates/web/payment_methods/form.html:3
 #: web/templates/web/payment_methods/form.html:9
 #: web/templates/web/payment_methods/form.html:12
-#: web/templates/web/payment_methods/list.html:8 web/views.py:617
+#: web/templates/web/payment_methods/list.html:8 web/views.py:619
 msgid "New payment method"
 msgstr "Neue Zahlungsmethode"
 
@@ -4511,7 +4580,7 @@ msgstr ""
 msgid "Change the password you use to log in."
 msgstr "Ändere das Passwort, mit dem du dich anmeldest."
 
-#: web/templates/web/preferences.html:28 web/views.py:219
+#: web/templates/web/preferences.html:28 web/views.py:221
 msgid "You sign in via single sign-on and have no local password."
 msgstr "Du meldest dich über Single Sign-on an und hast kein lokales Passwort."
 
@@ -4579,7 +4648,7 @@ msgstr "Vertragspartner bearbeiten"
 #: web/templates/web/providers/form.html:3
 #: web/templates/web/providers/form.html:9
 #: web/templates/web/providers/form.html:12
-#: web/templates/web/providers/list.html:8 web/views.py:611
+#: web/templates/web/providers/list.html:8 web/views.py:613
 msgid "New contract partner"
 msgstr "Neuer Vertragspartner"
 
@@ -4616,52 +4685,52 @@ msgstr "Noch keine Neuigkeiten."
 msgid "Welcome! You are the administrator of this installation."
 msgstr "Willkommen! Du bist der Administrator dieser Installation."
 
-#: web/views.py:207
+#: web/views.py:209
 msgid "Your settings have been saved."
 msgstr "Deine Einstellungen wurden gespeichert."
 
-#: web/views.py:225
+#: web/views.py:227
 msgid "Your password has been changed."
 msgstr "Dein Passwort wurde geändert."
 
-#: web/views.py:352
+#: web/views.py:354
 msgid "The sharing settings have been saved."
 msgstr "Die Freigaben wurden gespeichert."
 
-#: web/views.py:545
+#: web/views.py:547
 msgid "Predecessor contract"
 msgstr "Vorgängervertrag"
 
-#: web/views.py:545
+#: web/views.py:547
 msgid "Successor contract"
 msgstr "Nachfolgevertrag"
 
-#: web/views.py:595
+#: web/views.py:597
 msgid "The reminder has been saved."
 msgstr "Die Erinnerung wurde gespeichert."
 
-#: web/views.py:637
+#: web/views.py:639
 msgid "The contract has been created. You can now add its costs."
 msgstr "Der Vertrag wurde angelegt. Jetzt kannst du die Kosten hinzufügen."
 
-#: web/views.py:658
+#: web/views.py:660
 msgid "The contract has been saved."
 msgstr "Der Vertrag wurde gespeichert."
 
-#: web/views.py:709
+#: web/views.py:711
 #, python-format
 msgid "The contract “%(name)s” has been deleted."
 msgstr "Der Vertrag „%(name)s“ wurde gelöscht."
 
-#: web/views.py:775
+#: web/views.py:777
 msgid "The cost entry has been saved."
 msgstr "Der Kosteneintrag wurde gespeichert."
 
-#: web/views.py:790
+#: web/views.py:792
 msgid "The cost entry has been deleted."
 msgstr "Der Kosteneintrag wurde gelöscht."
 
-#: web/views.py:803
+#: web/views.py:805
 msgid ""
 "Readers may view the contract and its costs. Editors may also edit the "
 "contract and its costs, but not delete it or change the sharing. The owner "
@@ -4671,27 +4740,27 @@ msgstr ""
 "und Kosten außerdem bearbeiten, aber nicht löschen und keine Freigaben "
 "ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1051
+#: web/views.py:1053
 msgid "The contract partner has been created."
 msgstr "Der Vertragspartner wurde angelegt."
 
-#: web/views.py:1057
+#: web/views.py:1059
 msgid "The contract partner has been saved."
 msgstr "Der Vertragspartner wurde gespeichert."
 
-#: web/views.py:1063
+#: web/views.py:1065
 msgid ""
 "The contract partner cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Vertragspartner kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1064
+#: web/views.py:1066
 #, python-format
 msgid "The contract partner “%(name)s” has been deleted."
 msgstr "Der Vertragspartner „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1095
+#: web/views.py:1097
 msgid ""
 "Readers may view the contract partner and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -4701,26 +4770,26 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1126
+#: web/views.py:1128
 msgid "The consumer has been created."
 msgstr "Der Verbraucher wurde angelegt."
 
-#: web/views.py:1132
+#: web/views.py:1134
 msgid "The consumer has been saved."
 msgstr "Der Verbraucher wurde gespeichert."
 
-#: web/views.py:1138
+#: web/views.py:1140
 msgid "The consumer cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Verbraucher kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1139
+#: web/views.py:1141
 #, python-format
 msgid "The consumer “%(name)s” has been deleted."
 msgstr "Der Verbraucher „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1148
+#: web/views.py:1150
 msgid ""
 "Readers may view the consumer and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "
@@ -4730,27 +4799,27 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1174
+#: web/views.py:1176
 msgid "The payment method has been created."
 msgstr "Die Zahlungsmethode wurde angelegt."
 
-#: web/views.py:1180
+#: web/views.py:1182
 msgid "The payment method has been saved."
 msgstr "Die Zahlungsmethode wurde gespeichert."
 
-#: web/views.py:1186
+#: web/views.py:1188
 msgid ""
 "The payment method cannot be deleted because it is still used in contracts."
 msgstr ""
 "Die Zahlungsmethode kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1187
+#: web/views.py:1189
 #, python-format
 msgid "The payment method “%(name)s” has been deleted."
 msgstr "Die Zahlungsmethode „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1216
+#: web/views.py:1218
 msgid ""
 "Readers may view the payment method and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -4760,15 +4829,15 @@ msgstr ""
 "Bearbeiter dürfen sie außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1290
+#: web/views.py:1292
 msgid "The category has been created."
 msgstr "Die Kategorie wurde angelegt."
 
-#: web/views.py:1301
+#: web/views.py:1303
 msgid "The category has been saved."
 msgstr "Die Kategorie wurde gespeichert."
 
-#: web/views.py:1308
+#: web/views.py:1310
 msgid ""
 "The category cannot be deleted because it is still used in contracts or has "
 "subcategories."
@@ -4776,12 +4845,12 @@ msgstr ""
 "Die Kategorie kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird oder Unterkategorien hat."
 
-#: web/views.py:1310
+#: web/views.py:1312
 #, python-format
 msgid "The category “%(name)s” has been deleted."
 msgstr "Die Kategorie „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1322
+#: web/views.py:1324
 msgid ""
 "Readers may view the category and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "
@@ -4797,33 +4866,71 @@ msgid "Paperless inside Contracts Manager"
 msgstr "Paperless direkt in Contracts Manager"
 
 #: web/whats_new.py:48
-msgid "If Paperless is connected via its API, Paperless documents open directly in Contracts Manager. Everyone who may read a contract can open its documents, even without an account in Paperless."
-msgstr "Ist Paperless über die API angebunden, öffnen sich Paperless-Dokumente direkt in Contracts Manager. Wer einen Vertrag lesen darf, kann seine Dokumente öffnen, auch ohne Konto in Paperless."
+msgid ""
+"If Paperless is connected via its API, Paperless documents open directly in "
+"Contracts Manager. Everyone who may read a contract can open its documents, "
+"even without an account in Paperless."
+msgstr ""
+"Ist Paperless über die API angebunden, öffnen sich Paperless-Dokumente "
+"direkt in Contracts Manager. Wer einen Vertrag lesen darf, kann seine "
+"Dokumente öffnen, auch ohne Konto in Paperless."
 
 #: web/whats_new.py:51
 msgid "Uploaded documents can be transferred to Paperless with one button."
-msgstr "Hochgeladene Dokumente lassen sich mit einem Klick an Paperless übertragen."
+msgstr ""
+"Hochgeladene Dokumente lassen sich mit einem Klick an Paperless übertragen."
 
 #: web/whats_new.py:52
-msgid "New page Administration › Paperless. Email, single sign-on and the AI assistant are now set up only in Administration."
-msgstr "Neue Seite Verwaltung › Paperless. E-Mail, Single Sign-on und der KI-Assistent werden jetzt nur noch in der Verwaltung eingerichtet."
+msgid ""
+"New page Administration › Paperless. Email, single sign-on and the AI "
+"assistant are now set up only in Administration."
+msgstr ""
+"Neue Seite Verwaltung › Paperless. E-Mail, Single Sign-on und der KI-"
+"Assistent werden jetzt nur noch in der Verwaltung eingerichtet."
 
 #: web/whats_new.py:55
 msgid "The assistant spots duplicates"
 msgstr "Der Assistent erkennt Dubletten"
 
 #: web/whats_new.py:56
-msgid "The AI assistant points out contract partners, categories and consumers that are probably the same – for example several entries for one insurance company – and explains how to merge them."
-msgstr "Der KI-Assistent weist auf Vertragspartner, Kategorien und Verbraucher hin, die vermutlich dasselbe sind – zum Beispiel mehrere Einträge für eine Versicherung – und erklärt, wie man sie zusammenführt."
+msgid ""
+"The AI assistant points out contract partners, categories and consumers that "
+"are probably the same – for example several entries for one insurance "
+"company – and explains how to merge them."
+msgstr ""
+"Der KI-Assistent weist auf Vertragspartner, Kategorien und Verbraucher hin, "
+"die vermutlich dasselbe sind – zum Beispiel mehrere Einträge für eine "
+"Versicherung – und erklärt, wie man sie zusammenführt."
 
 #: web/whats_new.py:59
-msgid "Before it proposes a new contract partner, it looks for similar existing entries and proposes those instead. This applies to new conversations."
-msgstr "Bevor er einen neuen Vertragspartner vorschlägt, sucht er nach ähnlichen vorhandenen Einträgen und schlägt diese vor. Das gilt für neue Unterhaltungen."
+msgid ""
+"Before it proposes a new contract partner, it looks for similar existing "
+"entries and proposes those instead. This applies to new conversations."
+msgstr ""
+"Bevor er einen neuen Vertragspartner vorschlägt, sucht er nach ähnlichen "
+"vorhandenen Einträgen und schlägt diese vor. Das gilt für neue "
+"Unterhaltungen."
 
 #: web/whats_new.py:62
 msgid "What's new after an update"
 msgstr "Neuigkeiten nach einem Update"
 
 #: web/whats_new.py:63
-msgid "After each update, this window shows once what has changed. You can read it again at any time under “What's new” in the user menu."
-msgstr "Nach jedem Update zeigt dieses Fenster einmal, was sich geändert hat. Nachlesen kannst du es jederzeit unter „Neuigkeiten“ im Benutzermenü."
+msgid ""
+"After each update, this window shows once what has changed. You can read it "
+"again at any time under “What's new” in the user menu."
+msgstr ""
+"Nach jedem Update zeigt dieses Fenster einmal, was sich geändert hat. "
+"Nachlesen kannst du es jederzeit unter „Neuigkeiten“ im Benutzermenü."
+
+#: web/whats_new.py:66
+msgid "System emails"
+msgstr "System-E-Mails"
+
+#: web/whats_new.py:67
+msgid "Members of the new group “Systemmail” receive this summary of what's new by email after each update. Administrators decide who is in the group."
+msgstr "Mitglieder der neuen Gruppe „Systemmail“ bekommen diese Zusammenfassung der Neuigkeiten nach jedem Update per E-Mail. Wer in der Gruppe ist, legen Administratoren fest."
+
+#: web/whats_new.py:69
+msgid "Superusers in the group also receive an email when a new version is available. Superusers and administrators were added to the group with this update."
+msgstr "Superuser in der Gruppe bekommen außerdem eine E-Mail, wenn eine neue Version verfügbar ist. Superuser und Administratoren wurden mit diesem Update in die Gruppe aufgenommen."

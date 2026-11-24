@@ -153,6 +153,15 @@ class SiteSettings(models.Model):
     update_check = models.BooleanField(_("check for updates"), default=True)
     latest_version = models.CharField(_("latest known version"), max_length=20, blank=True, editable=False)
     update_checked_at = models.DateTimeField(_("last update check"), null=True, blank=True, editable=False)
+    # Version 0.11.0: System-E-Mails (web.system_mail). Version, zu der die
+    # E-Mail "Neue Version verfügbar" schon verschickt wurde, und Version,
+    # deren Neuigkeiten schon per E-Mail angekündigt wurden (leer = neue
+    # Installation, nichts ankündigen).
+    update_notified_version = models.CharField(
+        _("update email sent for version"), max_length=20, blank=True, editable=False,
+    )
+    announced_version = models.CharField(_("what's new email sent for version"), max_length=20, blank=True,
+                                         editable=False)
 
     # Version 0.9.0: Paperless-ngx. Nur hier, keine .env mehr; ein früheres
     # PAPERLESS_URL übernimmt web.env_import einmalig.

@@ -1,0 +1,1 @@
+{% load i18n %}{% blocktranslate %}Contracts Manager {{ version }} is available{% endblocktranslate %}

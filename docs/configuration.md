@@ -60,6 +60,7 @@ Default groups, created automatically:
 | **Alle** | contains every user automatically; sharing with “Alle” makes an object visible to everyone |
 | **Administratoren** | may manage users and groups in the web interface |
 | **KI** | may use the [AI assistant](#ai-assistant): ask questions about the contracts they can see, upload documents and have new contracts proposed. The assistant always acts with the rights of the user. The group only controls access to the assistant, so it is not offered when sharing objects. |
+| **Systemmail** | receives [system emails](#system-emails): a summary of what's new after each update, superusers also an email when a new version is available. Not offered when sharing objects. |
 
 **Sharing an object:** on the page of a contract, contract partner, category, consumer or payment method, open **Sharing** and choose exactly one role per user and group: no access, reader or editor. Readers of master data can select it in their own contracts. Sharing a main category does not share its subcategories. Only the owner and superusers see and change sharing. When ownership is handed over, the previous owner automatically becomes an editor (the role can be removed afterwards).
 
@@ -136,6 +137,17 @@ The **worker** service (django-q2) sends reminders daily at the time set under *
 ```bash
 sudo docker compose exec app python manage.py send_reminders
 ```
+
+### System emails
+
+Since 0.11.0 Contracts Manager sends system emails to the members of the group **Systemmail** (with an email address, active accounts only):
+
+| Email | Who | When |
+|---|---|---|
+| **New version available** | superusers in the group | once per version, after the daily [update check](#version-and-updates) finds it (not when the check is switched off) |
+| **What's new** | all members | once per update, a few minutes after the new version has started; the same content as the window *What's new* (at most three versions). Versions without news (only bug fixes) send nothing. |
+
+Administrators decide who is in the group (Administration › Groups or the user form); users cannot join or leave it themselves. On the update to 0.11.0 all superusers and members of **Administratoren** were added. In a new installation the first administrator is added; later users are not. A new installation does not send a *What's new* email. Without [SMTP settings](#smtp-in-the-app) the emails only go to the log.
 
 ## Single sign-on with the Synology SSO Server
 
@@ -395,7 +407,7 @@ Once a day the worker asks GitHub for the newest release and stores the result. 
 
 Updating itself stays manual: [Operations](operations.md#update).
 
-After an update, **every user** sees a short window **What's new** once, on the first page after logging in. It lists the new features of the versions since their last visit (at most three); closing it counts as read. Users read it again under **What's new** in the user menu. New users don't see it. The texts are part of the app (no internet access needed); the full release notes are linked.
+After an update, **every user** sees a short window **What's new** once, on the first page after logging in. It lists the new features of the versions since their last visit (at most three); closing it counts as read. Users read it again under **What's new** in the user menu. New users don't see it. Members of the group **Systemmail** also get it by email ([system emails](#system-emails)). The texts are part of the app (no internet access needed); the full release notes are linked.
 
 ## Language
 

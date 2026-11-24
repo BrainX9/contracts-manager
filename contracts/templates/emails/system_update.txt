@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktranslate with name=recipient.get_username %}Hello {{ name }},{% endblocktranslate %}
+
+{% blocktranslate %}a new version of Contracts Manager is available: {{ version }} (installed: {{ installed_version }}).{% endblocktranslate %}
+
+{% translate "Release notes" %}: {{ release_url }}
+{% translate "How to update" %}: {{ operations_url }}
+
+{% translate "Make a backup before you update." %}
+
+--
+{% translate "You receive this email because you are in the group “Systemmail”. An administrator can remove you from it." %}
