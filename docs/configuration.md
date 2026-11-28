@@ -413,6 +413,99 @@ After an update, **every user** sees a short window **What's new** once, on the 
 
 The interface is available in German (default) and English. Each user chooses the language under **Settings**; it applies on all devices, in the Django admin and in emails. The login page uses German.
 
+## Reverse proxy
+
+The app runs fine behind a reverse proxy, e.g. for HTTPS and access from the internet. The [Synology guide](installation-synology.md#6-reverse-proxy-with-https) covers the reverse proxy of DSM; this section is for other proxies. The app needs **no WebSockets** and no extra paths – the whole app is proxied as it is, at the root of its own (sub)domain. Serving it under a sub-path such as `https://example.com/contracts/` is not supported.
+
+### What matters
+
+| Setting | Value |
+|---|---|
+| **Target** | Proxy on the host: `http://<host>:8010` (the port from `ports:` in the Compose file). Proxy as a container in the same Docker network: `http://contracts-manager-app:8000` – the internal port **8000**, not 8010. |
+| **Headers** | Pass on `Host` (the address the browser used) and set `X-Forwarded-Proto` (`https`) and `X-Forwarded-For`. Caddy, Traefik and Nginx Proxy Manager do this by themselves; plain Nginx needs the lines below. |
+| **`USE_HTTPS: "True"`** | In the Compose file as soon as the app is reached via HTTPS. Without it, logging in fails with a CSRF error. |
+| **`ALLOWED_HOSTS`** | Optional. If set, it must contain the domain of the proxy, e.g. `contracts.example.com`. |
+| **`CSRF_TRUSTED_ORIGINS`** | Only if the proxy changes the address or the scheme, e.g. `https://contracts.example.com` (with `https://`, without a trailing slash). |
+| **Request size** | Allow at least **21 MB** for uploads (documents up to 20 MB). |
+| **Address of the app** | Under **Administration › Email settings** enter the public address, e.g. `https://contracts.example.com`, so links in emails are correct. |
+
+Block port 8010 for access from outside (firewall), so the app can only be reached through the proxy. If the proxy runs as a container in the same Docker network, you can remove `ports:` from the Compose file altogether.
+
+### Same Docker network
+
+The Compose file creates a network named after its folder, e.g. `contracts-manager_default`. A proxy from another Compose project joins it like this (in the proxy's Compose file):
+
+```yaml
+services:
+  proxy:
+    # …
+    networks: [default, contracts-manager]
+
+networks:
+  contracts-manager:
+    name: contracts-manager_default
+    external: true
+```
+
+Check the exact name with `docker network ls`.
+
+### Examples
+
+**Nginx**
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name contracts.example.com;
+    # ssl_certificate …; ssl_certificate_key …;
+
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://contracts-manager-app:8000;   # or http://<host>:8010
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 120s;
+    }
+}
+```
+
+**Caddy** (`Caddyfile`, HTTPS certificate included)
+
+```
+contracts.example.com {
+    reverse_proxy contracts-manager-app:8000
+}
+```
+
+**Traefik** (labels on the service `app` in the Compose file of Contracts Manager; Traefik must be in the same network)
+
+```yaml
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.contracts.rule=Host(`contracts.example.com`)
+      - traefik.http.routers.contracts.entrypoints=websecure
+      - traefik.http.routers.contracts.tls.certresolver=letsencrypt
+      - traefik.http.services.contracts.loadbalancer.server.port=8000
+```
+
+Traefik passes uploads of any size by default.
+
+**Nginx Proxy Manager:** new proxy host with the domain, scheme `http`, forward hostname `contracts-manager-app` and port `8000` (same Docker network) or the address of the host and port `8010`. On the tab SSL request a certificate and enable *Force SSL*. Under *Advanced* add `client_max_body_size 25m;`. WebSockets support is not needed.
+
+### Troubleshooting
+
+| Symptom | Cause |
+|---|---|
+| No connection, *502 Bad Gateway* or timeout | Wrong target: in the same Docker network use `contracts-manager-app:8000`; from the host use port `8010`. A proxy in another Docker network cannot reach the container by name. Check that the app runs: `docker compose ps` (state *healthy*). |
+| *400 Bad Request* | `ALLOWED_HOSTS` is set but does not contain the domain, or the proxy does not pass on `Host`. |
+| *403 CSRF verification failed* when logging in | `USE_HTTPS` is missing, the proxy does not set `X-Forwarded-Proto`, or it changes the address: set `CSRF_TRUSTED_ORIGINS`. |
+| *413* when uploading | The proxy limits the request size; allow at least 21 MB. |
+| Links in emails point to the wrong address | Enter the public address under **Administration › Email settings**. |
+
+Errors of the app (e.g. *400* or *403*) are logged: `docker compose logs app`. If a request does not reach the app at all, the problem lies in the proxy or the network.
+
 ## Security
 
 - **Failed logins:** after 5 wrong passwords for the same user name from the same IP address, logging in is locked for 15 minutes ([django-axes](https://github.com/jazzband/django-axes)). Configurable with `AXES_FAILURE_LIMIT` and `AXES_COOLOFF_MINUTES`; locks can be lifted in the Django admin (see [operations](operations.md#locked-login)). Behind the reverse proxy (`USE_HTTPS=True`) the client address is taken from `X-Forwarded-For`.

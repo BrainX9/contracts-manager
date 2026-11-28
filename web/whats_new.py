@@ -69,6 +69,11 @@ ENTRIES = (
         Item(_("Superusers in the group also receive an email when a new version is available. Superusers and "
                "administrators were added to the group with this update."), superuser_only=True),
     )),
+    Entry("0.12.0", _("Several values per filter"), (
+        Item(_("In the contract list, the filters for main category, category, consumer, payment method and "
+               "contract partner now take several values – for example “Me” and “Household” together. "
+               "Contracts matching any of the ticked values are shown.")),
+    )),
 )
 
 

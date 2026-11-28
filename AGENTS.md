@@ -598,6 +598,23 @@ Keine neuen Abhängigkeiten.
 **Weiteres**
 - Backup: Schritt `upgrade_0_10_1` (Gruppe „Systemmail“ vor den Benutzern einfügen, Superuser und Administratoren als Mitglieder, `announced_version = "0.11.0"`, damit ein Import keine E-Mail auslöst); Eintrag `0.11.0` in `backup_upgrades.VERSIONS`. `APP_VERSION` ist `0.11.0`.
 
+### Version 0.12.0: Mehrfachfilter, Reverse-Proxy-Anleitung, Sicherheitskorrekturen
+Keine neuen Abhängigkeiten, keine Migration. Anlass: Issue #19 (erstes Issue eines Nutzers), aufgeteilt in #20–#22; umgesetzt ist #20.
+
+**Mehrere Werte je Filter in der Vertragsliste (#20)**
+- Hauptkategorie, Kategorie, Verbraucher, Zahlungsmethode und Vertragspartner nehmen mehrere Werte (`?consumer=1&consumer=3`, `web.views._selected_ids`); innerhalb eines Filters ODER, zwischen den Filtern UND. Links mit einem Wert gelten weiter. Der Status bleibt eine Einzelauswahl (Entscheidung des Maintainers, Sonderwerte „alle außer archivierten“ und „alle“).
+- Oberfläche: Klappfeld mit Kästchen (`web/includes/multi_filter.html`, `<details>`, Angaben aus `_multi_filter`), funktioniert ohne JavaScript; `app.js` passt nur die Beschriftung an, schließt bei Klick daneben oder Esc und richtet das Menü rechtsbündig aus, wenn es sonst aus dem Bild ragt. Angeboten werden weiter nur Werte aus sichtbaren Verträgen.
+
+**Reverse Proxy**
+- `docs/configuration.md#reverse-proxy`: Ziel (`<host>:8010` bzw. `contracts-manager-app:8000` im selben Docker-Netz), Header (`Host` mit Port, `X-Forwarded-Proto`), `USE_HTTPS`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, 21 MB, Beispiele für Nginx, Caddy, Traefik und Nginx Proxy Manager, typische Fehler. Nginx und Caddy lokal geprüft (Anmeldung über HTTPS, Upload-Grenze). Bei Nginx `proxy_set_header Host $http_host` (mit Port), sonst schlägt die CSRF-Prüfung bei einem Port außer 443 fehl.
+
+**Sicherheitskorrekturen (Docker Scout „Fixable“)**
+- CVE-2026-135901 (shadow/passwd) und CVE-2026-124851 (libzstd): Korrekturen in Debian `stable-security`. Der Workflow baut mit `pull: true` und dem Build-Argument `APT_REFRESH` (Run-ID), das der `RUN`-Schritt mit `apt-get upgrade` nutzt; sonst nimmt `cache-from: type=gha` die alte Schicht ohne Korrekturen.
+- **Vor jedem Release das gebaute Image in Docker Scout mit dem Filter „Fixable“ prüfen** und die Paketversionen im Image kontrollieren (`dpkg -l`).
+
+**Weiteres**
+- Backup: Eintrag `0.12.0` in `backup_upgrades.VERSIONS`, Schritt von 0.11.0 ist `no_changes`. `APP_VERSION` ist `0.12.0`.
+
 ### Spätere Phasen (noch nicht umsetzen, nur Schnittstellen nicht verbauen)
 - REST-API mit `django-ninja` (automatische OpenAPI/Swagger-Doku)
 - MCP-Server auf Basis derselben Modelle

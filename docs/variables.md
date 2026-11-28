@@ -38,7 +38,7 @@ and run `docker compose up -d` again. Write a `$` in a value as `$$`. The publis
 |---|---|---|
 | `ALLOWED_HOSTS` | every address | *Recommended.* Host names the app is reached at, comma separated, e.g. `contracts.example.com`. Without it the app accepts every address; links in emails use the address of the app from the email settings. |
 | `CSRF_TRUSTED_ORIGINS` | – | Full addresses incl. `http://` or `https://`. Only needed if a reverse proxy changes the address or the scheme. |
-| `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS. |
+| `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS. See [reverse proxy](configuration.md#reverse-proxy). |
 | `APP_UID`, `APP_GID` | `1000` | User and group the app runs as. On every start the container gives the folders `media` and `config` to this user, then drops root. Set them if another user should own the files, e.g. your NAS user. |
 | `SECRET_KEY` | generated | Secret key of Django (sessions, password reset links). Without it the app creates a random key on the first start and stores it in the folder `config` (`config/secret_key`, readable only by the app user). If that file is lost, a new key is created: everyone is signed out and open invitation and reset links stop working; no data is lost. To set your own: `openssl rand -hex 32`. |
 

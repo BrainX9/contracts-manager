@@ -61,6 +61,11 @@ jobs:
           context: .
           load: true
           tags: contracts-manager:test
+          # Version 0.12.0: neuestes Basis-Image und die Schicht mit
+          # apt-get upgrade bei jedem Lauf neu bauen (sonst nimmt der Cache
+          # die alte Schicht ohne die Sicherheitskorrekturen von Debian)
+          pull: true
+          build-args: APT_REFRESH=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -108,5 +113,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          pull: true
+          build-args: APT_REFRESH=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

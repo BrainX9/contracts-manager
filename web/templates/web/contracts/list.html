@@ -22,31 +22,13 @@
              hx-indicator="#results-indicator" autocomplete="off">
     </div>
     <div class="col-6 col-md-3 col-xxl-2">
-      <label class="visually-hidden" for="filter-main-category">{% translate "Main category" %}</label>
-      <select id="filter-main-category" name="main_category" class="form-select">
-        <option value="">{% translate "All main categories" %}</option>
-        {% for item in main_categories %}
-        <option value="{{ item.pk }}"{% if item.pk == filters.main_category %} selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
+      {% include "web/includes/multi_filter.html" with field=multi_filters.main_category %}
     </div>
     <div class="col-6 col-md-3 col-xxl-2">
-      <label class="visually-hidden" for="filter-category">{% translate "Category" %}</label>
-      <select id="filter-category" name="category" class="form-select">
-        <option value="">{% translate "All categories" %}</option>
-        {% for item in categories %}
-        <option value="{{ item.pk }}"{% if item.pk == filters.category %} selected{% endif %}>{{ item }}</option>
-        {% endfor %}
-      </select>
+      {% include "web/includes/multi_filter.html" with field=multi_filters.category %}
     </div>
     <div class="col-6 col-md-3 col-xxl-2">
-      <label class="visually-hidden" for="filter-consumer">{% translate "Consumer" %}</label>
-      <select id="filter-consumer" name="consumer" class="form-select">
-        <option value="">{% translate "All consumers" %}</option>
-        {% for item in consumers %}
-        <option value="{{ item.pk }}"{% if item.pk == filters.consumer %} selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
+      {% include "web/includes/multi_filter.html" with field=multi_filters.consumer %}
     </div>
     <div class="col-6 col-md-3 col-xxl-2">
       <label class="visually-hidden" for="filter-status">{% translate "Status" %}</label>
@@ -58,25 +40,13 @@
         <option value="all"{% if filters.status == "all" %} selected{% endif %}>{% translate "All, including archived" %}</option>
       </select>
     </div>
-    {% if payment_methods %}
+    {% if multi_filters.payment_method.options %}
     <div class="col-6 col-md-3 col-xxl-2">
-      <label class="visually-hidden" for="filter-payment-method">{% translate "Payment method" %}</label>
-      <select id="filter-payment-method" name="payment_method" class="form-select">
-        <option value="">{% translate "All payment methods" %}</option>
-        {% for item in payment_methods %}
-        <option value="{{ item.pk }}"{% if item.pk == filters.payment_method %} selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
+      {% include "web/includes/multi_filter.html" with field=multi_filters.payment_method %}
     </div>
     {% endif %}
     <div class="col-6 col-md-3 col-xxl-2">
-      <label class="visually-hidden" for="filter-provider">{% translate "Contract partner" %}</label>
-      <select id="filter-provider" name="provider" class="form-select">
-        <option value="">{% translate "All contract partners" %}</option>
-        {% for item in providers %}
-        <option value="{{ item.pk }}"{% if item.pk == filters.provider %} selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
+      {% include "web/includes/multi_filter.html" with field=multi_filters.provider %}
     </div>
   </div>
   <noscript><button type="submit" class="btn btn-primary mt-2">{% translate "Apply filters" %}</button></noscript>
