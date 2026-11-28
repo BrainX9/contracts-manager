@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, TemplateView, UpdateView
 from django_htmx.http import reswap, retarget
@@ -444,6 +445,36 @@ def _selected_id(request, name):
     return int(value) if value.isdigit() else None
 
 
+def _selected_ids(request, name):
+    """
+    Liest IDs aus den URL-Parametern (Version 0.12.0: mehrere Werte je
+    Filter, z. B. ``?consumer=1&consumer=3``); ungültige Werte werden
+    ignoriert. Ergebnis: sortierte Liste ohne Doppelte, leer = kein Filter.
+    """
+    return sorted({int(value) for value in request.GET.getlist(name) if value.isdigit()})
+
+
+def _multi_filter(name, label, all_label, items, selected, text=lambda item: item.name):
+    """
+    Angaben für ein Klappfeld mit Kästchen in der Vertragsliste (Version
+    0.12.0). ``summary`` ist die Beschriftung: alle, der eine gewählte Name
+    oder die Anzahl.
+    """
+    options = [{"pk": item.pk, "text": text(item), "checked": item.pk in selected} for item in items]
+    checked = [option["text"] for option in options if option["checked"]]
+    if not checked:
+        summary = all_label
+    elif len(checked) == 1:
+        summary = checked[0]
+    else:
+        # gleicher Text wie data-many-label in multi_filter.html (immer ab 2)
+        summary = gettext("%(count)s selected") % {"count": len(checked)}
+    return {
+        "name": name, "id": f"filter-{name.replace('_', '-')}", "label": label, "all_label": all_label,
+        "options": options, "summary": summary,
+    }
+
+
 class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
     """
     Liste der sichtbaren Verträge mit Suche, Filtern, Sortierung und der
@@ -460,11 +491,13 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
 
         filters = {
             "q": request.GET.get("q", "").strip(),
-            "main_category": _selected_id(request, "main_category"),
-            "category": _selected_id(request, "category"),
-            "consumer": _selected_id(request, "consumer"),
-            "provider": _selected_id(request, "provider"),
-            "payment_method": _selected_id(request, "payment_method"),
+            # Version 0.12.0: mehrere Werte je Filter; innerhalb eines Filters
+            # ODER, zwischen den Filtern UND
+            "main_category": _selected_ids(request, "main_category"),
+            "category": _selected_ids(request, "category"),
+            "consumer": _selected_ids(request, "consumer"),
+            "provider": _selected_ids(request, "provider"),
+            "payment_method": _selected_ids(request, "payment_method"),
             # Version 0.7.0: leer = alle außer archivierten, "all" = alle
             "status": _selected_status(request),
         }
@@ -480,11 +513,11 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             )
         if filters["main_category"]:
             contracts = contracts.filter(
-                Q(category_id=filters["main_category"]) | Q(category__parent_id=filters["main_category"])
+                Q(category_id__in=filters["main_category"]) | Q(category__parent_id__in=filters["main_category"])
             )
         for name in ("category", "consumer", "provider", "payment_method"):
             if filters[name]:
-                contracts = contracts.filter(**{f"{name}_id": filters[name]})
+                contracts = contracts.filter(**{f"{name}_id__in": filters[name]})
         if not filters["status"]:
             contracts = contracts.exclude(status=Contract.Status.ARCHIVED)
         elif filters["status"] != STATUS_ALL:
@@ -497,6 +530,31 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
 
         # Filteroptionen nur aus sichtbaren Verträgen, damit keine fremden
         # Namen erscheinen
+        main_categories = Category.objects.filter(
+            Q(parent__isnull=True, pk__in=visible.values("category"))
+            | Q(pk__in=visible.values("category__parent"))
+        ).order_by("name")
+        categories = category_tree_order(Category.objects.filter(pk__in=visible.values("category")))
+        consumers = Consumer.objects.filter(pk__in=visible.values("consumer")).order_by("name")
+        providers = Provider.objects.filter(pk__in=visible.values("provider")).order_by("name")
+        payment_methods = PaymentMethod.objects.filter(pk__in=visible.values("payment_method")).order_by("name")
+        multi_filters = {
+            "main_category": _multi_filter(
+                "main_category", _("Main category"), _("All main categories"), main_categories,
+                filters["main_category"],
+            ),
+            "category": _multi_filter(
+                "category", _("Category"), _("All categories"), categories, filters["category"], text=str,
+            ),
+            "consumer": _multi_filter("consumer", _("Consumer"), _("All consumers"), consumers, filters["consumer"]),
+            "payment_method": _multi_filter(
+                "payment_method", _("Payment method"), _("All payment methods"), payment_methods,
+                filters["payment_method"],
+            ),
+            "provider": _multi_filter(
+                "provider", _("Contract partner"), _("All contract partners"), providers, filters["provider"],
+            ),
+        }
         context.update({
             "rows": rows,
             "totals": totals,
@@ -507,16 +565,7 @@ class ContractListView(LoginRequiredMixin, HtmxResultsMixin, TemplateView):
             "visible_count": visible.count(),
             "statuses": Contract.Status.choices,
             "archived_count": visible.filter(status=Contract.Status.ARCHIVED).count(),
-            "main_categories": Category.objects.filter(
-                Q(parent__isnull=True, pk__in=visible.values("category"))
-                | Q(pk__in=visible.values("category__parent"))
-            ).order_by("name"),
-            "categories": category_tree_order(Category.objects.filter(pk__in=visible.values("category"))),
-            "consumers": Consumer.objects.filter(pk__in=visible.values("consumer")).order_by("name"),
-            "providers": Provider.objects.filter(pk__in=visible.values("provider")).order_by("name"),
-            "payment_methods": PaymentMethod.objects.filter(
-                pk__in=visible.values("payment_method")
-            ).order_by("name"),
+            "multi_filters": multi_filters,
         })
         return context
 

@@ -29,6 +29,7 @@ Electricity, internet, mobile, insurance, streaming, the gym – most households
 - **Easy start:** one Compose file, one password to set – no `.env`, no `chown`; the secret key is generated.
 - **Backup and import** of all data and files as a single ZIP file.
 - Superusers see the installed version and a **hint when an update is available**.
+- Filters in the contract list take **several values** each, e.g. two consumers.
 - After an update, every user sees **What's new** once; members of the group *Systemmail* also get it by email, superusers an email when a new version is available.
 - Interface in **English and German**, light and dark mode, works on the phone.
 - All assets served locally – no CDN, no tracking.
@@ -91,7 +92,7 @@ Only a few settings are needed before the app runs; they are at the top of `dock
 | **Required** | `POSTGRES_DB`, `POSTGRES_USER` | `contracts_db`, `contracts_user` | database name and user |
 | **Required** | `POSTGRES_PASSWORD` | – | database password |
 | Optional | `ALLOWED_HOSTS` | every address | recommended: host names the app is reached at, comma separated |
-| Optional | `CSRF_TRUSTED_ORIGINS` | – | only if the reverse proxy changes the address or the scheme |
+| Optional | `CSRF_TRUSTED_ORIGINS` | – | only if the reverse proxy changes the address or the scheme ([reverse proxy](https://github.com/BrainX9/contracts-manager/blob/main/docs/configuration.md#reverse-proxy)) |
 | Optional | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
 | Optional | `APP_UID`, `APP_GID` | `1000` | user and group the app runs as |
 | Optional | `SECRET_KEY` | generated | without it the app creates a key in `config/` |

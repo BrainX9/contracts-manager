@@ -17,7 +17,11 @@ WORKDIR /app
 # Texterkennung in Scans und Fotos (KI-Assistent, Version 0.8b).
 # apt-get upgrade (0.4.0): Sicherheitskorrekturen von Debian einspielen,
 # die das Basis-Image noch nicht enthält.
-RUN apt-get update \
+# APT_REFRESH (0.12.0): Der Workflow setzt bei jedem Lauf einen neuen Wert,
+# damit diese Schicht nicht aus dem Build-Cache kommt.
+ARG APT_REFRESH=local
+RUN echo "apt refresh: ${APT_REFRESH}" \
+    && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends gettext \
         tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng poppler-utils \

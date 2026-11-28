@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Contracts Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 19:08+0100\n"
+"POT-Creation-Date: 2026-11-28 19:40+0100\n"
 "PO-Revision-Date: 2026-11-06 22:30+0100\n"
 "Last-Translator: Contracts Manager\n"
 "Language-Team: German\n"
@@ -292,7 +292,7 @@ msgid "Notes"
 msgstr "Notizen"
 
 #: assistant/proposals.py:128 web/templates/web/categories/detail.html:18
-#: web/templates/web/contracts/list.html:25
+#: web/views.py:543
 msgid "Main category"
 msgstr "Hauptkategorie"
 
@@ -305,25 +305,22 @@ msgstr "Nummer"
 #: contracts/templates/emails/reminder.txt:6
 #: web/templates/web/contracts/_results.html:29
 #: web/templates/web/contracts/detail.html:42
-#: web/templates/web/contracts/list.html:73
 #: web/templates/web/includes/contract_table.html:20
-#: web/templates/web/providers/_results.html:20
+#: web/templates/web/providers/_results.html:20 web/views.py:555
 msgid "Contract partner"
 msgstr "Vertragspartner"
 
 #: assistant/proposals.py:182 web/templates/web/categories/_results.html:18
 #: web/templates/web/contracts/_results.html:30
 #: web/templates/web/contracts/detail.html:52
-#: web/templates/web/contracts/list.html:34
-#: web/templates/web/includes/contract_table.html:21
+#: web/templates/web/includes/contract_table.html:21 web/views.py:547
 msgid "Category"
 msgstr "Kategorie"
 
 #: assistant/proposals.py:182 web/templates/web/consumers/_results.html:20
 #: web/templates/web/contracts/_results.html:31
 #: web/templates/web/contracts/detail.html:54
-#: web/templates/web/contracts/list.html:43
-#: web/templates/web/includes/contract_table.html:22
+#: web/templates/web/includes/contract_table.html:22 web/views.py:549
 msgid "Consumer"
 msgstr "Verbraucher"
 
@@ -779,7 +776,7 @@ msgstr "Keine Kosten"
 #: web/templates/web/manage/system.html:22
 #: web/templates/web/manage/users/detail.html:74
 #: web/templates/web/payment_methods/_results.html:21
-#: web/templates/web/providers/_results.html:23 web/views.py:803
+#: web/templates/web/providers/_results.html:23 web/views.py:852
 msgid "Contracts"
 msgstr "Verträge"
 
@@ -1458,8 +1455,14 @@ msgstr ""
 "Zugang zum Assistenten und wird deshalb bei Freigaben nicht angeboten."
 
 #: contracts/permissions.py:54
-msgid "Receives system emails: after an update a summary of what's new, superusers also an email when a new version is available. This group is not offered when sharing objects."
-msgstr "Bekommt System-E-Mails: nach einem Update eine Zusammenfassung der Neuigkeiten, Superuser außerdem eine E-Mail, wenn eine neue Version verfügbar ist. Diese Gruppe wird bei Freigaben nicht angeboten."
+msgid ""
+"Receives system emails: after an update a summary of what's new, superusers "
+"also an email when a new version is available. This group is not offered "
+"when sharing objects."
+msgstr ""
+"Bekommt System-E-Mails: nach einem Update eine Zusammenfassung der "
+"Neuigkeiten, Superuser außerdem eine E-Mail, wenn eine neue Version "
+"verfügbar ist. Diese Gruppe wird bei Freigaben nicht angeboten."
 
 #: contracts/templates/admin/contracts/contract/change_list.html:42
 #: web/templates/web/contracts/_results.html:11
@@ -1656,8 +1659,12 @@ msgstr "Update verfügbar"
 #: contracts/templates/emails/system_update.html:7
 #: contracts/templates/emails/system_update.txt:3
 #, python-format
-msgid "a new version of Contracts Manager is available: %(version)s (installed: %(installed_version)s)."
-msgstr "eine neue Version von Contracts Manager ist verfügbar: %(version)s (installiert: %(installed_version)s)."
+msgid ""
+"a new version of Contracts Manager is available: %(version)s (installed: "
+"%(installed_version)s)."
+msgstr ""
+"eine neue Version von Contracts Manager ist verfügbar: %(version)s "
+"(installiert: %(installed_version)s)."
 
 #: contracts/templates/emails/system_update.html:9
 #: contracts/templates/emails/system_update.txt:5
@@ -1681,8 +1688,12 @@ msgstr "So geht das Update"
 #: contracts/templates/emails/system_update.txt:11
 #: contracts/templates/emails/system_whats_new.html:21
 #: contracts/templates/emails/system_whats_new.txt:12
-msgid "You receive this email because you are in the group “Systemmail”. An administrator can remove you from it."
-msgstr "Du bekommst diese E-Mail, weil du in der Gruppe „Systemmail“ bist. Ein Administrator kann dich daraus entfernen."
+msgid ""
+"You receive this email because you are in the group “Systemmail”. An "
+"administrator can remove you from it."
+msgstr ""
+"Du bekommst diese E-Mail, weil du in der Gruppe „Systemmail“ bist. Ein "
+"Administrator kann dich daraus entfernen."
 
 #: contracts/templates/emails/system_update_subject.txt:1
 #, python-format
@@ -1702,7 +1713,8 @@ msgstr "Neuigkeiten"
 #: contracts/templates/emails/system_whats_new.txt:3
 #, python-format
 msgid "Contracts Manager has been updated to version %(version)s. What's new:"
-msgstr "Contracts Manager wurde auf Version %(version)s aktualisiert. Das ist neu:"
+msgstr ""
+"Contracts Manager wurde auf Version %(version)s aktualisiert. Das ist neu:"
 
 #: contracts/templates/emails/system_whats_new.html:17
 msgid "Open Contracts Manager"
@@ -2657,7 +2669,7 @@ msgstr "Übersicht"
 #: web/templates/web/providers/detail.html:7
 #: web/templates/web/providers/form.html:7
 #: web/templates/web/providers/list.html:3
-#: web/templates/web/providers/list.html:6 web/views.py:1095
+#: web/templates/web/providers/list.html:6 web/views.py:1144
 msgid "Contract partners"
 msgstr "Vertragspartner"
 
@@ -2665,7 +2677,7 @@ msgstr "Vertragspartner"
 #: web/templates/web/categories/form.html:7
 #: web/templates/web/categories/list.html:3
 #: web/templates/web/categories/list.html:6
-#: web/templates/web/manage/users/detail.html:76 web/views.py:1322
+#: web/templates/web/manage/users/detail.html:76 web/views.py:1371
 msgid "Categories"
 msgstr "Kategorien"
 
@@ -2673,7 +2685,7 @@ msgstr "Kategorien"
 #: web/templates/web/consumers/form.html:7
 #: web/templates/web/consumers/list.html:3
 #: web/templates/web/consumers/list.html:6
-#: web/templates/web/manage/users/detail.html:77 web/views.py:1148
+#: web/templates/web/manage/users/detail.html:77 web/views.py:1197
 msgid "Consumers"
 msgstr "Verbraucher"
 
@@ -2681,7 +2693,7 @@ msgstr "Verbraucher"
 #: web/templates/web/payment_methods/detail.html:7
 #: web/templates/web/payment_methods/form.html:7
 #: web/templates/web/payment_methods/list.html:3
-#: web/templates/web/payment_methods/list.html:6 web/views.py:1216
+#: web/templates/web/payment_methods/list.html:6 web/views.py:1265
 msgid "Payment methods"
 msgstr "Zahlungsmethoden"
 
@@ -2909,7 +2921,7 @@ msgstr "Kategorie bearbeiten"
 #: web/templates/web/categories/form.html:3
 #: web/templates/web/categories/form.html:9
 #: web/templates/web/categories/form.html:12
-#: web/templates/web/categories/list.html:8 web/views.py:615
+#: web/templates/web/categories/list.html:8 web/views.py:664
 msgid "New category"
 msgstr "Neue Kategorie"
 
@@ -3013,7 +3025,7 @@ msgstr "Verbraucher bearbeiten"
 #: web/templates/web/consumers/form.html:3
 #: web/templates/web/consumers/form.html:9
 #: web/templates/web/consumers/form.html:12
-#: web/templates/web/consumers/list.html:8 web/views.py:617
+#: web/templates/web/consumers/list.html:8 web/views.py:666
 msgid "New consumer"
 msgstr "Neuer Verbraucher"
 
@@ -3220,7 +3232,7 @@ msgstr[1] "%(counter)s Verträge"
 #: web/templates/web/contracts/_results.html:26
 #: web/templates/web/contracts/detail.html:31
 #: web/templates/web/contracts/form.html:45
-#: web/templates/web/contracts/list.html:52
+#: web/templates/web/contracts/list.html:34
 #: web/templates/web/includes/contract_table.html:18
 #: web/templates/web/includes/status_dot.html:1
 #: web/templates/web/manage/reminders.html:23
@@ -3273,8 +3285,7 @@ msgid "Cancelled as of"
 msgstr "Gekündigt zum"
 
 #: web/templates/web/contracts/detail.html:56
-#: web/templates/web/contracts/list.html:63
-#: web/templates/web/payment_methods/_results.html:20
+#: web/templates/web/payment_methods/_results.html:20 web/views.py:551
 msgid "Payment method"
 msgstr "Zahlungsmethode"
 
@@ -3315,35 +3326,15 @@ msgstr "Name, Referenz oder Vertragspartner"
 msgid "Search name, reference, number or partner"
 msgstr "Name, Referenz, Nummer oder Partner suchen"
 
-#: web/templates/web/contracts/list.html:27
-msgid "All main categories"
-msgstr "Alle Hauptkategorien"
-
 #: web/templates/web/contracts/list.html:36
-msgid "All categories"
-msgstr "Alle Kategorien"
-
-#: web/templates/web/contracts/list.html:45
-msgid "All consumers"
-msgstr "Alle Verbraucher"
-
-#: web/templates/web/contracts/list.html:54
 msgid "All except archived"
 msgstr "Alle außer archivierten"
 
-#: web/templates/web/contracts/list.html:58
+#: web/templates/web/contracts/list.html:40
 msgid "All, including archived"
 msgstr "Alle, auch archivierte"
 
-#: web/templates/web/contracts/list.html:65
-msgid "All payment methods"
-msgstr "Alle Zahlungsmethoden"
-
-#: web/templates/web/contracts/list.html:75
-msgid "All contract partners"
-msgstr "Alle Vertragspartner"
-
-#: web/templates/web/contracts/list.html:82
+#: web/templates/web/contracts/list.html:52
 msgid "Apply filters"
 msgstr "Filter anwenden"
 
@@ -3448,6 +3439,15 @@ msgstr "In Contracts Manager gespeichert"
 #: web/templates/web/includes/document_source_icon.html:1
 msgid "In Paperless"
 msgstr "In Paperless"
+
+#: web/templates/web/includes/multi_filter.html:7 web/views.py:471
+#, python-format
+msgid "%(count)s selected"
+msgstr "%(count)s ausgewählt"
+
+#: web/templates/web/includes/multi_filter.html:18
+msgid "No entries"
+msgstr "Keine Einträge"
 
 #: web/templates/web/includes/object_actions.html:6
 #: web/templates/web/sharing.html:3 web/templates/web/sharing.html:9
@@ -4560,7 +4560,7 @@ msgstr "Zahlungsmethode bearbeiten"
 #: web/templates/web/payment_methods/form.html:3
 #: web/templates/web/payment_methods/form.html:9
 #: web/templates/web/payment_methods/form.html:12
-#: web/templates/web/payment_methods/list.html:8 web/views.py:619
+#: web/templates/web/payment_methods/list.html:8 web/views.py:668
 msgid "New payment method"
 msgstr "Neue Zahlungsmethode"
 
@@ -4580,7 +4580,7 @@ msgstr ""
 msgid "Change the password you use to log in."
 msgstr "Ändere das Passwort, mit dem du dich anmeldest."
 
-#: web/templates/web/preferences.html:28 web/views.py:221
+#: web/templates/web/preferences.html:28 web/views.py:222
 msgid "You sign in via single sign-on and have no local password."
 msgstr "Du meldest dich über Single Sign-on an und hast kein lokales Passwort."
 
@@ -4648,7 +4648,7 @@ msgstr "Vertragspartner bearbeiten"
 #: web/templates/web/providers/form.html:3
 #: web/templates/web/providers/form.html:9
 #: web/templates/web/providers/form.html:12
-#: web/templates/web/providers/list.html:8 web/views.py:613
+#: web/templates/web/providers/list.html:8 web/views.py:662
 msgid "New contract partner"
 msgstr "Neuer Vertragspartner"
 
@@ -4681,56 +4681,76 @@ msgstr "Du nutzt Version %(version)s."
 msgid "No news yet."
 msgstr "Noch keine Neuigkeiten."
 
-#: web/views.py:133
+#: web/views.py:134
 msgid "Welcome! You are the administrator of this installation."
 msgstr "Willkommen! Du bist der Administrator dieser Installation."
 
-#: web/views.py:209
+#: web/views.py:210
 msgid "Your settings have been saved."
 msgstr "Deine Einstellungen wurden gespeichert."
 
-#: web/views.py:227
+#: web/views.py:228
 msgid "Your password has been changed."
 msgstr "Dein Passwort wurde geändert."
 
-#: web/views.py:354
+#: web/views.py:355
 msgid "The sharing settings have been saved."
 msgstr "Die Freigaben wurden gespeichert."
 
+#: web/views.py:543
+msgid "All main categories"
+msgstr "Alle Hauptkategorien"
+
 #: web/views.py:547
+msgid "All categories"
+msgstr "Alle Kategorien"
+
+#: web/views.py:549
+msgid "All consumers"
+msgstr "Alle Verbraucher"
+
+#: web/views.py:551
+msgid "All payment methods"
+msgstr "Alle Zahlungsmethoden"
+
+#: web/views.py:555
+msgid "All contract partners"
+msgstr "Alle Vertragspartner"
+
+#: web/views.py:596
 msgid "Predecessor contract"
 msgstr "Vorgängervertrag"
 
-#: web/views.py:547
+#: web/views.py:596
 msgid "Successor contract"
 msgstr "Nachfolgevertrag"
 
-#: web/views.py:597
+#: web/views.py:646
 msgid "The reminder has been saved."
 msgstr "Die Erinnerung wurde gespeichert."
 
-#: web/views.py:639
+#: web/views.py:688
 msgid "The contract has been created. You can now add its costs."
 msgstr "Der Vertrag wurde angelegt. Jetzt kannst du die Kosten hinzufügen."
 
-#: web/views.py:660
+#: web/views.py:709
 msgid "The contract has been saved."
 msgstr "Der Vertrag wurde gespeichert."
 
-#: web/views.py:711
+#: web/views.py:760
 #, python-format
 msgid "The contract “%(name)s” has been deleted."
 msgstr "Der Vertrag „%(name)s“ wurde gelöscht."
 
-#: web/views.py:777
+#: web/views.py:826
 msgid "The cost entry has been saved."
 msgstr "Der Kosteneintrag wurde gespeichert."
 
-#: web/views.py:792
+#: web/views.py:841
 msgid "The cost entry has been deleted."
 msgstr "Der Kosteneintrag wurde gelöscht."
 
-#: web/views.py:805
+#: web/views.py:854
 msgid ""
 "Readers may view the contract and its costs. Editors may also edit the "
 "contract and its costs, but not delete it or change the sharing. The owner "
@@ -4740,27 +4760,27 @@ msgstr ""
 "und Kosten außerdem bearbeiten, aber nicht löschen und keine Freigaben "
 "ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1053
+#: web/views.py:1102
 msgid "The contract partner has been created."
 msgstr "Der Vertragspartner wurde angelegt."
 
-#: web/views.py:1059
+#: web/views.py:1108
 msgid "The contract partner has been saved."
 msgstr "Der Vertragspartner wurde gespeichert."
 
-#: web/views.py:1065
+#: web/views.py:1114
 msgid ""
 "The contract partner cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Vertragspartner kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1066
+#: web/views.py:1115
 #, python-format
 msgid "The contract partner “%(name)s” has been deleted."
 msgstr "Der Vertragspartner „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1097
+#: web/views.py:1146
 msgid ""
 "Readers may view the contract partner and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -4770,26 +4790,26 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1128
+#: web/views.py:1177
 msgid "The consumer has been created."
 msgstr "Der Verbraucher wurde angelegt."
 
-#: web/views.py:1134
+#: web/views.py:1183
 msgid "The consumer has been saved."
 msgstr "Der Verbraucher wurde gespeichert."
 
-#: web/views.py:1140
+#: web/views.py:1189
 msgid "The consumer cannot be deleted because it is still used in contracts."
 msgstr ""
 "Der Verbraucher kann nicht gelöscht werden, weil er noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1141
+#: web/views.py:1190
 #, python-format
 msgid "The consumer “%(name)s” has been deleted."
 msgstr "Der Verbraucher „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1150
+#: web/views.py:1199
 msgid ""
 "Readers may view the consumer and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "
@@ -4799,27 +4819,27 @@ msgstr ""
 "Bearbeiter dürfen ihn außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1176
+#: web/views.py:1225
 msgid "The payment method has been created."
 msgstr "Die Zahlungsmethode wurde angelegt."
 
-#: web/views.py:1182
+#: web/views.py:1231
 msgid "The payment method has been saved."
 msgstr "Die Zahlungsmethode wurde gespeichert."
 
-#: web/views.py:1188
+#: web/views.py:1237
 msgid ""
 "The payment method cannot be deleted because it is still used in contracts."
 msgstr ""
 "Die Zahlungsmethode kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird."
 
-#: web/views.py:1189
+#: web/views.py:1238
 #, python-format
 msgid "The payment method “%(name)s” has been deleted."
 msgstr "Die Zahlungsmethode „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1218
+#: web/views.py:1267
 msgid ""
 "Readers may view the payment method and use it in their contracts. Editors "
 "may also edit it, but not delete it or change the sharing. The owner has "
@@ -4829,15 +4849,15 @@ msgstr ""
 "Bearbeiter dürfen sie außerdem bearbeiten, aber nicht löschen und keine "
 "Freigaben ändern. Der Eigentümer hat vollen Zugriff."
 
-#: web/views.py:1292
+#: web/views.py:1341
 msgid "The category has been created."
 msgstr "Die Kategorie wurde angelegt."
 
-#: web/views.py:1303
+#: web/views.py:1352
 msgid "The category has been saved."
 msgstr "Die Kategorie wurde gespeichert."
 
-#: web/views.py:1310
+#: web/views.py:1359
 msgid ""
 "The category cannot be deleted because it is still used in contracts or has "
 "subcategories."
@@ -4845,12 +4865,12 @@ msgstr ""
 "Die Kategorie kann nicht gelöscht werden, weil sie noch in Verträgen "
 "verwendet wird oder Unterkategorien hat."
 
-#: web/views.py:1312
+#: web/views.py:1361
 #, python-format
 msgid "The category “%(name)s” has been deleted."
 msgstr "Die Kategorie „%(name)s“ wurde gelöscht."
 
-#: web/views.py:1324
+#: web/views.py:1373
 msgid ""
 "Readers may view the category and use it in their contracts. Editors may "
 "also edit it, but not delete it or change the sharing. The owner has full "
@@ -4928,9 +4948,28 @@ msgid "System emails"
 msgstr "System-E-Mails"
 
 #: web/whats_new.py:67
-msgid "Members of the new group “Systemmail” receive this summary of what's new by email after each update. Administrators decide who is in the group."
-msgstr "Mitglieder der neuen Gruppe „Systemmail“ bekommen diese Zusammenfassung der Neuigkeiten nach jedem Update per E-Mail. Wer in der Gruppe ist, legen Administratoren fest."
+msgid ""
+"Members of the new group “Systemmail” receive this summary of what's new by "
+"email after each update. Administrators decide who is in the group."
+msgstr ""
+"Mitglieder der neuen Gruppe „Systemmail“ bekommen diese Zusammenfassung der "
+"Neuigkeiten nach jedem Update per E-Mail. Wer in der Gruppe ist, legen "
+"Administratoren fest."
 
 #: web/whats_new.py:69
-msgid "Superusers in the group also receive an email when a new version is available. Superusers and administrators were added to the group with this update."
-msgstr "Superuser in der Gruppe bekommen außerdem eine E-Mail, wenn eine neue Version verfügbar ist. Superuser und Administratoren wurden mit diesem Update in die Gruppe aufgenommen."
+msgid ""
+"Superusers in the group also receive an email when a new version is "
+"available. Superusers and administrators were added to the group with this "
+"update."
+msgstr ""
+"Superuser in der Gruppe bekommen außerdem eine E-Mail, wenn eine neue "
+"Version verfügbar ist. Superuser und Administratoren wurden mit diesem "
+"Update in die Gruppe aufgenommen."
+
+#: web/whats_new.py:72
+msgid "Several values per filter"
+msgstr "Mehrere Werte pro Filter"
+
+#: web/whats_new.py:73
+msgid "In the contract list, the filters for main category, category, consumer, payment method and contract partner now take several values – for example “Me” and “Household” together. Contracts matching any of the ticked values are shown."
+msgstr "In der Vertragsliste nehmen die Filter für Hauptkategorie, Kategorie, Verbraucher, Zahlungsmethode und Vertragspartner jetzt mehrere Werte – zum Beispiel „Ich“ und „Haushalt“ zusammen. Angezeigt werden die Verträge, die zu einem der angehakten Werte passen."

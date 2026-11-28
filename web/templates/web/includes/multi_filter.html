@@ -1,0 +1,21 @@
+{% load i18n %}{% comment %}
+Klappfeld mit Kästchen für einen Filter der Vertragsliste (Version 0.12.0).
+Funktioniert ohne JavaScript (<details>); app.js passt nur die Beschriftung
+an und schließt das Feld bei einem Klick daneben.
+Parameter: field (aus web.views._multi_filter).
+{% endcomment %}<details class="multi-filter" id="{{ field.id }}" data-all-label="{{ field.all_label }}"
+         data-many-label="{% blocktranslate with count='__count__' %}{{ count }} selected{% endblocktranslate %}">
+  <summary class="form-select" aria-label="{{ field.label }}"><span class="multi-filter-summary">{{ field.summary }}</span></summary>
+  <fieldset class="multi-filter-menu">
+    <legend class="visually-hidden">{{ field.label }}</legend>
+    {% for option in field.options %}
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="{{ field.name }}" value="{{ option.pk }}"
+             id="{{ field.id }}-{{ option.pk }}"{% if option.checked %} checked{% endif %}>
+      <label class="form-check-label" for="{{ field.id }}-{{ option.pk }}">{{ option.text }}</label>
+    </div>
+    {% empty %}
+    <p class="text-body-secondary small mb-0">{% translate "No entries" %}</p>
+    {% endfor %}
+  </fieldset>
+</details>

@@ -778,3 +778,71 @@ main h1.h3 {
 .contract-archived td {
   color: var(--bs-secondary-color);
 }
+
+/* --- Klappfeld mit Kästchen für Filter (Version 0.12.0) -------------------- */
+
+.multi-filter {
+  position: relative;
+}
+
+.multi-filter > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.multi-filter > summary::-webkit-details-marker {
+  display: none;
+}
+
+.multi-filter-summary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multi-filter[open] > summary {
+  border-color: rgba(var(--app-primary-rgb), 0.6);
+  box-shadow: 0 0 0 0.25rem rgba(var(--app-primary-rgb), 0.2);
+}
+
+.multi-filter-menu {
+  position: absolute;
+  z-index: 1000;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  max-height: 18rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--app-shadow-lg);
+}
+
+.multi-filter-menu .form-check {
+  margin-bottom: 0.25rem;
+}
+
+.multi-filter-menu .form-check-label {
+  overflow-wrap: anywhere;
+}
+
+/* Ab Tablet darf das Menü breiter als das Feld sein; app.js richtet es
+   rechtsbündig aus, wenn es sonst aus dem Bild ragt. */
+@media (min-width: 768px) {
+  .multi-filter-menu {
+    right: auto;
+    width: max-content;
+    min-width: 100%;
+    max-width: 20rem;
+  }
+
+  .multi-filter-menu.align-end {
+    left: auto;
+    right: 0;
+  }
+}

@@ -6,7 +6,7 @@
 
 **Keep track of every contract, subscription and insurance policy in your household – self-hosted, private and shareable.**
 
-[![Version](https://img.shields.io/badge/version-0.11.0-4f46e5)](#roadmap)
+[![Version](https://img.shields.io/badge/version-0.12.0-4f46e5)](#roadmap)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2%20LTS-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -47,7 +47,7 @@ The user interface is available in **English and German** (per user).
 - Cost history with payment interval (weekly, monthly, quarterly, yearly); the current amount is picked by date
 - **Documents** per contract: upload files (PDF, images, Office, up to 20 MB) or link Paperless-ngx documents, and attach them to cost entries
 - Monthly and yearly totals, converted to a monthly basis
-- Live search, filters and sorting; totals follow the filter
+- Live search, filters with several values each (e.g. two consumers) and sorting; totals follow the filter
 
 </td>
 <td width="50%" valign="top">
@@ -186,7 +186,7 @@ Three containers run: `contracts-manager-db`, `contracts-manager-app` and `contr
 **Next steps**
 
 - Email, single sign-on, the AI assistant and Paperless are set up in the app under **Administration**.
-- HTTPS with the reverse proxy of the NAS and daily backups: [installation guide](docs/installation-synology.md).
+- HTTPS with the reverse proxy of the NAS and daily backups: [installation guide](docs/installation-synology.md). Other reverse proxies (Nginx, Caddy, Traefik, Nginx Proxy Manager): [configuration › reverse proxy](docs/configuration.md#reverse-proxy).
 - More settings (for example `ALLOWED_HOSTS`): [Configuration](#configuration) below and [all variables](docs/variables.md).
 - Installations from before 0.9.0 keep their `docker-compose.yml` and `.env`; the file with `.env` is now called [`docker-compose.env.yml`](docker-compose.env.yml).
 
@@ -215,7 +215,7 @@ Contracts Manager needs only a few settings before it starts. They are in the bl
 | **Required** | `POSTGRES_DB`, `POSTGRES_USER` | `contracts_db`, `contracts_user` | Name of the database and its user |
 | **Required** | `POSTGRES_PASSWORD` | – | Password of the database user (letters and digits) |
 | Optional, *recommended* | `ALLOWED_HOSTS` | every address | Host names the app is reached at, comma separated |
-| Optional | `CSRF_TRUSTED_ORIGINS` | – | Only if a reverse proxy changes the address or the scheme |
+| Optional | `CSRF_TRUSTED_ORIGINS` | – | Only if a reverse proxy changes the address or the scheme ([reverse proxy](docs/configuration.md#reverse-proxy)) |
 | Optional | `USE_HTTPS` | `False` | `True` behind a reverse proxy with HTTPS |
 | Optional | `APP_UID`, `APP_GID` | `1000` | User and group the app runs as; `media` and `config` are given to them automatically |
 | Optional | `SECRET_KEY` | generated | Without it the app creates a key in the folder `config` |
@@ -229,7 +229,7 @@ Contracts Manager needs only a few settings before it starts. They are in the bl
 | [Installation on a Synology NAS](docs/installation-synology.md) | Project folder, Compose file, Container Manager, first administrator, reverse proxy with HTTPS, daily backup |
 | [Schritt-für-Schritt-Anleitung Synology (deutsch)](docs/installation-synology-de.md) | Detailed German walkthrough for beginners: Container Manager without SSH, Compose file, HTTPS, daily backups, updates, troubleshooting |
 | [Environment variables](docs/variables.md) | All variables in four groups – required, optional, advanced, archived – and where to set them (Compose file or `.env`) |
-| [Configuration](docs/configuration.md) | Users and sharing, settings in the app, email and reminders, single sign-on, notes with Markdown, documents, Paperless-ngx, AI assistant (also Ollama, document AI for scans and photos), version and updates |
+| [Configuration](docs/configuration.md) | Users and sharing, settings in the app, email and reminders, single sign-on, notes with Markdown, documents, Paperless-ngx, AI assistant (also Ollama, document AI for scans and photos), version and updates, reverse proxy (Nginx, Caddy, Traefik, Nginx Proxy Manager) |
 | [Operations](docs/operations.md) | Updates, backup and restore, export and import of all data as one file, restart with an encrypted folder |
 | [Development](docs/development.md) | Local development, translations, tests, project structure |
 

@@ -1080,7 +1080,8 @@ class PaymentMethodPagesTest(TestCase):
         self.client.force_login(self.owner)
         make_contract(self.owner, "Wasser", "20.00")
         response = self.client.get(reverse("contract_list"))
-        self.assertEqual(list(response.context["payment_methods"]), [self.method])
+        options = response.context["multi_filters"]["payment_method"]["options"]
+        self.assertEqual([option["pk"] for option in options], [self.method.pk])
         self.assertEqual(len(response.context["rows"]), 3)
         response = self.client.get(reverse("contract_list"), {"payment_method": self.method.pk})
         self.assertEqual({row["contract"].name for row in response.context["rows"]}, {"Strom", "Gas"})
